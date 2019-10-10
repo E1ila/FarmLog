@@ -16,6 +16,8 @@ local FLogMinHeight = (200);
 local FLogFrameSChildContentTable = {};
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
+local lastMobLoot = {}
+
 local function FLogtobool(arg1)
 	return arg1 == 1 or arg1 == true
 end
@@ -142,11 +144,11 @@ local function FLogReportData()
 			for _, itemLink in ipairs(FLogSortedItemLinks) do				
 				for j = 1, #FLog[mobName][itemLink] do
 					local report = "  "..itemLink;
-					local num = FLog[mobName][itemLink][j][1];
+					local quantity = FLog[mobName][itemLink][j][1];
 					local rollType = FLog[mobName][itemLink][j][2];
 					local roll = FLog[mobName][itemLink][j][3];
-					if num > 1 then
-						report = report.."x"..num;
+					if quantity > 1 then
+						report = report.."x"..quantity;
 					end
 					if (rollType == LOOT_ROLL_TYPE_NEED) then
 						report = report.." ("..L["need"]..roll..")";
@@ -259,14 +261,14 @@ local function FLogRefreshSChildFrame()
 				if i > n then
 					FLogCreateSChild(1);
 				end
-				local num = FLog[mobName][itemLink][j][1];
+				local quantity = FLog[mobName][itemLink][j][1];
 				local rollType = FLog[mobName][itemLink][j][2];
 				local roll = FLog[mobName][itemLink][j][3];
-				if num > 1 then
-					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.."x"..num);
+				if quantity > 1 then
+					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.."x"..quantity);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 					FLogFrameSChildContentTable[i][3]:SetText("");
-				elseif num == 1 then
+				elseif quantity == 1 then
 					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 					FLogFrameSChildContentTable[i][3]:SetText("");
@@ -312,8 +314,8 @@ local function FLogRefreshSChildFrame()
 														editName = mobName;
 														editItem = itemLink;
 														editIdx = j;
-														if num > 1 then
-															FLogEditFrameItem:SetText(itemLink.."x"..num);
+														if quantity > 1 then
+															FLogEditFrameItem:SetText(itemLink.."x"..quantity);
 														else
 															FLogEditFrameItem:SetText(itemLink);
 														end																									
@@ -345,10 +347,10 @@ local function ClearFLog()
 	SVLastChange = date("%d.%m.%y - %H:%M");
 end
 
-local function FLog_tinsert(mobName, itemLink, num, rollType, roll)
+local function FLog_tinsert(mobName, itemLink, quantity, rollType, roll)
 -- inserts into FLog
-	print(tostring(mobName)..", "..tostring(itemName)..", "..tostring(num)..", "..tostring(rollType)..", "..tostring(roll));
-	if (mobName and itemLink and num and rollType and roll) then		
+	-- print(tostring(mobName)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(rollType)..", "..tostring(roll));
+	if (mobName and itemLink and quantity and rollType and roll) then		
 		if FLog[mobName] then		
 			if FLog[mobName][itemLink] then				
 				if rollType == -1 then
@@ -360,34 +362,48 @@ local function FLog_tinsert(mobName, itemLink, num, rollType, roll)
 						end
 					end
 					if f > 0 then
-						FLog[mobName][itemLink][f][1] = FLog[mobName][itemLink][f][1] + num;
+						FLog[mobName][itemLink][f][1] = FLog[mobName][itemLink][f][1] + quantity;
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					else
-						tinsert(FLog[mobName][itemLink], {num, rollType, roll});
+						tinsert(FLog[mobName][itemLink], {quantity, rollType, roll});
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					end
 				else
-					tinsert(FLog[mobName][itemLink], {num, rollType, roll});
+					tinsert(FLog[mobName][itemLink], {quantity, rollType, roll});
 					SVLastChange = date("%d.%m.%y - %H:%M");
 				end
 			else
-				FLog[mobName][itemLink] = {{num, rollType, roll}};
+				FLog[mobName][itemLink] = {{quantity, rollType, roll}};
 				SVLastChange = date("%d.%m.%y - %H:%M");
 			end
 		else
 			FLog[mobName] = {};
-			FLog[mobName][itemLink] = {{num, rollType, roll}};
+			FLog[mobName][itemLink] = {{quantity, rollType, roll}};
 			SVLastChange = date("%d.%m.%y - %H:%M");
 		end
 	end
 end
 
+local function FLog_LOOT_OPENED(autoLoot)
+	local lootCount = GetNumLootItems()
+	local mobName = UnitName("target")
+	lastMobLoot = {}
+	for i = 1, lootCount do 
+		local link = GetLootSlotLink(i)
+		lastMobLoot[link] = mobName
+	end 
+end 
+
 local function FLog_CHAT_MSG_LOOT(arg1)
 -- parse the chat-message and add the item to the FLog, if the following conditions are fullfilled.
-	local s, _ = string.find(arg1, "%|c");
-	local _, e = string.find(arg1, "%]%|h%|r");
-	local itemLink = string.sub(arg1, s, e);	
+	local startIndex, _ = string.find(arg1, "%|c");
+	local _, endIndex = string.find(arg1, "%]%|h%|r");
+	local itemLink = string.sub(arg1, startIndex, endIndex);	
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, _ = GetItemInfo(itemLink);
+
+	mobName = lastMobLoot[itemLink]
+	if not mobName then return end 
+
 	local inRaid = IsInRaid();
 	local inParty = false;
 	if GetNumGroupMembers() > 0 then
@@ -407,58 +423,13 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 		(SVItemRarity[5] and itemRarity == 5) or
 		(SVItemRarity[6] and itemRarity == 6))) 
 	then	
-		-- get correct mobName:
-		-- case 1 = Player
-		-- case 2a = Group-Member, same Realm
-		-- case 2b = Group-Member, different Realm
-		local mobName = string.sub(arg1, 0, (string.find(arg1, " ")-1));	
-		if mobName == L["you"] then
-			mobName = UnitName("PLAYER");		
-		else
-			local h = "party"
-			if inRaid then
-				h = "raid"
-			end
-			for i = 1, GetNumGroupMembers() do
-				local x = h..i;
-				local n, r = UnitName(x);
-				if mobName == n then
-					if (not (UnitIsSameServer(x, "PLAYER"))) then		
-						if r then
-							mobName = n.."-"..r;
-							i = GetNumGroupMembers() + 1;
-						end
-					end
-				end
-			end				
-		end
+		-- parse quantity from chat-message
+		local quantity = 1;		
+		if ((endIndex + 2 ) <= (#arg1 - 1)) then
+			quantity = tonumber(string.sub(arg1, endIndex + 2, #arg1 - 1));
+		end				
 		
-		-- parse num from chat-message
-		local num = 1;		
-		if ((e + 2 ) <= (#arg1 - 1)) then
-			num = tonumber(string.sub(arg1, e + 2, #arg1 - 1));
-		end		
-
-		-- if possible, get rollType and roll from Blizzard-FarmLog
-		local rollType = -1;
-		local roll = -1;
-		if itemRarity >= 2 then
-			for itemIdx = 1, C_LootHistory.GetNumItems() do
-				local _, itemLink2, _, _, winnerIdx = C_LootHistory.GetItem(itemIdx);			
-				--[[print(" -- "..itemIdx);
-				print(tostring(gsub(itemLink, "\124", "\124\124")));
-				print(tostring(gsub(itemLink2, "\124", "\124\124")));]]--
-				if ((itemLink == itemLink2) and winnerIdx) then					
-					local userName2, _, rT, r, _ = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx);
-					if mobName == userName2 then
-						rollType = rT;
-						roll = r;
-						itemIdx = C_LootHistory.GetNumItems() + 1;
-					end
-				end
-			end
-		end		
-		FLog_tinsert(mobName, itemLink, num, rollType, roll);
+		FLog_tinsert(mobName, itemLink, quantity, -1, -1);
 		FLogRefreshSChildFrame();
 	end
 end
@@ -481,7 +452,9 @@ SlashCmdList["LH"] = function(args)
 end
 
 local function FLogOnEvent(event, ...)
-	if event == "CHAT_MSG_LOOT" then
+	if event == "LOOT_OPENED" then
+		FLog_LOOT_OPENED(...);			
+	elseif event == "CHAT_MSG_LOOT" then
 		if (... and (strfind(..., L["loot"]))) then
 			FLog_CHAT_MSG_LOOT(...);			
 		end	
@@ -752,6 +725,7 @@ local FLogFrame = CreateFrame("FRAME", "FLogFrame", UIParent);
 FLogFrame:SetFrameStrata("HIGH"); 
 FLogFrame:RegisterEvent("ADDON_LOADED");
 FLogFrame:RegisterEvent("CHAT_MSG_LOOT");
+FLogFrame:RegisterEvent("LOOT_OPENED")
 FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...)
