@@ -72,7 +72,7 @@ local function FLogSort(db)
 end
 
 local function FLogSortItemLinks(db)
--- Sort the ItemLinks of the ItemIDs of the FLog[userName] alphabetically.
+-- Sort the ItemLinks of the ItemIDs of the FLog[mobName] alphabetically.
 -- return as table.
 	local database = {};
 	for itemLink, _ in pairs(db) do	
@@ -136,15 +136,15 @@ local function FLogReportData()
 		local FLogSortedNames = FLogSort(FLog);
 		FLogReport(L["Report"]..FarmLogNS.FLogVersionShort..":");
 		FLogReport(L["Report2"]..tostring(SVLastChange));
-		for _, userName in ipairs(FLogSortedNames) do
-			local FLogSortedItemLinks = FLogSortItemLinks(FLog[userName]);
-			FLogReport(userName..":");
+		for _, mobName in ipairs(FLogSortedNames) do
+			local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);
+			FLogReport(mobName..":");
 			for _, itemLink in ipairs(FLogSortedItemLinks) do				
-				for j = 1, #FLog[userName][itemLink] do
+				for j = 1, #FLog[mobName][itemLink] do
 					local report = "  "..itemLink;
-					local num = FLog[userName][itemLink][j][1];
-					local rollType = FLog[userName][itemLink][j][2];
-					local roll = FLog[userName][itemLink][j][3];
+					local num = FLog[mobName][itemLink][j][1];
+					local rollType = FLog[mobName][itemLink][j][2];
+					local roll = FLog[mobName][itemLink][j][3];
 					if num > 1 then
 						report = report.."x"..num;
 					end
@@ -241,12 +241,12 @@ local function FLogRefreshSChildFrame()
 	local n = #FLogFrameSChildContentTable;
 	local i = 1;
 	local FLogSortedNames = FLogSort(FLog);
-	for _, userName in ipairs(FLogSortedNames) do	
-		local FLogSortedItemLinks = FLogSortItemLinks(FLog[userName]);		
+	for _, mobName in ipairs(FLogSortedNames) do	
+		local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);		
 		if i > n then
 			FLogCreateSChild(1);
 		end
-		FLogFrameSChildContentTable[i][1]:SetText(userName..":");
+		FLogFrameSChildContentTable[i][1]:SetText(mobName..":");
 		FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 		FLogFrameSChildContentTable[i][3]:SetText("");
 		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", nil);
@@ -255,13 +255,13 @@ local function FLogRefreshSChildFrame()
 		FLogFrameSChildContentTable[i][0]:Show();
 		i = i + 1;
 		for _, itemLink in ipairs(FLogSortedItemLinks) do			
-			for j = 1, #FLog[userName][itemLink] do
+			for j = 1, #FLog[mobName][itemLink] do
 				if i > n then
 					FLogCreateSChild(1);
 				end
-				local num = FLog[userName][itemLink][j][1];
-				local rollType = FLog[userName][itemLink][j][2];
-				local roll = FLog[userName][itemLink][j][3];
+				local num = FLog[mobName][itemLink][j][1];
+				local rollType = FLog[mobName][itemLink][j][2];
+				local roll = FLog[mobName][itemLink][j][3];
 				if num > 1 then
 					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.."x"..num);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
@@ -309,7 +309,7 @@ local function FLogRefreshSChildFrame()
 														DressUpItemLink(itemLink);
 													elseif IsAltKeyDown() then
 													--edit
-														editName = userName;
+														editName = mobName;
 														editItem = itemLink;
 														editIdx = j;
 														if num > 1 then
@@ -317,7 +317,7 @@ local function FLogRefreshSChildFrame()
 														else
 															FLogEditFrameItem:SetText(itemLink);
 														end																									
-														FLogEditFrameOwnerBox:SetText(userName);
+														FLogEditFrameOwnerBox:SetText(mobName);
 														FLogEditFrame:Show();
 														FLogEditFrameOwnerBox:SetFocus(true);												
 													end
@@ -345,38 +345,38 @@ local function ClearFLog()
 	SVLastChange = date("%d.%m.%y - %H:%M");
 end
 
-local function FLog_tinsert(userName, itemLink, num, rollType, roll)
+local function FLog_tinsert(mobName, itemLink, num, rollType, roll)
 -- inserts into FLog
--- print(tostring(userName)..", "..tostring(itemName)..", "..tostring(num)..", "..tostring(rollType)..", "..tostring(roll));
-	if (userName and itemLink and num and rollType and roll) then		
-		if FLog[userName] then		
-			if FLog[userName][itemLink] then				
+	print(tostring(mobName)..", "..tostring(itemName)..", "..tostring(num)..", "..tostring(rollType)..", "..tostring(roll));
+	if (mobName and itemLink and num and rollType and roll) then		
+		if FLog[mobName] then		
+			if FLog[mobName][itemLink] then				
 				if rollType == -1 then
 					local f = -1;
-					for i = 1, #FLog[userName][itemLink] do
-						if FLog[userName][itemLink][i][2] == -1 then
+					for i = 1, #FLog[mobName][itemLink] do
+						if FLog[mobName][itemLink][i][2] == -1 then
 							f = i;
-							i = #FLog[userName][itemLink] + 1;
+							i = #FLog[mobName][itemLink] + 1;
 						end
 					end
 					if f > 0 then
-						FLog[userName][itemLink][f][1] = FLog[userName][itemLink][f][1] + num;
+						FLog[mobName][itemLink][f][1] = FLog[mobName][itemLink][f][1] + num;
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					else
-						tinsert(FLog[userName][itemLink], {num, rollType, roll});
+						tinsert(FLog[mobName][itemLink], {num, rollType, roll});
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					end
 				else
-					tinsert(FLog[userName][itemLink], {num, rollType, roll});
+					tinsert(FLog[mobName][itemLink], {num, rollType, roll});
 					SVLastChange = date("%d.%m.%y - %H:%M");
 				end
 			else
-				FLog[userName][itemLink] = {{num, rollType, roll}};
+				FLog[mobName][itemLink] = {{num, rollType, roll}};
 				SVLastChange = date("%d.%m.%y - %H:%M");
 			end
 		else
-			FLog[userName] = {};
-			FLog[userName][itemLink] = {{num, rollType, roll}};
+			FLog[mobName] = {};
+			FLog[mobName][itemLink] = {{num, rollType, roll}};
 			SVLastChange = date("%d.%m.%y - %H:%M");
 		end
 	end
@@ -407,13 +407,13 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 		(SVItemRarity[5] and itemRarity == 5) or
 		(SVItemRarity[6] and itemRarity == 6))) 
 	then	
-		-- get correct userName:
+		-- get correct mobName:
 		-- case 1 = Player
 		-- case 2a = Group-Member, same Realm
 		-- case 2b = Group-Member, different Realm
-		local userName = string.sub(arg1, 0, (string.find(arg1, " ")-1));	
-		if userName == L["you"] then
-			userName = UnitName("PLAYER");		
+		local mobName = string.sub(arg1, 0, (string.find(arg1, " ")-1));	
+		if mobName == L["you"] then
+			mobName = UnitName("PLAYER");		
 		else
 			local h = "party"
 			if inRaid then
@@ -422,10 +422,10 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 			for i = 1, GetNumGroupMembers() do
 				local x = h..i;
 				local n, r = UnitName(x);
-				if userName == n then
+				if mobName == n then
 					if (not (UnitIsSameServer(x, "PLAYER"))) then		
 						if r then
-							userName = n.."-"..r;
+							mobName = n.."-"..r;
 							i = GetNumGroupMembers() + 1;
 						end
 					end
@@ -450,7 +450,7 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 				print(tostring(gsub(itemLink2, "\124", "\124\124")));]]--
 				if ((itemLink == itemLink2) and winnerIdx) then					
 					local userName2, _, rT, r, _ = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx);
-					if userName == userName2 then
+					if mobName == userName2 then
 						rollType = rT;
 						roll = r;
 						itemIdx = C_LootHistory.GetNumItems() + 1;
@@ -458,17 +458,17 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 				end
 			end
 		end		
-		FLog_tinsert(userName, itemLink, num, rollType, roll);
+		FLog_tinsert(mobName, itemLink, num, rollType, roll);
 		FLogRefreshSChildFrame();
 	end
 end
 
 function lohitest()
 	local FLogSortedNames = FLogSort(FLog);
-	for _, userName in ipairs(FLogSortedNames) do
-		local FLogSortedItemLinks = FLogSortItemLinks(FLog[userName]);		
+	for _, mobName in ipairs(FLogSortedNames) do
+		local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);		
 		for _, itemLink in ipairs(FLogSortedItemLinks) do
-			print(userName..": "..itemLink);
+			print(mobName..": "..itemLink);
 			print(tostring(gsub(itemLink, "\124", "\124\124")));
 		end
 	end
