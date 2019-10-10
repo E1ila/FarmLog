@@ -1,11 +1,11 @@
 ﻿## Interface: 60200
 ## Title: FarmLog
-## Notes: logs the loot
-## Author: SirMezO @EU-Aegwynn
-## Version: v3.8
+## Notes: Logs loot, monster kills and instances
+## Author: SirMezO @EU-Aegwynn, E1ila
+## Version: v1.0
 ## SavedVariables: FLogItemRarity, FLogReportTo, FLogLog, FLog_LockFrames, FLog_LockMinimapButton, FLog_Frame, FLog_MinimapButtonPosition, FLog_EnableMinimapButton, FLog_Tooltip
 ## SavedVariablesPerCharacter: FLog, FLogWhisperBox, FLog_Version, FLogLastChange
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua
 libs\LibDataBroker-1.1.lua
-FarmLog.lua
+FarmLog.xml

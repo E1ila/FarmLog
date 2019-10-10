@@ -1,7 +1,9 @@
-﻿SLASH_LH1 = "/farmlog";
-local FLogVersionNumber = "1.0";
-local FLogVersion = "FarmLog v"..FLogVersionNumber;
-local FLogVersionShort = "(v"..FLogVersionNumber..")";
+﻿FarmLogNS = {}
+FarmLogNS.FLogVersionNumber = "1.0"
+FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
+FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
+
+SLASH_LH1 = "/farmlog";
 local inIni = false;
 local lastIni = nil;
 local editName = "";
@@ -12,133 +14,26 @@ local FLogMaxHeight = (GetScreenHeight() - 50);
 local FLogMinWidth = (300);
 local FLogMinHeight = (200);
 local FLogFrameSChildContentTable = {};
-
---begin localization
-local L = {};
-L["yes"] = "Yes";
-L["no"] = "No";
-L["reset"] = "Reset Data?";	
-L["clear"] = "Reset";
-L["report"] = "Report";
-L["Log-Options:"] = "Log-Options:";
-L["poor"] = "Poor Items";
-L["common"] = "Common Items";
-L["uncommon"] = "Uncommon Items";
-L["rare"] = "Rare Items";
-L["epic"] = "Epic Items";
-L["legendary"] = "Legendary Items";
-L["artifact"] = "Artifact Items";
-L["heirloom"] = "Heirloom"
-L["solo"] = "Solo";
-L["party"] = "Party";
-L["raid"] = "Raid";
-L["Report"] = "FLog-Report ";
-L["Report2"] = "Last change on ";
-L["Report:"] = "Report to:";
-L["ChatFrame1"] = "ChatFrame1";
-L["/say"] = "/say";
-L["/yell"] = "/yell";
-L["/party"] = "/party";
-L["/raid"] = "/raid";
-L["/guild"] = "/guild";
-L["/whisper:"] = "/whisper:";
-L["General-Options:"] = "General-Options:";
-L["lockFrames"] = "Lock Frames";
-L["enableMinimapButton"] = "Enable Minimap-Button";
-L["lockMinimapButton"] = "Lock Minimap-Button";
-L["LDBClick"] = "Left-Click to open "..FLogVersion.."|nRight-Click to open Blizzard-FarmLog";
-L["Help"] = "O = Show Options|n? = Show Help|nX = Close Frame|n|n- Mouseover a row to highlight and to show Item-Tooltip|n- Shift-Click to copy the ItemLink into the Chatframe-EditBox|n- Alt-Click to to edit the owner of selected Item(s)|n|nReport = Report current FLog|nReset = Reset the current FLog";
-L["tooltip"] = "Show Item-Tolltip";
-L["updated"] = "|cffff0000FarmLog updated to Version v"..FLogVersionNumber..".|r";
-L["updated2"] = "|cffff0000The complete FarmLog-Data has been reset, caused by compatibility-reasons.|r";
-L["need"] = "N: ";
-L["greed"] = "G: ";
-L["disenchant"] = "D: ";
-L["loot"] = "loot: "; --AddOn needs correct localization to work!!!
-L["you"] = "You"; --AddOn needs correct localization to work!!!
-if (GetLocale() == "enUS") then
-elseif (GetLocale() == "deDE") then
-	L["yes"] = "Ja";
-	L["no"] = "Nein";
-	L["reset"] = "Daten löschen?";	
-	L["clear"] = "Löschen";
-	L["report"] = "Berichten";
-	L["Log-Options:"] = "Log-Optionen:";
-	L["poor"] = "Schlechte Gegenstände";
-	L["common"] = "Gewöhnliche Gegenstände";
-	L["uncommon"] = "Gute Gegenstände";
-	L["rare"] = "Rare Gegenstände";
-	L["epic"] = "Epische Gegenstände";
-	L["legendary"] = "Legendäre Gegenstände";
-	L["artifact"] = "Artefakte";
-	L["heirloom"] = "Erbstücke"
-	L["solo"] = "Solo";
-	L["party"] = "Gruppe";
-	L["raid"] = "Schlachtzug";
-	L["Report"] = "FLog-Bericht ";
-	L["Report2"] = "Letzte Änderung am ";
-	L["Report:"] = "Bericht an:";
-	L["ChatFrame1"] = "ChatFrame1";
-	L["/say"] = "/sagen";
-	L["/yell"] = "/schreien";
-	L["/party"] = "/gruppe";
-	L["/raid"] = "/schlachtzug";
-	L["/guild"] = "/gilde";
-	L["/whisper:"] = "/flüstern:";
-	L["General-Options:"] = "Allgemeine Optionen:";
-	L["lockFrames"] = "Fenster sperren";
-	L["enableMinimapButton"] = "Minimap-Button anzeigen";
-	L["lockMinimapButton"] = "Minimap-Button sperren";
-	L["LDBClick"] = "Links-Klicken um "..FLogVersion.." zu öffnen|nRechts-Klicken um Blizzard-FarmLog zu öffnen";
-	L["Help"] = "O = Optionen|n? = Hilfe|nX = Fenster schließen|n|n- Mouseover zum hervorheben der Zeile und um den Item-Tooltip anzuzeigen|n- Shift-Klick um den ItemLink in die Chatframe-EditBox einzufügen|n- Alt-Klick um den Besitzer der / des ausgewählten Items zu ändern|n|nBerichten = FLog-Bericht erstellen|nReset = FLog zurücksetzen";
-	L["tooltip"] = "Item-Tolltip anzeigen";
-	L["updated"] = "|cffff0000FarmLog wurde auf Version v"..FLogVersionNumber.." geupdated.|r";
-	L["updated2"] = "|cffff0000Die komplette FarmLog-Datenbank musste aus Kompatibilitätsgründen zurückgesetzt werden.|r";
-	L["need"] = "B: ";
-	L["greed"] = "G: ";
-	L["disenchant"] = "E: ";
-	L["loot"] = "Beute: ";
-	L["you"] = "Ihr";
-elseif (GetLocale() == "zhCN") then
-    L["loot"] = "获得了物品: "; 
-    L["you"] = "你";
-else
-	--[[ 
-	feel free to create the following localizations (you can contact me via curse.com):
-	"frFR": French
-	"koKR": Korean
-	"zhCN": Chinese (simplified)
-	"zhTW": Chinese (traditional)
-	"ruRU": Russian (UI AddOn)
-	"esES": Spanish (Spain)
-	"esMX": Spanish (Mexico)
-	]]--
-	print("|cffff0000"..FLogVersion..": Your WoW-Version isn't compatible. This is caused by localization issues.|r");
-end
---end localization
+local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local function FLogtobool(arg1)
-	if arg1 == 1 or arg1 == true then	
-		return true;
-	else
-		return false;
-	end
+	return arg1 == 1 or arg1 == true
 end
 
 local function FarmLogFrameToggle()
 	if FarmLogFrame:IsShown() then
-		FarmLogFrame:Hide();		
+		FarmLogFrame:Hide()
 	elseif not FarmLogFrame:IsShown() then
-		FarmLogFrame:Show();
+		FarmLogFrame:Show()
 	end
 end
 
 local function FLogToggle()
 	if FLogFrame:IsShown() then
-		FLogFrame:Hide();
-		FLogOptionsFrame:Hide();
+		FLogFrame:Hide()
+		FLogOptionsFrame:Hide()
 	elseif not FLogFrame:IsShown() then
-		FLogFrame:Show();
+		FLogFrame:Show()
 	end
 end
 
@@ -157,7 +52,7 @@ local function AddToChatFrameEditBox(itemLink)
 end
 
 local function FLogSort(db)
--- Sort the userNames of the LoHI alphabetically.
+-- Sort the userNames of the FarmLog alphabetically.
 -- return as table.
 	local database = {};
 	for name, _ in pairs(db) do	
@@ -239,7 +134,7 @@ end
 local function FLogReportData()
 	if (FLog and FLogFrameSChildContentTable[1][0]:IsShown()) then
 		local FLogSortedNames = FLogSort(FLog);
-		FLogReport(L["Report"]..FLogVersionShort..":");
+		FLogReport(L["Report"]..FarmLogNS.FLogVersionShort..":");
 		FLogReport(L["Report2"]..tostring(FLogLastChange));
 		for _, userName in ipairs(FLogSortedNames) do
 			local FLogSortedItemLinks = FLogSortItemLinks(FLog[userName]);
@@ -548,17 +443,17 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 		local rollType = -1;
 		local roll = -1;
 		if itemRarity >= 2 then
-			for itemIdx = 1, C_FarmLog.GetNumItems() do
-				local _, itemLink2, _, _, winnerIdx = C_FarmLog.GetItem(itemIdx);			
+			for itemIdx = 1, C_LootHistory.GetNumItems() do
+				local _, itemLink2, _, _, winnerIdx = C_LootHistory.GetItem(itemIdx);			
 				--[[print(" -- "..itemIdx);
 				print(tostring(gsub(itemLink, "\124", "\124\124")));
 				print(tostring(gsub(itemLink2, "\124", "\124\124")));]]--
 				if ((itemLink == itemLink2) and winnerIdx) then					
-					local userName2, _, rT, r, _ = C_FarmLog.GetPlayerInfo(itemIdx, winnerIdx);
+					local userName2, _, rT, r, _ = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx);
 					if userName == userName2 then
 						rollType = rT;
 						roll = r;
-						itemIdx = C_FarmLog.GetNumItems() + 1;
+						itemIdx = C_LootHistory.GetNumItems() + 1;
 					end
 				end
 			end
@@ -669,19 +564,19 @@ local function FLogOnEvent(event, ...)
 			print(L["updated"]);
 			print(L["updated2"]);
 			ClearFLog(FLog);
-			FLog_Version = tonumber(FLogVersionNumber);
+			FLog_Version = tonumber(FarmLogNS.FLogVersionNumber);
 		else
 			if FLog_Version < 3.0 then
 				print(L["updated"]);
 				print(L["updated2"]);
 				ClearFLog(FLog);
-				FLog_Version = tonumber(FLogVersionNumber);
-			elseif FLog_Version < tonumber(FLogVersionNumber) then
+				FLog_Version = tonumber(FarmLogNS.FLogVersionNumber);
+			elseif FLog_Version < tonumber(FarmLogNS.FLogVersionNumber) then
 				print(L["updated"]);
-				FLog_Version = tonumber(FLogVersionNumber);
-			elseif FLog_Version > tonumber(FLogVersionNumber) then
+				FLog_Version = tonumber(FarmLogNS.FLogVersionNumber);
+			elseif FLog_Version > tonumber(FarmLogNS.FLogVersionNumber) then
 				print(L["updated"]);
-				FLog_Version = tonumber(FLogVersionNumber);
+				FLog_Version = tonumber(FarmLogNS.FLogVersionNumber);
 			end
 		end
 		if FLogLastChange == nil then
@@ -811,7 +706,7 @@ FLogResetTopFrame:Show();
 
 local FLogResetFrameText = FLogResetTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogResetFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogResetFrameText:SetText(FLogVersion);
+FLogResetFrameText:SetText(FarmLogNS.FLogVersion);
 FLogResetFrameText:SetPoint("CENTER");
 
 local FLogResetFrameText2 = FLogResetFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -918,7 +813,7 @@ FLogTopFrame:Show();
 
 local FLogFrameText = FLogTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogFrameText:SetText(FLogVersion);
+FLogFrameText:SetText(FarmLogNS.FLogVersion);
 FLogFrameText:SetPoint("CENTER");
 
 local FLogFrameOptions = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
@@ -1697,3 +1592,5 @@ FLogHelpFrameText:SetWidth(230);
 FLogHelpFrameText:SetJustifyH("LEFT");
 FLogHelpFrameText:SetText(L["Help"]);
 FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
+
+-- end UI
