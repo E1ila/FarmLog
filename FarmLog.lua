@@ -392,6 +392,9 @@ local function ClearLog()
 	FLogSVDrops = {}
 	FLogSVKills = {}
 	FLogSVGold = 0
+	FLogSVVendor = 0
+	FLogSVXP = 0
+	FLogSVHonor = 0
 	HideSChildFrame(1);
 	FLogFrameShowButton:Disable();
 	FLogFrameClearButton:Disable();
@@ -568,6 +571,8 @@ local function OnLootEvent(arg1)
 
 	FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
 
+	local receiver = string.sub(arg1, 0, (string.find(arg1, " ")-1))
+
 	local inRaid = IsInRaid();
 	local inParty = false;
 	if GetNumGroupMembers() > 0 then
@@ -578,8 +583,8 @@ local function OnLootEvent(arg1)
 		-- (FLogSVOptionGroupType["Party"] and inParty and not inRaid) or
 		-- (FLogSVOptionGroupType["Solo"] and not inParty and not inRaid))
 		-- and 
-		itemType ~= "Money"
-		and 
+		receiver == L["you"] and 
+		itemType ~= "Money" and 
 		(
 			(FLogSVItemRarity[0] and itemRarity == 0) or
 			(FLogSVItemRarity[1] and itemRarity == 1) or
