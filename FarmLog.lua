@@ -25,6 +25,11 @@ local FLogFrameSChildContentTable = {};
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local LastMobLoot = {}
+local SkillName = nil 
+
+local SPELL_HERBING = 2366
+local SPELL_MINING = 2575
+local SPELL_FISHING = 7620
 
 local function debug(text)
 	if FLogSVDebug then 
@@ -151,10 +156,10 @@ end
 
 local function ReportSession()
 	if (FLogSVDrops and FLogFrameSChildContentTable[1][0]:IsShown()) then
-		local FLogSortedNames = SortLog(FLogSVDrops);
+		local sortedNames = SortLog(FLogSVDrops);
 		SendReport(L["Report"]..FarmLogNS.FLogVersionShort..":");
 		SendReport(L["Report2"]..tostring(SVLastChange));
-		for _, mobName in ipairs(FLogSortedNames) do
+		for _, mobName in ipairs(sortedNames) do
 			local FLogSortedItemLinks = SortItems(FLogSVDrops[mobName]);
 			SendReport(mobName..":");
 			for _, itemLink in ipairs(FLogSortedItemLinks) do				
@@ -286,10 +291,20 @@ local function RefreshSChildFrame()
 		AddItem("    "..FLogSVXP)
 	end 
 
-	local FLogSortedNames = SortLog(FLogSVKills);
-	for _, mobName in ipairs(FLogSortedNames) do	
+	local sortedNames = SortLog(FLogSVKills);
+	-- add missing mobNames like Herbalism / Mining / Fishing
+	for name, _ in pairs(FLogSVDrops) do 
+		if not FLogSVKills[name] then 
+			tinsert(sortedNames, 1, name)
+		end 
+	end 
+	for _, mobName in ipairs(sortedNames) do	
 		local FLogSortedItemLinks = SortItems(FLogSVDrops[mobName] or {});	
-		AddItem(mobName.." x"..(FLogSVKills[mobName] or "0"))	
+		local section = mobName 
+		if FLogSVKills[mobName] then 
+			section = section .. " x" .. FLogSVKills[mobName]
+		end 
+		AddItem(section)	
 		for _, itemLink in ipairs(FLogSortedItemLinks) do			
 			for j = 1, #FLogSVDrops[mobName][itemLink] do
 				if i > n then
@@ -422,7 +437,21 @@ end
 
 -- EVENTS ----------------------------------------------------------------------------------------
 
--- Honot event
+-- Spell cast 
+
+local function OnSpellCastEvent(unit, target, guid, spellId)
+	if spellId == SPELL_HERBING then 
+		SkillName = L["Herbalism"]
+	elseif spellId == SPELL_MINING then 
+		SkillName = L["Mining"]
+	elseif spellId == SPELL_FISHING then 
+		SkillName = L["Fishing"]
+	else 
+		SkillName = nil 
+	end 
+end 
+
+-- Honor event
 
 local function OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
 	debug("OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
@@ -451,8 +480,7 @@ end
 
 local function OnCombatXPEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
 	local xp = ParseXPEvent(text)
-	debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
-	print(xp)
+	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	FLogSVXP = (FLogSVXP or 0) + xp 
 	RefreshSChildFrame()
 end 
@@ -475,7 +503,10 @@ end
 local function OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
 	local mobName = UnitName("target")
+	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
+	if not mobName and SkillName then mobName = SkillName end 
 	LastMobLoot = {}
+	SkillName = nil 
 	for i = 1, lootCount do 
 		local link = GetLootSlotLink(i)
 		if link then 
@@ -542,19 +573,25 @@ local function OnLootEvent(arg1)
 	if GetNumGroupMembers() > 0 then
 		inParty = true;
 	end
-	if (((FLogSVOptionGroupType["Raid"] and inRaid) or 
-		(FLogSVOptionGroupType["Party"] and inParty and not inRaid) or
-		(FLogSVOptionGroupType["Solo"] and not inParty and not inRaid))
+	if (
+		-- ((FLogSVOptionGroupType["Raid"] and inRaid) or 
+		-- (FLogSVOptionGroupType["Party"] and inParty and not inRaid) or
+		-- (FLogSVOptionGroupType["Solo"] and not inParty and not inRaid))
+		-- and 
+		itemType ~= "Money"
 		and 
-		(not(itemType == "Money")) 
-		and 
-		((FLogSVItemRarity[0] and itemRarity == 0) or
-		(FLogSVItemRarity[1] and itemRarity == 1) or
-		(FLogSVItemRarity[2] and itemRarity == 2) or
-		(FLogSVItemRarity[3] and itemRarity == 3) or
-		(FLogSVItemRarity[4] and itemRarity == 4) or
-		(FLogSVItemRarity[5] and itemRarity == 5) or
-		(FLogSVItemRarity[6] and itemRarity == 6))) 
+		(
+			(FLogSVItemRarity[0] and itemRarity == 0) or
+			(FLogSVItemRarity[1] and itemRarity == 1) or
+			(FLogSVItemRarity[2] and itemRarity == 2) or
+			(FLogSVItemRarity[3] and itemRarity == 3) or
+			(FLogSVItemRarity[4] and itemRarity == 4) or
+			(FLogSVItemRarity[5] and itemRarity == 5) or
+			(FLogSVItemRarity[6] and itemRarity == 6) or 
+			mobName == L["Herbalism"] or 
+			mobName == L["Mining"] or 
+			mobName == L["Fishing"] 
+		)) 
 	then	
 		-- parse quantity from chat-message
 		local quantity = 1;		
@@ -587,6 +624,8 @@ local function OnEvent(event, ...)
 			OnCurrencyEvent(...)	
 		elseif event == "CHAT_MSG_MONEY" then 
 			OnMoneyEvent(...)	
+		elseif event == "UNIT_SPELLCAST_SENT" then 
+			OnSpellCastEvent(...)
 		end 
 	end 
 
@@ -862,6 +901,7 @@ FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
 FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
 FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
+FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...)
 										OnEvent(event, ...);
