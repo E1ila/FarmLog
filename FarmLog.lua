@@ -3,11 +3,11 @@ FarmLogNS.FLogVersionNumber = "1.0"
 FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
 FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
 
+SVGold = 0
 SVDrops = {}
 SVKills = {}
-SVDebug = false
+SVDebug = true
 
-SLASH_LH1 = "/farmlog";
 local inIni = false;
 local lastIni = nil;
 local editName = "";
@@ -21,6 +21,13 @@ local FLogFrameSChildContentTable = {};
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local lastMobLoot = {}
+
+SLASH_LH1 = "/farmlog";
+SlashCmdList["LH"] = function(args)
+	if args == "toggle" then
+		FLogToggle();
+	end	
+end
 
 local function debug(text)
 	if SVDebug then 
@@ -252,13 +259,10 @@ local function FLogRefreshSChildFrame()
 --Refresh the SChildFrame
 	local n = #FLogFrameSChildContentTable;
 	local i = 1;
-	local FLogSortedNames = FLogSort(SVKills);
-	for _, mobName in ipairs(FLogSortedNames) do	
-		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName] or {});		
-		if i > n then
-			FLogCreateSChild(1);
-		end
-		FLogFrameSChildContentTable[i][1]:SetText(mobName.." x"..(SVKills[mobName] or "0"));
+
+	local function AddItem(text) 
+		if i > n then FLogCreateSChild(1) end
+		FLogFrameSChildContentTable[i][1]:SetText(text);
 		FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 		FLogFrameSChildContentTable[i][3]:SetText("");
 		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", nil);
@@ -266,14 +270,24 @@ local function FLogRefreshSChildFrame()
 		FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", nil);
 		FLogFrameSChildContentTable[i][0]:Show();
 		i = i + 1;
+	end 
+
+	-- gold
+	AddItem("Money")
+	AddItem("    "..GetCoinTextureString(SVGold))
+
+	local FLogSortedNames = FLogSort(SVKills);
+	for _, mobName in ipairs(FLogSortedNames) do	
+		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName] or {});	
+		AddItem(mobName.." x"..(SVKills[mobName] or "0"))	
 		for _, itemLink in ipairs(FLogSortedItemLinks) do			
 			for j = 1, #SVDrops[mobName][itemLink] do
 				if i > n then
 					FLogCreateSChild(1);
 				end
 				local quantity = SVDrops[mobName][itemLink][j][1];
-				local rollType = SVDrops[mobName][itemLink][j][2];
-				local roll = SVDrops[mobName][itemLink][j][3];
+				-- local rollType = SVDrops[mobName][itemLink][j][2];
+				-- local roll = SVDrops[mobName][itemLink][j][3];
 				if quantity > 1 then
 					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.." x"..quantity);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
@@ -350,7 +364,9 @@ local function FLogRefreshSChildFrame()
 end
 
 local function ClearFLog()	
-	wipe(SVDrops);
+	SVDrops = {}
+	SVKills = {}
+	SVGold = 0
 	FLogHideSChildFrame(1);
 	FLogFrameShowButton:Disable();
 	FLogFrameClearButton:Disable();
@@ -394,13 +410,21 @@ local function FLog_tinsert(mobName, itemLink, quantity, rollType, roll)
 	end
 end
 
+-- EVENTS ----------------------------------------------------------------------------------------
+
+-- Honot event
+
 local function FLog_CHAT_MSG_COMBAT_HONOR_GAIN(text, playerName, languageName, channelName, playerName2, specialFlags)
 	debug("FLog_CHAT_MSG_COMBAT_HONOR_GAIN - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 end 
 
+-- XP events
+
 local function FLog_CHAT_MSG_COMBAT_XP_GAIN(text, playerName, languageName, channelName, playerName2, specialFlags)
 	debug("FLog_CHAT_MSG_COMBAT_HONOR_GAIN - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 end 
+
+-- Combat log event
 
 local function FLog_COMBAT_LOG_EVENT()
 	local eventInfo = {CombatLogGetCurrentEventInfo()}
@@ -408,10 +432,12 @@ local function FLog_COMBAT_LOG_EVENT()
 	if eventName == "PARTY_KILL" then 
 		local mobName = eventInfo[9]
 		SVKills[mobName] = (SVKills[mobName] or 0) + 1
-		debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(SVKills[mobName]))
+		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(SVKills[mobName]))
 		FLogRefreshSChildFrame()
 	end 
 end 
+
+-- Loot window event
 
 local function FLog_LOOT_OPENED(autoLoot)
 	local lootCount = GetNumLootItems()
@@ -425,14 +451,58 @@ local function FLog_LOOT_OPENED(autoLoot)
 	end 
 end 
 
+-- Currency event
+
+local function FLog_CHAT_MSG_CURRENCY(text)
+	debug("FLog_CHAT_MSG_CURRENCY - "..text)
+end 
+
+-- Money event
+
+local moneyStrings = {
+	_G.LOOT_MONEY_SPLIT,
+	_G.LOOT_MONEY_SPLIT_GUILD,
+	_G.YOU_LOOT_MONEY,
+	_G.YOU_LOOT_MONEY_GUILD,
+	_G.LOOT_MONEY_REFUND,
+}
+local GOLD_AMOUNT_inv = _G.GOLD_AMOUNT:gsub("%%d", "(%1+)")
+local SILVER_AMOUNT_inv = _G.SILVER_AMOUNT:gsub("%%d", "(%1+)")
+local COPPER_AMOUNT_inv = _G.COPPER_AMOUNT:gsub("%%d", "(%1+)")
+local GOLD_AMOUNT_SYMBOL = _G.GOLD_AMOUNT_SYMBOL
+local SILVER_AMOUNT_SYMBOL = _G.SILVER_AMOUNT_SYMBOL
+local COPPER_AMOUNT_SYMBOL = _G.COPPER_AMOUNT_SYMBOL
+
+local function parse_CHAT_MSG_MONEY(chatmsg)
+	for _, moneyString in ipairs(moneyStrings) do
+		local amount = FLogDeformat(chatmsg, moneyString)
+		if amount then
+			local gold = chatmsg:match(GOLD_AMOUNT_inv) or 0
+			local silver = chatmsg:match(SILVER_AMOUNT_inv) or 0
+			local copper = chatmsg:match(COPPER_AMOUNT_inv) or 0
+			return 10000 * gold + 100 * silver + copper
+		end
+	end
+end
+
+local function FLog_CHAT_MSG_MONEY(text)
+	local money = parse_CHAT_MSG_MONEY(text)
+	SVGold = SVGold + money 
+	FLogRefreshSChildFrame()
+end 
+
+-- Loot receive event
+
 local function FLog_CHAT_MSG_LOOT(arg1)
--- parse the chat-message and add the item to the SVDrops, if the following conditions are fullfilled.
+	-- parse the chat-message and add the item to the SVDrops, if the following conditions are fullfilled.
 	local startIndex, _ = string.find(arg1, "%|c");
 	local _, endIndex = string.find(arg1, "%]%|h%|r");
 	local itemLink = string.sub(arg1, startIndex, endIndex);	
-	local _, _, itemRarity, _, _, itemType, _, _, _, _, _ = GetItemInfo(itemLink);
+	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
 	mobName = lastMobLoot[itemLink] or "Unknown"
+
+	debug("vendorPrice = "..vendorPrice)
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -464,22 +534,7 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 	end
 end
 
-function lohitest()
-	local FLogSortedNames = FLogSort(SVDrops);
-	for _, mobName in ipairs(FLogSortedNames) do
-		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName]);		
-		for _, itemLink in ipairs(FLogSortedItemLinks) do
-			print(mobName..": "..itemLink);
-			print(tostring(gsub(itemLink, "\124", "\124\124")));
-		end
-	end
-end
-
-SlashCmdList["LH"] = function(args)
-	if args == "toggle" then
-		FLogToggle();
-	end	
-end
+-- OnEvent
 
 local function FLogOnEvent(event, ...)
 	if event == "LOOT_OPENED" then
@@ -493,7 +548,11 @@ local function FLogOnEvent(event, ...)
 	elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
 		FLog_CHAT_MSG_COMBAT_XP_GAIN(...);			
 	elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then 
-		FLog_COMBAT_LOG_EVENT(...);			
+		FLog_COMBAT_LOG_EVENT(...);		
+	elseif event == "CHAT_MSG_CURRENCY" then 
+		FLog_CHAT_MSG_CURRENCY(...)	
+	elseif event == "CHAT_MSG_MONEY" then 
+		FLog_CHAT_MSG_MONEY(...)	
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		local inInstance, _ = IsInInstance();
 		inInstance = FLogtobool(inInstance);
@@ -570,13 +629,13 @@ local function FLogOnEvent(event, ...)
 		if SVVersion == nil then
 			print(L["updated"]);
 			print(L["updated2"]);
-			ClearFLog(SVDrops);
+			ClearFLog();
 			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 		else
 			if SVVersion < 1.0 then
 				print(L["updated"]);
 				print(L["updated2"]);
-				ClearFLog(SVDrops);
+				ClearFLog();
 				SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 			elseif SVVersion < tonumber(FarmLogNS.FLogVersionNumber) then
 				print(L["updated"]);
@@ -764,6 +823,8 @@ FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
 FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
+FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...)
 										FLogOnEvent(event, ...);
