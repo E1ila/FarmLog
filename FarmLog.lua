@@ -775,7 +775,7 @@ FLogResetTopFrame:Show();
 
 local FLogResetFrameText = FLogResetTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogResetFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogResetFrameText:SetText(FarmLogNS.FLogVersion);
+FLogResetFrameText:SetText(L["window-title"]);
 FLogResetFrameText:SetPoint("CENTER");
 
 local FLogResetFrameText2 = FLogResetFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -888,7 +888,7 @@ FLogTopFrame:Show();
 
 local FLogFrameText = FLogTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogFrameText:SetText(FarmLogNS.FLogVersion);
+FLogFrameText:SetText(L["window-title"]);
 FLogFrameText:SetPoint("CENTER");
 
 local FLogFrameOptions = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
