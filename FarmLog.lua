@@ -7,6 +7,7 @@ SVGold = 0
 SVDrops = {}
 SVKills = {}
 SVDebug = true
+SVVendor = 0
 
 local inIni = false;
 local lastIni = nil;
@@ -272,9 +273,11 @@ local function FLogRefreshSChildFrame()
 		i = i + 1;
 	end 
 
-	-- gold
 	AddItem("Money")
 	AddItem("    "..GetCoinTextureString(SVGold))
+
+	AddItem("Vendor")
+	AddItem("    "..GetCoinTextureString(SVVendor))
 
 	local FLogSortedNames = FLogSort(SVKills);
 	for _, mobName in ipairs(FLogSortedNames) do	
@@ -502,7 +505,7 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 
 	mobName = lastMobLoot[itemLink] or "Unknown"
 
-	debug("vendorPrice = "..vendorPrice)
+	SVVendor = (SVVendor or 0) + (vendorPrice or 0)
 
 	local inRaid = IsInRaid();
 	local inParty = false;
