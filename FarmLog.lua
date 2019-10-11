@@ -5,6 +5,7 @@ FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
 
 SVDrops = {}
 SVKills = {}
+SVDebug = false
 
 SLASH_LH1 = "/farmlog";
 local inIni = false;
@@ -20,6 +21,12 @@ local FLogFrameSChildContentTable = {};
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local lastMobLoot = {}
+
+local function debug(text)
+	if SVDebug then 
+		print("|cffffff00FarmLog|r "..text)
+	end 
+end 
 
 local function FLogtobool(arg1)
 	return arg1 == 1 or arg1 == true
@@ -245,13 +252,13 @@ local function FLogRefreshSChildFrame()
 --Refresh the SChildFrame
 	local n = #FLogFrameSChildContentTable;
 	local i = 1;
-	local FLogSortedNames = FLogSort(SVDrops);
+	local FLogSortedNames = FLogSort(SVKills);
 	for _, mobName in ipairs(FLogSortedNames) do	
-		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName]);		
+		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName] or {});		
 		if i > n then
 			FLogCreateSChild(1);
 		end
-		FLogFrameSChildContentTable[i][1]:SetText(mobName..":");
+		FLogFrameSChildContentTable[i][1]:SetText(mobName.." x"..(SVKills[mobName] or "0"));
 		FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 		FLogFrameSChildContentTable[i][3]:SetText("");
 		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", nil);
@@ -268,7 +275,7 @@ local function FLogRefreshSChildFrame()
 				local rollType = SVDrops[mobName][itemLink][j][2];
 				local roll = SVDrops[mobName][itemLink][j][3];
 				if quantity > 1 then
-					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.."x"..quantity);
+					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.." x"..quantity);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
 					FLogFrameSChildContentTable[i][3]:SetText("");
 				elseif quantity == 1 then
@@ -387,6 +394,25 @@ local function FLog_tinsert(mobName, itemLink, quantity, rollType, roll)
 	end
 end
 
+local function FLog_CHAT_MSG_COMBAT_HONOR_GAIN(text, playerName, languageName, channelName, playerName2, specialFlags)
+	debug("FLog_CHAT_MSG_COMBAT_HONOR_GAIN - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+end 
+
+local function FLog_CHAT_MSG_COMBAT_XP_GAIN(text, playerName, languageName, channelName, playerName2, specialFlags)
+	debug("FLog_CHAT_MSG_COMBAT_HONOR_GAIN - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+end 
+
+local function FLog_COMBAT_LOG_EVENT()
+	local eventInfo = {CombatLogGetCurrentEventInfo()}
+	local eventName = eventInfo[2]
+	if eventName == "PARTY_KILL" then 
+		local mobName = eventInfo[9]
+		SVKills[mobName] = (SVKills[mobName] or 0) + 1
+		debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(SVKills[mobName]))
+		FLogRefreshSChildFrame()
+	end 
+end 
+
 local function FLog_LOOT_OPENED(autoLoot)
 	local lootCount = GetNumLootItems()
 	local mobName = UnitName("target")
@@ -406,8 +432,7 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 	local itemLink = string.sub(arg1, startIndex, endIndex);	
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, _ = GetItemInfo(itemLink);
 
-	mobName = lastMobLoot[itemLink]
-	if not mobName then return end 
+	mobName = lastMobLoot[itemLink] or "Unknown"
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -463,6 +488,12 @@ local function FLogOnEvent(event, ...)
 		if (... and (strfind(..., L["loot"]))) then
 			FLog_CHAT_MSG_LOOT(...);			
 		end	
+	elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
+		FLog_CHAT_MSG_COMBAT_HONOR_GAIN(...);			
+	elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
+		FLog_CHAT_MSG_COMBAT_XP_GAIN(...);			
+	elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then 
+		FLog_COMBAT_LOG_EVENT(...);			
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		local inInstance, _ = IsInInstance();
 		inInstance = FLogtobool(inInstance);
@@ -730,6 +761,9 @@ FLogFrame:RegisterEvent("ADDON_LOADED");
 FLogFrame:RegisterEvent("CHAT_MSG_LOOT");
 FLogFrame:RegisterEvent("LOOT_OPENED")
 FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
+FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
+FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...)
 										FLogOnEvent(event, ...);
