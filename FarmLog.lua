@@ -3,6 +3,9 @@ FarmLogNS.FLogVersionNumber = "1.0"
 FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
 FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
 
+SVDrops = {}
+SVKills = {}
+
 SLASH_LH1 = "/farmlog";
 local inIni = false;
 local lastIni = nil;
@@ -74,7 +77,7 @@ local function FLogSort(db)
 end
 
 local function FLogSortItemLinks(db)
--- Sort the ItemLinks of the ItemIDs of the FLog[mobName] alphabetically.
+-- Sort the ItemLinks of the ItemIDs of the SVDrops[mobName] alphabetically.
 -- return as table.
 	local database = {};
 	for itemLink, _ in pairs(db) do	
@@ -134,19 +137,19 @@ local function FLogReport(message)
 end
 
 local function FLogReportData()
-	if (FLog and FLogFrameSChildContentTable[1][0]:IsShown()) then
-		local FLogSortedNames = FLogSort(FLog);
+	if (SVDrops and FLogFrameSChildContentTable[1][0]:IsShown()) then
+		local FLogSortedNames = FLogSort(SVDrops);
 		FLogReport(L["Report"]..FarmLogNS.FLogVersionShort..":");
 		FLogReport(L["Report2"]..tostring(SVLastChange));
 		for _, mobName in ipairs(FLogSortedNames) do
-			local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);
+			local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName]);
 			FLogReport(mobName..":");
 			for _, itemLink in ipairs(FLogSortedItemLinks) do				
-				for j = 1, #FLog[mobName][itemLink] do
+				for j = 1, #SVDrops[mobName][itemLink] do
 					local report = "  "..itemLink;
-					local quantity = FLog[mobName][itemLink][j][1];
-					local rollType = FLog[mobName][itemLink][j][2];
-					local roll = FLog[mobName][itemLink][j][3];
+					local quantity = SVDrops[mobName][itemLink][j][1];
+					local rollType = SVDrops[mobName][itemLink][j][2];
+					local roll = SVDrops[mobName][itemLink][j][3];
 					if quantity > 1 then
 						report = report.."x"..quantity;
 					end
@@ -242,9 +245,9 @@ local function FLogRefreshSChildFrame()
 --Refresh the SChildFrame
 	local n = #FLogFrameSChildContentTable;
 	local i = 1;
-	local FLogSortedNames = FLogSort(FLog);
+	local FLogSortedNames = FLogSort(SVDrops);
 	for _, mobName in ipairs(FLogSortedNames) do	
-		local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);		
+		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName]);		
 		if i > n then
 			FLogCreateSChild(1);
 		end
@@ -257,13 +260,13 @@ local function FLogRefreshSChildFrame()
 		FLogFrameSChildContentTable[i][0]:Show();
 		i = i + 1;
 		for _, itemLink in ipairs(FLogSortedItemLinks) do			
-			for j = 1, #FLog[mobName][itemLink] do
+			for j = 1, #SVDrops[mobName][itemLink] do
 				if i > n then
 					FLogCreateSChild(1);
 				end
-				local quantity = FLog[mobName][itemLink][j][1];
-				local rollType = FLog[mobName][itemLink][j][2];
-				local roll = FLog[mobName][itemLink][j][3];
+				local quantity = SVDrops[mobName][itemLink][j][1];
+				local rollType = SVDrops[mobName][itemLink][j][2];
+				local roll = SVDrops[mobName][itemLink][j][3];
 				if quantity > 1 then
 					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.."x"..quantity);
 					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
@@ -340,7 +343,7 @@ local function FLogRefreshSChildFrame()
 end
 
 local function ClearFLog()	
-	wipe(FLog);
+	wipe(SVDrops);
 	FLogHideSChildFrame(1);
 	FLogFrameShowButton:Disable();
 	FLogFrameClearButton:Disable();
@@ -348,37 +351,37 @@ local function ClearFLog()
 end
 
 local function FLog_tinsert(mobName, itemLink, quantity, rollType, roll)
--- inserts into FLog
+-- inserts into SVDrops
 	-- print(tostring(mobName)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(rollType)..", "..tostring(roll));
 	if (mobName and itemLink and quantity and rollType and roll) then		
-		if FLog[mobName] then		
-			if FLog[mobName][itemLink] then				
+		if SVDrops[mobName] then		
+			if SVDrops[mobName][itemLink] then				
 				if rollType == -1 then
 					local f = -1;
-					for i = 1, #FLog[mobName][itemLink] do
-						if FLog[mobName][itemLink][i][2] == -1 then
+					for i = 1, #SVDrops[mobName][itemLink] do
+						if SVDrops[mobName][itemLink][i][2] == -1 then
 							f = i;
-							i = #FLog[mobName][itemLink] + 1;
+							i = #SVDrops[mobName][itemLink] + 1;
 						end
 					end
 					if f > 0 then
-						FLog[mobName][itemLink][f][1] = FLog[mobName][itemLink][f][1] + quantity;
+						SVDrops[mobName][itemLink][f][1] = SVDrops[mobName][itemLink][f][1] + quantity;
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					else
-						tinsert(FLog[mobName][itemLink], {quantity, rollType, roll});
+						tinsert(SVDrops[mobName][itemLink], {quantity, rollType, roll});
 						SVLastChange = date("%d.%m.%y - %H:%M");
 					end
 				else
-					tinsert(FLog[mobName][itemLink], {quantity, rollType, roll});
+					tinsert(SVDrops[mobName][itemLink], {quantity, rollType, roll});
 					SVLastChange = date("%d.%m.%y - %H:%M");
 				end
 			else
-				FLog[mobName][itemLink] = {{quantity, rollType, roll}};
+				SVDrops[mobName][itemLink] = {{quantity, rollType, roll}};
 				SVLastChange = date("%d.%m.%y - %H:%M");
 			end
 		else
-			FLog[mobName] = {};
-			FLog[mobName][itemLink] = {{quantity, rollType, roll}};
+			SVDrops[mobName] = {};
+			SVDrops[mobName][itemLink] = {{quantity, rollType, roll}};
 			SVLastChange = date("%d.%m.%y - %H:%M");
 		end
 	end
@@ -390,12 +393,14 @@ local function FLog_LOOT_OPENED(autoLoot)
 	lastMobLoot = {}
 	for i = 1, lootCount do 
 		local link = GetLootSlotLink(i)
-		lastMobLoot[link] = mobName
+		if link then 
+			lastMobLoot[link] = mobName
+		end 
 	end 
 end 
 
 local function FLog_CHAT_MSG_LOOT(arg1)
--- parse the chat-message and add the item to the FLog, if the following conditions are fullfilled.
+-- parse the chat-message and add the item to the SVDrops, if the following conditions are fullfilled.
 	local startIndex, _ = string.find(arg1, "%|c");
 	local _, endIndex = string.find(arg1, "%]%|h%|r");
 	local itemLink = string.sub(arg1, startIndex, endIndex);	
@@ -435,9 +440,9 @@ local function FLog_CHAT_MSG_LOOT(arg1)
 end
 
 function lohitest()
-	local FLogSortedNames = FLogSort(FLog);
+	local FLogSortedNames = FLogSort(SVDrops);
 	for _, mobName in ipairs(FLogSortedNames) do
-		local FLogSortedItemLinks = FLogSortItemLinks(FLog[mobName]);		
+		local FLogSortedItemLinks = FLogSortItemLinks(SVDrops[mobName]);		
 		for _, itemLink in ipairs(FLogSortedItemLinks) do
 			print(mobName..": "..itemLink);
 			print(tostring(gsub(itemLink, "\124", "\124\124")));
@@ -473,9 +478,7 @@ local function FLogOnEvent(event, ...)
 		end
 		FLogRefreshSChildFrame();
 	elseif (event == "ADDON_LOADED" and ... == "FarmLog") then		
-		if FLog == nil then
-			FLog = {};
-		end
+		print(L["loaded-welcome"]);
 		if SVItemRarity == nil then
 			SVItemRarity = {};
 			SVItemRarity[0]=false; --poor (grey)
@@ -536,13 +539,13 @@ local function FLogOnEvent(event, ...)
 		if SVVersion == nil then
 			print(L["updated"]);
 			print(L["updated2"]);
-			ClearFLog(FLog);
+			ClearFLog(SVDrops);
 			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 		else
-			if SVVersion < 3.0 then
+			if SVVersion < 1.0 then
 				print(L["updated"]);
 				print(L["updated2"]);
-				ClearFLog(FLog);
+				ClearFLog(SVDrops);
 				SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 			elseif SVVersion < tonumber(FarmLogNS.FLogVersionNumber) then
 				print(L["updated"]);
@@ -1515,19 +1518,19 @@ FLogEditFrameEditButton:SetPoint("BOTTOM", FLogEditFrame, "BOTTOM", -55, 5);
 FLogEditFrameEditButton:SetScript("OnClick", function()
 													local newName = FLogEditFrameOwnerBox:GetText();
 													if editName ~= newName then
-														if #FLog[editName][editItem] == 1 then
-															FLog_tinsert(newName, editItem, FLog[editName][editItem][editIdx][1], FLog[editName][editItem][editIdx][2], FLog[editName][editItem][editIdx][3]);
-															FLog[editName][editItem] = nil;
+														if #SVDrops[editName][editItem] == 1 then
+															FLog_tinsert(newName, editItem, SVDrops[editName][editItem][editIdx][1], SVDrops[editName][editItem][editIdx][2], SVDrops[editName][editItem][editIdx][3]);
+															SVDrops[editName][editItem] = nil;
 															local x = 0;
-															for a, _ in pairs (FLog[editName]) do																
+															for a, _ in pairs (SVDrops[editName]) do																
 																x = x + 1;
 															end
 															if x == 0 then
-																FLog[editName] = nil;
+																SVDrops[editName] = nil;
 															end
 														else
-															FLog_tinsert(newName, editItem, FLog[editName][editItem][editIdx][1], FLog[editName][editItem][editIdx][2], FLog[editName][editItem][editIdx][3]);
-															tremove(FLog[editName][editItem], editIdx);
+															FLog_tinsert(newName, editItem, SVDrops[editName][editItem][editIdx][1], SVDrops[editName][editItem][editIdx][2], SVDrops[editName][editItem][editIdx][3]);
+															tremove(SVDrops[editName][editItem], editIdx);
 														end
 														FLogRefreshSChildFrame();
 													end

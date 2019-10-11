@@ -4,7 +4,7 @@
 ## Author: SirMezO @EU-Aegwynn, E1ila
 ## Version: v1.0
 ## SavedVariables: SVItemRarity, SVOptionReportTo, SVOptionGroupType, SVLockFrames, SVLockMinimapButton, SVFrame, SVMinimapButtonPosition, SVEnableMinimapButton, SVTooltip
-## SavedVariablesPerCharacter: FLog, SVWhisperBox, SVVersion, SVLastChange
+## SavedVariablesPerCharacter: SVDrops, SVKills, SVWhisperBox, SVVersion, SVLastChange
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua
 libs\LibDataBroker-1.1.lua
