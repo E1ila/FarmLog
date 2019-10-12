@@ -675,7 +675,6 @@ local function ParseSelfLootEvent(chatmsg)
 end
 
 local function OnLootEvent(text)
-	debug("OnLootEvent "..text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
