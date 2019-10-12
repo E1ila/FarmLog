@@ -59,6 +59,14 @@ local function secondsToClock(seconds)
 	end
 end
 
+local function EndSession()
+	if FLogSVStartTime then 
+		local delta = time() - FLogSVStartTime
+		FLogSVTotalSeconds = FLogSVTotalSeconds + delta 
+		FLogSVStartTime = nil
+	end 
+end 
+
 local function ToggleWindow()
 	if FLogFrame:IsShown() then
 		FLogFrame:Hide()
@@ -71,10 +79,7 @@ end
 local function ToggleLogging() 
 	if FLogSVEnabled then 
 		FLogSVEnabled = false 
-		local delta = time() - FLogSVStartTime
-		FLogSVTotalSeconds = FLogSVTotalSeconds + delta 
-		FLogSVStartTime = nil
-
+		EndSession()
 		FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds));
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 		print("|cffffff00Farm session ended|r")
@@ -784,6 +789,7 @@ local function OnAddonLoaded()
 	FLogFrame:SetPoint(FLogSVFrame["point"], FLogSVFrame["x"], FLogSVFrame["y"]);
 	
 	if FLogSVEnabled then 
+		FLogSVStartTime = time()
 		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
 	else 
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
@@ -853,13 +859,15 @@ local function OnEvent(event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" then
 		OnEnteringWorld()
-	elseif (event == "ADDON_LOADED" and ... == "FarmLog") then		
+	elseif event == "ADDON_LOADED" and ... == "FarmLog" then		
 		OnAddonLoaded()
+	elseif event == "PLAYER_LOGOUT" then 
+		EndSession()
 	end
 end
 
 local function OnUpdate() 
-	if FLogSVEnabled then 
+	if FLogSVEnabled and FLogSVStartTime then 
 		local now = time()
 		if now - LastUpdate >= 1 then 
 			FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds + now - FLogSVStartTime));
@@ -1000,6 +1008,7 @@ FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
 FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
 FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
+FLogFrame:RegisterEvent("PLAYER_LOGOUT")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
 FLogFrame:SetScript("OnUpdate", function(self, ...) OnUpdate(...) end);
