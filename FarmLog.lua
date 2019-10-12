@@ -616,7 +616,7 @@ local MoneyStrings = {
 	_G.LOOT_MONEY_SPLIT_GUILD,
 	_G.YOU_LOOT_MONEY,
 	_G.YOU_LOOT_MONEY_GUILD,
-	_G.LOOT_MONEY_REFUND,
+	_G.ERR_QUEST_REWARD_MONEY_S,
 }
 local GOLD_AMOUNT_inv = _G.GOLD_AMOUNT:gsub("%%d", "(%1+)")
 local SILVER_AMOUNT_inv = _G.SILVER_AMOUNT:gsub("%%d", "(%1+)")
