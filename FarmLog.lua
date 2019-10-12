@@ -1841,8 +1841,11 @@ FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
 
 -- slash
 SLASH_LH1 = "/farmlog";
+SLASH_LH2 = "/fl";
 SlashCmdList["LH"] = function(args)
-	if args == "show" then
+	if args == "reset" then
+		ClearLog()
+	elseif args == "show" then
 		ToggleWindow()
 	else 
 		ToggleLogging()
