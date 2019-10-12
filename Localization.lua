@@ -41,7 +41,7 @@ function FarmLog_BuildLocalization(context)
     L["tooltip"] = "Show Item-Tolltip";
     L["updated"] = "|cffffff00FarmLog|r Updated to Version "..context.FLogVersionNumber..".";
     L["updated2"] = "|cffffff00FarmLog|r The complete data has been reset, caused by compatibility-reasons.";
-    L["loaded-welcome"] = "|cffffff00FarmLog|r Loaded, type |cff00ffff/farmlog|r to start/end a farm session";
+    L["loaded-welcome"] = "Loaded, type |cff0000ff/fl|r or |cff0000ff/farmlog|r to start/end a farm session, |cff0000ff/fl help|r for more options";
     L["window-title"] = "Session Yield";
     L["reset-title"] = "Reset"
     L["reputation"] = "reputation"

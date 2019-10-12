@@ -3,7 +3,7 @@
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 ## Author: SirMezO @EU-Aegwynn, E1ila
 ## Version: v1.0
-## SavedVariables: FLogSVItemRarity, FLogSVOptionReportTo, FLogSVOptionGroupType, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip
+## SavedVariables: FLogSVItemRarity, FLogSVOptionReportTo, FLogSVOptionGroupType, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
 ## SavedVariablesPerCharacter: FLogSVDrops, FLogSVKills, SVWhisperBox, SVVersion, SVLastChange, FLogSVDebug, FLogSVGold, FLogSVVendor, FLogSVEnabled, FLogSVXP, FLogSVHonor, FLogSVStartTime, FLogSVTotalSeconds, FLogSVRep
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua

@@ -3,6 +3,7 @@ FarmLogNS.FLogVersionNumber = "1.0"
 FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
 FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
 
+FLogSVAHValue = {}
 FLogSVGold = 0
 FLogSVDrops = {}
 FLogSVKills = {}
@@ -50,6 +51,10 @@ local function debug(text)
 	end 
 end 
 
+local function out(text)
+	print(" |cffff8800<|cffffbb00FarmLog|cffff8800>|r "..text)
+end 
+
 local function tobool(arg1)
 	return arg1 == 1 or arg1 == true
 end
@@ -90,13 +95,13 @@ local function ToggleLogging()
 		EndSession()
 		FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds));
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-		print("|cffffff00Farm session ended|r")
+		out("|cffffff00Farm session ended|r")
 	else 
 		FLogSVEnabled = true 
 		FLogSVStartTime = time()
 
 		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
-		print("|cffffff00Farm session started|r")
+		out("|cffffff00Farm session started|r")
 	end 
 end 
 
@@ -164,7 +169,7 @@ end
 
 local function SendReport(message)
 	if FLogSVOptionReportTo["ChatFrame1"] then
-		print(message);
+		out(message);
 	end
 	if FLogSVOptionReportTo["Say"] then
 		SendChatMessage(message, "SAY");
@@ -714,7 +719,7 @@ end
 -- Addon Loaded
 
 local function OnAddonLoaded()
-	print(L["loaded-welcome"]);
+	out(L["loaded-welcome"]);
 	if FLogSVItemRarity == nil then
 		FLogSVItemRarity = {};
 		FLogSVItemRarity[0]=false; --poor (grey)
@@ -773,21 +778,21 @@ local function OnAddonLoaded()
 	end
 	--compatibility fix for older Versions ( < 3.0)
 	if SVVersion == nil then
-		print(L["updated"]);
-		print(L["updated2"]);
+		out(L["updated"]);
+		out(L["updated2"]);
 		ClearLog();
 		SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 	else
 		if SVVersion < 1.0 then
-			print(L["updated"]);
-			print(L["updated2"]);
+			out(L["updated"]);
+			out(L["updated2"]);
 			ClearLog();
 			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 		elseif SVVersion < tonumber(FarmLogNS.FLogVersionNumber) then
-			print(L["updated"]);
+			out(L["updated"]);
 			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 		elseif SVVersion > tonumber(FarmLogNS.FLogVersionNumber) then
-			print(L["updated"]);
+			out(L["updated"]);
 			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
 		end
 	end
@@ -1894,13 +1899,38 @@ FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
 -- slash
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
-SlashCmdList["LH"] = function(args)
-	if args == "reset" then
-		ClearLog()
-		print("|cffffff00Farm yield has been reset|r")
-	elseif args == "show" then
-		ToggleWindow()
-	else 
+SlashCmdList["LH"] = function(msg)
+	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
+	if not cmd then
 		ToggleLogging()
-	end	
+	else 
+		cmd = string.upper(cmd)
+		if  "SHOW" == cmd or "S" == cmd then
+			ToggleWindow()
+		elseif "SET" == cmd then
+			local startIndex, _ = string.find(arg1, "%|c");
+			local _, endIndex = string.find(arg1, "%]%|h%|r");
+			local itemLink = string.sub(arg1, startIndex, endIndex);	
+		
+			if itemLink and GetItemInfo(itemLink) then 
+				local value = nil 
+				if ((endIndex + 2 ) <= (#arg1)) then
+					value = tonumber(string.sub(arg1, endIndex + 2, #arg1)) * 10000
+				end				
+				FLogSVAHValue[itemLink] = value 
+				if value and value > 0 then 
+					out("Setting AH value of "..itemLink.." to "..GetCoinTextureString(value))
+				else 
+					out("Removing "..itemLink.." from AH value table")
+				end 
+			else 
+				out("Incorrect usage of command write |cff0000ff/fl set [ITEM_LINK] [PRICE_GOLD]|r")
+			end 
+		elseif  "RESET" == cmd or "R" == cmd then
+			ClearLog()
+			out("|cffffff00Farm yield has been reset|r")
+		else 
+			out("Unknown command "..cmd)
+		end 
+	end 
 end
