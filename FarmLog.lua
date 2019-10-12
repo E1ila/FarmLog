@@ -11,6 +11,8 @@ FLogSVXP = 0
 FLogSVHonor = 0
 FLogSVDebug = true
 FLogSVEnabled = false
+FLogSVStartTime = nil 
+FLogSVTotalSeconds = 0
 
 local inIni = false;
 local lastIni = nil;
@@ -22,10 +24,12 @@ local FLogMaxHeight = (GetScreenHeight() - 50);
 local FLogMinWidth = (300);
 local FLogMinHeight = (200);
 local FLogFrameSChildContentTable = {};
+local FLogFrameTitleText
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local LastMobLoot = {}
 local SkillName = nil 
+local LastUpdate = 0
 
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
@@ -41,6 +45,19 @@ local function tobool(arg1)
 	return arg1 == 1 or arg1 == true
 end
 
+local function secondsToClock(seconds)
+	local seconds = tonumber(seconds)
+
+	if seconds <= 0 then
+		return "00:00:00";
+	else
+		hours = string.format("%02.f", math.floor(seconds/3600));
+		mins = string.format("%02.f", math.floor(seconds/60 - (hours*60)));
+		secs = string.format("%02.f", math.floor(seconds - hours*3600 - mins *60));
+		return hours..":"..mins..":"..secs
+	end
+end
+
 local function ToggleWindow()
 	if FLogFrame:IsShown() then
 		FLogFrame:Hide()
@@ -53,9 +70,18 @@ end
 local function ToggleLogging() 
 	if FLogSVEnabled then 
 		FLogSVEnabled = false 
+		local delta = time() - FLogSVStartTime
+		FLogSVTotalSeconds = FLogSVTotalSeconds + delta 
+		FLogSVStartTime = nil
+
+		FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds));
+		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 		print("|cffffff00Farm session ended|r")
 	else 
 		FLogSVEnabled = true 
+		FLogSVStartTime = time()
+
+		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
 		print("|cffffff00Farm session started|r")
 	end 
 end 
@@ -395,6 +421,11 @@ local function ClearLog()
 	FLogSVVendor = 0
 	FLogSVXP = 0
 	FLogSVHonor = 0
+	if FLogSVStartTime then 
+		FLogSVStartTime = time()
+	end 
+	FLogSVTotalSeconds = 0
+
 	HideSChildFrame(1);
 	FLogFrameShowButton:Disable();
 	FLogFrameClearButton:Disable();
@@ -609,6 +640,160 @@ local function OnLootEvent(arg1)
 	end
 end
 
+-- Addon Loaded
+
+local function OnAddonLoaded()
+	print(L["loaded-welcome"]);
+	if FLogSVItemRarity == nil then
+		FLogSVItemRarity = {};
+		FLogSVItemRarity[0]=false; --poor (grey)
+		FLogSVItemRarity[1]=false; --common (white)
+		FLogSVItemRarity[2]=true; --uncommon (green)
+		FLogSVItemRarity[3]=true; --rare (blue)
+		FLogSVItemRarity[4]=true; --epic (purple)
+		FLogSVItemRarity[5]=true; --legendary (orange)
+		FLogSVItemRarity[6]=false; --artifact
+		--FLogSVItemRarity[7]=false; --heirloom
+	end
+	if FLogSVOptionReportTo == nil then
+		FLogSVOptionReportTo = {};
+		FLogSVOptionReportTo["ChatFrame1"]=true;
+		FLogSVOptionReportTo["Say"]=false;
+		FLogSVOptionReportTo["Yell"]=false;
+		FLogSVOptionReportTo["Party"]=false;
+		FLogSVOptionReportTo["Raid"]=false;
+		FLogSVOptionReportTo["Guild"]=false;
+		FLogSVOptionReportTo["Whisper"]=false;
+	end
+	if FLogSVOptionGroupType == nil then 
+		FLogSVOptionGroupType = {};
+		FLogSVOptionGroupType["Solo"]=false;
+		FLogSVOptionGroupType["Party"]=true;
+		FLogSVOptionGroupType["Raid"]=true;
+	end
+	if FLogSVLockFrames == nil then
+		FLogSVLockFrames = false;
+	end
+	if FLogSVLockMinimapButton == nil then
+		FLogSVLockMinimapButton = false;
+	end
+	if FLogSVFrame == nil then
+		FLogSVFrame = {};
+		FLogSVFrame["width"] = 250;
+		FLogSVFrame["height"] = 200;
+		FLogSVFrame["point"] = "CENTER";
+		FLogSVFrame["x"] = 0;
+		FLogSVFrame["y"] = 0;
+	end
+	if FLogSVMinimapButtonPosition == nil then
+		FLogSVMinimapButtonPosition = {};
+		FLogSVMinimapButtonPosition["point"] = "TOP";
+		FLogSVMinimapButtonPosition["x"] = 0;
+		FLogSVMinimapButtonPosition["y"] = 0;
+	end
+	if FLogSVEnableMinimapButton == nil then
+		FLogSVEnableMinimapButton = true;
+	end
+	if FLog_LockShowLootFrame == nil then
+		FLog_LockShowLootFrame = false;
+	end	
+	if FLogSVTooltip == nil then
+		FLogSVTooltip = true;
+	end
+	--compatibility fix for older Versions ( < 3.0)
+	if SVVersion == nil then
+		print(L["updated"]);
+		print(L["updated2"]);
+		ClearLog();
+		SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
+	else
+		if SVVersion < 1.0 then
+			print(L["updated"]);
+			print(L["updated2"]);
+			ClearLog();
+			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
+		elseif SVVersion < tonumber(FarmLogNS.FLogVersionNumber) then
+			print(L["updated"]);
+			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
+		elseif SVVersion > tonumber(FarmLogNS.FLogVersionNumber) then
+			print(L["updated"]);
+			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
+		end
+	end
+	if SVLastChange == nil then
+		SVLastChange = date("%d.%m.%y - %H:%M");
+	end
+	
+	FLogOptionsCheckButtonLog0:SetChecked(FLogSVItemRarity[0]);
+	FLogOptionsCheckButtonLog1:SetChecked(FLogSVItemRarity[1]);
+	FLogOptionsCheckButtonLog2:SetChecked(FLogSVItemRarity[2]);
+	FLogOptionsCheckButtonLog3:SetChecked(FLogSVItemRarity[3]);
+	FLogOptionsCheckButtonLog4:SetChecked(FLogSVItemRarity[4]);
+	FLogOptionsCheckButtonLog5:SetChecked(FLogSVItemRarity[5]);
+	FLogOptionsCheckButtonLog6:SetChecked(FLogSVItemRarity[6]);
+	
+	FLogOptionsCheckButtonLogSolo:SetChecked(FLogSVOptionGroupType["Solo"]);
+	FLogOptionsCheckButtonLogParty:SetChecked(FLogSVOptionGroupType["Party"]);
+	FLogOptionsCheckButtonLogRaid:SetChecked(FLogSVOptionGroupType["Raid"]);
+	
+	FLogReportFrameCheckButtonChatFrame:SetChecked(FLogSVOptionReportTo["ChatFrame1"]);
+	FLogReportFrameCheckButtonSay:SetChecked(FLogSVOptionReportTo["Say"]);
+	FLogReportFrameCheckButtonYell:SetChecked(FLogSVOptionReportTo["Yell"]);
+	FLogReportFrameCheckButtonParty:SetChecked(FLogSVOptionReportTo["Party"]);
+	FLogReportFrameCheckButtonRaid:SetChecked(FLogSVOptionReportTo["Raid"]);
+	FLogReportFrameCheckButtonGuild:SetChecked(FLogSVOptionReportTo["Guild"]);
+	FLogReportFrameCheckButtonWhisper:SetChecked(FLogSVOptionReportTo["Whisper"]);
+	
+	FLogOptionsCheckButtonLockFrames:SetChecked(FLogSVLockFrames);
+	FLogOptionsCheckButtonEnableMinimapButton:SetChecked(FLogSVEnableMinimapButton);
+	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogSVLockMinimapButton);
+	FLogOptionsCheckButtonTooltip:SetChecked(FLogSVTooltip);	
+	
+	FLogFrame:SetWidth(FLogSVFrame["width"]);
+	FLogFrame:SetHeight(FLogSVFrame["height"]);
+	FLogFrame:SetPoint(FLogSVFrame["point"], FLogSVFrame["x"], FLogSVFrame["y"]);
+	
+	if FLogSVEnabled then 
+		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
+	else 
+		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
+	end 
+	FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds));
+
+	if not FLogSVLockFrames then		
+		FLogTopFrame:RegisterForDrag("LeftButton");			
+	end
+			
+	FLogMinimapButton:SetPoint(FLogSVMinimapButtonPosition["point"], Minimap, FLogSVMinimapButtonPosition["x"], FLogSVMinimapButtonPosition["y"]);
+	if FLogSVEnableMinimapButton then
+		FLogMinimapButton:Show();
+	else
+		FLogMinimapButton:Hide();
+	end	
+	if not FLogSVLockMinimapButton then		
+		FLogMinimapButton:RegisterForDrag("LeftButton");			
+	end
+	RefreshSChildFrame();
+end 
+
+-- Entering World
+
+local function OnEnteringWorld() 
+	local inInstance, _ = IsInInstance();
+	inInstance = tobool(inInstance);
+	local iniName = GetInstanceInfo();		
+	if ((inIni == false and inInstance) and not(lastIni == iniName)) then
+		inIni = true;
+		lastIni = iniName;
+		if ((IsInRaid() and FLogSVOptionGroupType["Raid"]) or (UnitInParty("Player") and not IsInRaid() and FLogSVOptionGroupType["Party"]) or (FLogSVOptionGroupType["Solo"] and not IsInRaid() and not UnitInParty("Player"))) then
+			FLogResetFrame:Show();
+		end
+	elseif (inIni and inInstance == false) then
+		inIni = false;			
+	end
+	RefreshSChildFrame();
+end 
+
 -- OnEvent
 
 local function OnEvent(event, ...)
@@ -635,146 +820,21 @@ local function OnEvent(event, ...)
 	end 
 
 	if event == "PLAYER_ENTERING_WORLD" then
-		local inInstance, _ = IsInInstance();
-		inInstance = tobool(inInstance);
-		local iniName = GetInstanceInfo();		
-		if ((inIni == false and inInstance) and not(lastIni == iniName)) then
-			inIni = true;
-			lastIni = iniName;
-			if ((IsInRaid() and FLogSVOptionGroupType["Raid"]) or (UnitInParty("Player") and not IsInRaid() and FLogSVOptionGroupType["Party"]) or (FLogSVOptionGroupType["Solo"] and not IsInRaid() and not UnitInParty("Player"))) then
-				FLogResetFrame:Show();
-			end
-		elseif (inIni and inInstance == false) then
-			inIni = false;			
-		end
-		RefreshSChildFrame();
+		OnEnteringWorld()
 	elseif (event == "ADDON_LOADED" and ... == "FarmLog") then		
-		print(L["loaded-welcome"]);
-		if FLogSVItemRarity == nil then
-			FLogSVItemRarity = {};
-			FLogSVItemRarity[0]=false; --poor (grey)
-			FLogSVItemRarity[1]=false; --common (white)
-			FLogSVItemRarity[2]=true; --uncommon (green)
-			FLogSVItemRarity[3]=true; --rare (blue)
-			FLogSVItemRarity[4]=true; --epic (purple)
-			FLogSVItemRarity[5]=true; --legendary (orange)
-			FLogSVItemRarity[6]=false; --artifact
-			--FLogSVItemRarity[7]=false; --heirloom
-		end
-		if FLogSVOptionReportTo == nil then
-			FLogSVOptionReportTo = {};
-			FLogSVOptionReportTo["ChatFrame1"]=true;
-			FLogSVOptionReportTo["Say"]=false;
-			FLogSVOptionReportTo["Yell"]=false;
-			FLogSVOptionReportTo["Party"]=false;
-			FLogSVOptionReportTo["Raid"]=false;
-			FLogSVOptionReportTo["Guild"]=false;
-			FLogSVOptionReportTo["Whisper"]=false;
-		end
-		if FLogSVOptionGroupType == nil then 
-			FLogSVOptionGroupType = {};
-			FLogSVOptionGroupType["Solo"]=false;
-			FLogSVOptionGroupType["Party"]=true;
-			FLogSVOptionGroupType["Raid"]=true;
-		end
-		if FLogSVLockFrames == nil then
-			FLogSVLockFrames = false;
-		end
-		if FLogSVLockMinimapButton == nil then
-			FLogSVLockMinimapButton = false;
-		end
-		if FLogSVFrame == nil then
-			FLogSVFrame = {};
-			FLogSVFrame["width"] = 250;
-			FLogSVFrame["height"] = 200;
-			FLogSVFrame["point"] = "CENTER";
-			FLogSVFrame["x"] = 0;
-			FLogSVFrame["y"] = 0;
-		end
-		if FLogSVMinimapButtonPosition == nil then
-			FLogSVMinimapButtonPosition = {};
-			FLogSVMinimapButtonPosition["point"] = "TOP";
-			FLogSVMinimapButtonPosition["x"] = 0;
-			FLogSVMinimapButtonPosition["y"] = 0;
-		end
-		if FLogSVEnableMinimapButton == nil then
-			FLogSVEnableMinimapButton = true;
-		end
-		if FLog_LockShowLootFrame == nil then
-			FLog_LockShowLootFrame = false;
-		end	
-		if FLogSVTooltip == nil then
-			FLogSVTooltip = true;
-		end
-		--compatibility fix for older Versions ( < 3.0)
-		if SVVersion == nil then
-			print(L["updated"]);
-			print(L["updated2"]);
-			ClearLog();
-			SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
-		else
-			if SVVersion < 1.0 then
-				print(L["updated"]);
-				print(L["updated2"]);
-				ClearLog();
-				SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
-			elseif SVVersion < tonumber(FarmLogNS.FLogVersionNumber) then
-				print(L["updated"]);
-				SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
-			elseif SVVersion > tonumber(FarmLogNS.FLogVersionNumber) then
-				print(L["updated"]);
-				SVVersion = tonumber(FarmLogNS.FLogVersionNumber);
-			end
-		end
-		if SVLastChange == nil then
-			SVLastChange = date("%d.%m.%y - %H:%M");
-		end
-		
-		FLogOptionsCheckButtonLog0:SetChecked(FLogSVItemRarity[0]);
-		FLogOptionsCheckButtonLog1:SetChecked(FLogSVItemRarity[1]);
-		FLogOptionsCheckButtonLog2:SetChecked(FLogSVItemRarity[2]);
-		FLogOptionsCheckButtonLog3:SetChecked(FLogSVItemRarity[3]);
-		FLogOptionsCheckButtonLog4:SetChecked(FLogSVItemRarity[4]);
-		FLogOptionsCheckButtonLog5:SetChecked(FLogSVItemRarity[5]);
-		FLogOptionsCheckButtonLog6:SetChecked(FLogSVItemRarity[6]);
-		
-		FLogOptionsCheckButtonLogSolo:SetChecked(FLogSVOptionGroupType["Solo"]);
-		FLogOptionsCheckButtonLogParty:SetChecked(FLogSVOptionGroupType["Party"]);
-		FLogOptionsCheckButtonLogRaid:SetChecked(FLogSVOptionGroupType["Raid"]);
-		
-		FLogReportFrameCheckButtonChatFrame:SetChecked(FLogSVOptionReportTo["ChatFrame1"]);
-		FLogReportFrameCheckButtonSay:SetChecked(FLogSVOptionReportTo["Say"]);
-		FLogReportFrameCheckButtonYell:SetChecked(FLogSVOptionReportTo["Yell"]);
-		FLogReportFrameCheckButtonParty:SetChecked(FLogSVOptionReportTo["Party"]);
-		FLogReportFrameCheckButtonRaid:SetChecked(FLogSVOptionReportTo["Raid"]);
-		FLogReportFrameCheckButtonGuild:SetChecked(FLogSVOptionReportTo["Guild"]);
-		FLogReportFrameCheckButtonWhisper:SetChecked(FLogSVOptionReportTo["Whisper"]);
-		
-		FLogOptionsCheckButtonLockFrames:SetChecked(FLogSVLockFrames);
-		FLogOptionsCheckButtonEnableMinimapButton:SetChecked(FLogSVEnableMinimapButton);
-		FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogSVLockMinimapButton);
-		FLogOptionsCheckButtonTooltip:SetChecked(FLogSVTooltip);	
-		
-		FLogFrame:SetWidth(FLogSVFrame["width"]);
-		FLogFrame:SetHeight(FLogSVFrame["height"]);
-		FLogFrame:SetPoint(FLogSVFrame["point"], FLogSVFrame["x"], FLogSVFrame["y"]);
-		
-		if not FLogSVLockFrames then		
-			FLogTopFrame:RegisterForDrag("LeftButton");			
-		end
-				
-		FLogMinimapButton:SetPoint(FLogSVMinimapButtonPosition["point"], Minimap, FLogSVMinimapButtonPosition["x"], FLogSVMinimapButtonPosition["y"]);
-		if FLogSVEnableMinimapButton then
-			FLogMinimapButton:Show();
-		else
-			FLogMinimapButton:Hide();
-		end	
-		if not FLogSVLockMinimapButton then		
-			FLogMinimapButton:RegisterForDrag("LeftButton");			
-		end
-		RefreshSChildFrame();
+		OnAddonLoaded()
 	end
 end
+
+local function OnUpdate() 
+	if FLogSVEnabled then 
+		local now = time()
+		if now - LastUpdate >= 1 then 
+			FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds + now - FLogSVStartTime));
+			LastUpdate = now 
+		end 
+	end 
+end 
 
 --LDB
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1");
@@ -853,7 +913,7 @@ FLogResetTopFrame:Show();
 
 local FLogResetFrameText = FLogResetTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogResetFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogResetFrameText:SetText(L["window-title"]);
+FLogResetFrameText:SetText(L["reset-title"]);
 FLogResetFrameText:SetPoint("CENTER");
 
 local FLogResetFrameText2 = FLogResetFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -908,9 +968,8 @@ FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
 FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
 FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
-FLogFrame:SetScript("OnEvent", function(self, event, ...)
-										OnEvent(event, ...);
-										end);
+FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
+FLogFrame:SetScript("OnUpdate", function(self, ...) OnUpdate(...) end);
 FLogFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
 FLogFrame:EnableMouse(true);
@@ -965,10 +1024,9 @@ FLogTopFrame:SetScript("OnLeave", function()
 												end);										  
 FLogTopFrame:Show();
 
-local FLogFrameText = FLogTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogFrameText:SetText(L["window-title"]);
-FLogFrameText:SetPoint("CENTER");
+FLogFrameTitleText = FLogTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
+FLogFrameTitleText:SetText(L["window-title"]);
+FLogFrameTitleText:SetPoint("CENTER");
 
 local FLogFrameOptions = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
 FLogFrameOptions:SetWidth(15);

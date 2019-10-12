@@ -43,6 +43,7 @@ function FarmLog_BuildLocalization(context)
     L["updated2"] = "|cffffff00FarmLog|r The complete data has been reset, caused by compatibility-reasons.";
     L["loaded-welcome"] = "|cffffff00FarmLog|r Loaded, type |cff00ffff/farmlog|r to start/end a farm session";
     L["window-title"] = "Session Yield";
+    L["reset-title"] = "Reset"
     L["Herbalism"] = "Herbalism"
     L["Fishing"] = "Fishing"
     L["Mining"] = "Mining"
