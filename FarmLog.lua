@@ -35,6 +35,11 @@ local LastUpdate = 0
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
 local SPELL_FISHING = 7620
+local SPELL_SKINNING = {}
+SPELL_SKINNING["10768"] = 1
+SPELL_SKINNING["8617"] = 1
+SPELL_SKINNING["8618"] = 1
+SPELL_SKINNING["8613"] = 1
 
 local function debug(text)
 	if FLogSVDebug then 
@@ -492,6 +497,8 @@ local function OnSpellCastEvent(unit, target, guid, spellId)
 		SkillName = L["Mining"]
 	elseif spellId == SPELL_FISHING then 
 		SkillName = L["Fishing"]
+	elseif SPELL_SKINNING[tostring(spellId)] == 1 then 
+		SkillName = L["Skinning"]
 	else 
 		SkillName = nil 
 	end 
@@ -506,6 +513,12 @@ end
 -- XP events
 
 local XPGainStrings = {
+	_G.COMBATLOG_XPGAIN_FIRSTPERSON_UNNAMED,
+	_G.COMBATLOG_XPGAIN_FIRSTPERSON_UNNAMED_GROUP,
+	_G.COMBATLOG_XPGAIN_FIRSTPERSON_UNNAMED_RAID,
+}
+
+local XPGainMobKillStrings = {
 	_G.COMBATLOG_XPGAIN_EXHAUSTION1,
 	_G.COMBATLOG_XPGAIN_EXHAUSTION2,
 	_G.COMBATLOG_XPGAIN_EXHAUSTION4,
@@ -516,8 +529,14 @@ local XPGainStrings = {
 }
 
 local function ParseXPEvent(chatmsg)
-	for _, xpString in ipairs(XPGainStrings) do
-		local mobName, amount = FLogDeformat(chatmsg, xpString)
+	for _, st in ipairs(XPGainMobKillStrings) do
+		local mobName, amount = FLogDeformat(chatmsg, st)
+		if amount then
+			return amount
+		end
+	end
+	for _, st in ipairs(XPGainStrings) do
+		local amount = FLogDeformat(chatmsg, st)
 		if amount then
 			return amount
 		end
@@ -626,16 +645,31 @@ end
 
 -- Loot receive event
 
-local function OnLootEvent(arg1)
-	-- parse the chat-message and add the item to the FLogSVDrops, if the following conditions are fullfilled.
-	local startIndex, _ = string.find(arg1, "%|c");
-	local _, endIndex = string.find(arg1, "%]%|h%|r");
-	local itemLink = string.sub(arg1, startIndex, endIndex);	
+local SelfLootStrings = {
+	_G.LOOT_ITEM_PUSHED_SELF_MULTIPLE,
+	_G.LOOT_ITEM_SELF_MULTIPLE,
+	_G.LOOT_ITEM_PUSHED_SELF,
+	_G.LOOT_ITEM_SELF,
+}
+
+local function ParseSelfLootEvent(chatmsg)
+	for _, st in ipairs(SelfLootStrings) do
+		local link, quantity = FLogDeformat(chatmsg, st)
+		if quantity then 
+			return link, quantity
+		end 
+		if link then 
+			return link, 1
+		end 
+	end
+end
+
+local function OnLootEvent(text)
+	debug("OnLootEvent "..text)
+	local itemLink, quantity = ParseSelfLootEvent(text)
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
 	mobName = LastMobLoot[itemLink] or "Unknown"
-
-	local receiver = string.sub(arg1, 0, (string.find(arg1, " ")-1))
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -647,7 +681,6 @@ local function OnLootEvent(arg1)
 		-- (FLogSVOptionGroupType["Party"] and inParty and not inRaid) or
 		-- (FLogSVOptionGroupType["Solo"] and not inParty and not inRaid))
 		-- and 
-		receiver == L["you"] and 
 		itemType ~= "Money" and 
 		(
 			(FLogSVItemRarity[0] and itemRarity == 0) or
@@ -661,16 +694,10 @@ local function OnLootEvent(arg1)
 			mobName == L["Mining"] or 
 			mobName == L["Fishing"] 
 		)) 
-	then	
-		-- parse quantity from chat-message
-		local quantity = 1;		
-		if ((endIndex + 2 ) <= (#arg1 - 1)) then
-			quantity = tonumber(string.sub(arg1, endIndex + 2, #arg1 - 1));
-		end				
-		
+	then			
 		FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
 
-		tinsert(mobName, itemLink, quantity, -1, -1);
+		tinsert(mobName, itemLink, (quantity or 1), -1, -1);
 		RefreshSChildFrame();
 	end
 end
@@ -1854,6 +1881,7 @@ SLASH_LH2 = "/fl";
 SlashCmdList["LH"] = function(args)
 	if args == "reset" then
 		ClearLog()
+		print("|cffffff00Farm yield has been reset|r")
 	elseif args == "show" then
 		ToggleWindow()
 	else 

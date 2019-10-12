@@ -48,6 +48,7 @@ function FarmLog_BuildLocalization(context)
     L["Herbalism"] = "Herbalism"
     L["Fishing"] = "Fishing"
     L["Mining"] = "Mining"
+    L["Skinning"] = "Skinning"
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
