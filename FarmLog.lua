@@ -600,8 +600,6 @@ local function OnLootEvent(arg1)
 
 	mobName = LastMobLoot[itemLink] or "Unknown"
 
-	FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
-
 	local receiver = string.sub(arg1, 0, (string.find(arg1, " ")-1))
 
 	local inRaid = IsInRaid();
@@ -635,6 +633,8 @@ local function OnLootEvent(arg1)
 			quantity = tonumber(string.sub(arg1, endIndex + 2, #arg1 - 1));
 		end				
 		
+		FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
+
 		tinsert(mobName, itemLink, quantity, -1, -1);
 		RefreshSChildFrame();
 	end
