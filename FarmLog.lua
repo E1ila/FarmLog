@@ -873,8 +873,6 @@ local function OnEvent(event, ...)
 	if FLogSVEnabled then 
 		if event == "LOOT_OPENED" then
 			OnLootOpened(...)			
-		elseif event == "LOOT_CLOSED" then 
-			OnLootClosed(...)
 		elseif event == "CHAT_MSG_LOOT" then
 			if (... and (strfind(..., L["loot"]))) then
 				OnLootEvent(...)		
@@ -1046,7 +1044,6 @@ FLogFrame:SetFrameStrata("HIGH");
 FLogFrame:RegisterEvent("ADDON_LOADED");
 FLogFrame:RegisterEvent("CHAT_MSG_LOOT");
 FLogFrame:RegisterEvent("LOOT_OPENED")
-FLogFrame:RegisterEvent("LOOT_CLOSED")
 FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")

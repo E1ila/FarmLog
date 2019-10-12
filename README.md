@@ -5,9 +5,10 @@ Logs loot, monster kills, honor and instances. Know exactly what your farm sessi
 * Tracks 
     * Farm session time with a stopwatch
     * Mob kills, counts how many of each mob was killed
-    * Herbs and mines gathering
+    * Loot from mobs and quests
+    * Herbalism, skinning and mining yield
     * Money loot, displays total gold collected
-    * Loot vendor value in gold
+    * Shows loot vendor value in gold
     * Reputation gain per faction
     * XP gained
     * Honor gain (not tested yet, will be available in phase 2)
