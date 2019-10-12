@@ -30,6 +30,7 @@ local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local LastMobLoot = {}
 local SkillName = nil 
+local SkillNameTime = nil 
 local LastUpdate = 0
 
 local SPELL_HERBING = 2366
@@ -40,6 +41,8 @@ SPELL_SKINNING["10768"] = 1
 SPELL_SKINNING["8617"] = 1
 SPELL_SKINNING["8618"] = 1
 SPELL_SKINNING["8613"] = 1
+
+local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
 
 local function debug(text)
 	if FLogSVDebug then 
@@ -493,12 +496,16 @@ end
 local function OnSpellCastEvent(unit, target, guid, spellId)
 	if spellId == SPELL_HERBING then 
 		SkillName = L["Herbalism"]
+		SkillNameTime = time()
 	elseif spellId == SPELL_MINING then 
 		SkillName = L["Mining"]
+		SkillNameTime = time()
 	elseif spellId == SPELL_FISHING then 
 		SkillName = L["Fishing"]
+		SkillNameTime = time()
 	elseif SPELL_SKINNING[tostring(spellId)] == 1 then 
 		SkillName = L["Skinning"]
+		SkillNameTime = time()
 	else 
 		SkillName = nil 
 	end 
@@ -590,11 +597,13 @@ end
 
 local function OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
-	local mobName = UnitName("target")
+	local mobName = nil 
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if not mobName and SkillName then mobName = SkillName end 
+	if not mobName then UnitName("target") end 
 	LastMobLoot = {}
 	SkillName = nil 
+	SkillNameTime = nil 
 	for i = 1, lootCount do 
 		local link = GetLootSlotLink(i)
 		if link then 
@@ -602,6 +611,7 @@ local function OnLootOpened(autoLoot)
 		end 
 	end 
 end 
+
 
 -- Currency event
 
@@ -669,7 +679,7 @@ local function OnLootEvent(text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
-	mobName = LastMobLoot[itemLink] or "Unknown"
+	mobName = LastMobLoot[itemLink]
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -862,10 +872,12 @@ end
 local function OnEvent(event, ...)
 	if FLogSVEnabled then 
 		if event == "LOOT_OPENED" then
-			OnLootOpened(...);			
+			OnLootOpened(...)			
+		elseif event == "LOOT_CLOSED" then 
+			OnLootClosed(...)
 		elseif event == "CHAT_MSG_LOOT" then
 			if (... and (strfind(..., L["loot"]))) then
-				OnLootEvent(...);			
+				OnLootEvent(...)		
 			end	
 		elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 			OnCombatHonorEvent(...);			
@@ -899,6 +911,13 @@ local function OnUpdate()
 		if now - LastUpdate >= 1 then 
 			FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds + now - FLogSVStartTime));
 			LastUpdate = now 
+		end 
+	end 
+	if SkillNameTime then 
+		local now = time()
+		if now - SkillNameTime >= SKILL_LOOTWINDOW_OPEN_TIMEOUT then 
+			SkillNameTime = nil 
+			SkillName = nil 
 		end 
 	end 
 end 
@@ -1027,6 +1046,7 @@ FLogFrame:SetFrameStrata("HIGH");
 FLogFrame:RegisterEvent("ADDON_LOADED");
 FLogFrame:RegisterEvent("CHAT_MSG_LOOT");
 FLogFrame:RegisterEvent("LOOT_OPENED")
+FLogFrame:RegisterEvent("LOOT_CLOSED")
 FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
