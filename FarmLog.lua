@@ -8,6 +8,7 @@ FLogSVDrops = {}
 FLogSVKills = {}
 FLogSVVendor = 0
 FLogSVXP = 0
+FLogSVRep = {}
 FLogSVHonor = 0
 FLogSVDebug = true
 FLogSVEnabled = false
@@ -317,6 +318,11 @@ local function RefreshSChildFrame()
 		AddItem("    "..FLogSVXP)
 	end 
 
+	for faction, rep in pairs(FLogSVRep) do 
+		AddItem(faction)
+		AddItem("    "..rep.." "..L["reputation"])
+	end 
+
 	local sortedNames = SortLog(FLogSVKills);
 	-- add missing mobNames like Herbalism / Mining / Fishing
 	for name, _ in pairs(FLogSVDrops) do 
@@ -421,6 +427,7 @@ local function ClearLog()
 	FLogSVVendor = 0
 	FLogSVXP = 0
 	FLogSVHonor = 0
+	FLogSVRep = {}
 	if FLogSVStartTime then 
 		FLogSVStartTime = time()
 	end 
@@ -516,6 +523,29 @@ local function OnCombatXPEvent(text, playerName, languageName, channelName, play
 	local xp = ParseXPEvent(text)
 	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	FLogSVXP = (FLogSVXP or 0) + xp 
+	RefreshSChildFrame()
+end 
+
+-- Faction change 
+
+local FactionGainStrings = {
+	_G.FACTION_STANDING_INCREASED,
+	_G.FACTION_STANDING_INCREASED_BONUS,
+}
+
+local function ParseRepEvent(chatmsg)
+	for _, xpString in ipairs(FactionGainStrings) do
+		local faction, amount = FLogDeformat(chatmsg, xpString)
+		if amount then
+			return faction, amount
+		end
+	end
+end
+
+local function OnCombatFactionChange() 
+	local faction, rep = ParseRepEvent(text)
+	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+	FLogSVRep[faction] = (FLogSVRep[faction] or 0) + rep 
 	RefreshSChildFrame()
 end 
 
@@ -816,6 +846,8 @@ local function OnEvent(event, ...)
 			OnMoneyEvent(...)	
 		elseif event == "UNIT_SPELLCAST_SENT" then 
 			OnSpellCastEvent(...)
+		elseif event == "CHAT_MSG_COMBAT_FACTION_CHANGE" then 
+			OnCombatFactionChange(...)
 		end 
 	end 
 
@@ -967,6 +999,7 @@ FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
 FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
 FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
+FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
 FLogFrame:SetScript("OnUpdate", function(self, ...) OnUpdate(...) end);
