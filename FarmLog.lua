@@ -519,7 +519,7 @@ local function ParseXPEvent(chatmsg)
 	end
 end
 
-local function OnCombatXPEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
+local function OnCombatXPEvent(text)
 	local xp = ParseXPEvent(text)
 	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	FLogSVXP = (FLogSVXP or 0) + xp 
@@ -534,17 +534,17 @@ local FactionGainStrings = {
 }
 
 local function ParseRepEvent(chatmsg)
-	for _, xpString in ipairs(FactionGainStrings) do
-		local faction, amount = FLogDeformat(chatmsg, xpString)
+	for _, st in ipairs(FactionGainStrings) do
+		local faction, amount = FLogDeformat(chatmsg, st)
 		if amount then
 			return faction, amount
 		end
 	end
 end
 
-local function OnCombatFactionChange() 
+local function OnCombatFactionChange(text) 
+	-- debug("OnCombatFactionChange - text:"..text)
 	local faction, rep = ParseRepEvent(text)
-	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	FLogSVRep[faction] = (FLogSVRep[faction] or 0) + rep 
 	RefreshSChildFrame()
 end 
