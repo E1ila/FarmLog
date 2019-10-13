@@ -29,8 +29,9 @@ You can track your farming session and know how much gold/hour you make. Good fo
 * Track traded gold (for enchanting, etc)
 * Support Chest / Container opening
 
-![Preview](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
-![Preview](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
+![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
+![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 
 This addon was based on the LootHistory addon which tracks who received which loot -
 https://www.curseforge.com/wow/addons/loothistory
