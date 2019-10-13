@@ -476,7 +476,7 @@ local function tinsert(mobName, itemLink, quantity, rollType, roll)
 			FLogSVDrops[mobName] = {}
 		end 
 		if FLogSVDrops[mobName][itemLink] then
-			FLogSVDrops[mobName][itemLink][1] = FLogSVDrops[mobName][itemLink][1] + quantity
+			FLogSVDrops[mobName][itemLink][1][1] = FLogSVDrops[mobName][itemLink][1][1] + quantity
 			SVLastChange = date("%d.%m.%y - %H:%M");
 		else
 			FLogSVDrops[mobName][itemLink] = {{quantity}};
