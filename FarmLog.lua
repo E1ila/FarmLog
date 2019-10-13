@@ -95,13 +95,17 @@ local function ToggleLogging()
 		EndSession()
 		FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds));
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-		out("|cffffff00Farm session ended|r")
+		out("|cffffff00Farm session paused|r")
 	else 
 		FLogSVEnabled = true 
 		FLogSVStartTime = time()
 
 		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
-		out("|cffffff00Farm session started|r")
+		if FLogSVTotalSeconds == 0 then 
+			out("|cffffff00Farm session started|r")
+		else 
+			out("|cffffff00Farm session resumed|r")
+		end 
 	end 
 end 
 
@@ -602,10 +606,10 @@ end
 
 local function OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
-	local mobName = nil 
+	local mobName = UnitName("target")
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
-	if not mobName and SkillName then mobName = SkillName end 
-	if not mobName then UnitName("target") end 
+	if (not mobName and SkillName) or (SkillName == L["Skinning"]) then mobName = SkillName end 
+	debug("OnLootOpened - mobName = "..mobName)
 	LastMobLoot = {}
 	SkillName = nil 
 	SkillNameTime = nil 
@@ -683,7 +687,7 @@ local function OnLootEvent(text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
-	mobName = LastMobLoot[itemLink]
+	mobName = LastMobLoot[itemLink] or "Unknown"
 
 	local inRaid = IsInRaid();
 	local inParty = false;

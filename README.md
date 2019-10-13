@@ -26,6 +26,7 @@ You can track your farming session and know how much gold/hour you make. Good fo
 * Calculate total AH value for items, set item AH value
 * Track quest reward
 * Track traded gold (for enchanting, etc)
+* Support Chest / Container opening
 
 ![Preview](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
 ![Preview](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
