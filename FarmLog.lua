@@ -697,6 +697,7 @@ end
 
 local function OnLootEvent(text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
+	if not itemLink then return end 
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
 	mobName = LastMobLoot[itemLink] or "Unknown"
