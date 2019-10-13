@@ -639,9 +639,10 @@ end
 
 local function OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
-	local mobName = UnitName("target")
+	local mobName = nil 
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
-	if (not mobName and SkillName) or (SkillName == L["Skinning"]) then mobName = SkillName end 
+	if not mobName and SkillName then mobName = SkillName end 
+	if not mobName then mobName = UnitName("target") end 
 	-- debug("OnLootOpened - mobName = "..mobName)
 	LastMobLoot = {}
 	SkillName = nil 
