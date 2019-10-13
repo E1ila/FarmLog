@@ -11,6 +11,7 @@ Logs loot, monster kills, honor and instances. Know exactly what your farm sessi
     * Shows loot vendor value in gold
     * Reputation gain per faction
     * XP gained
+    * Trade skill levels
     * Honor gain (not tested yet, will be available in phase 2)
 * Allows reporting farm results
 * Display farm yield in a window with all looted items

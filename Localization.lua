@@ -45,6 +45,8 @@ function FarmLog_BuildLocalization(context)
     L["window-title"] = "Session Yield";
     L["reset-title"] = "Reset"
     L["reputation"] = "reputation"
+    L["levels"] = "levels"
+    L["Skills"] = "Skills"
     L["Herbalism"] = "Herbalism"
     L["Fishing"] = "Fishing"
     L["Mining"] = "Mining"

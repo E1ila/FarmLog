@@ -10,12 +10,14 @@ FLogSVKills = {}
 FLogSVVendor = 0
 FLogSVXP = 0
 FLogSVRep = {}
+FLogSVSkill = {}
 FLogSVHonor = 0
 FLogSVDebug = true
 FLogSVEnabled = false
 FLogSVStartTime = nil 
 FLogSVTotalSeconds = 0
 
+local debugEnabled = false
 local inIni = false;
 local lastIni = nil;
 local editName = "";
@@ -345,6 +347,12 @@ local function RefreshSChildFrame()
 		AddItem("    "..rep.." "..L["reputation"])
 	end 
 
+	local firstSkill = true 
+	for skillName, levels in pairs(FLogSVSkill) do 
+		if firstSkill then AddItem(L["Skills"]) end 
+		AddItem("    "..skillName.." +"..levels)
+	end 
+
 	local sortedNames = SortLog(FLogSVKills);
 	-- add missing mobNames like Herbalism / Mining / Fishing
 	for name, _ in pairs(FLogSVDrops) do 
@@ -445,6 +453,7 @@ end
 local function ClearLog()	
 	FLogSVDrops = {}
 	FLogSVKills = {}
+	FLogSVSkill = {}
 	FLogSVGold = 0
 	FLogSVVendor = 0
 	FLogSVXP = 0
@@ -524,6 +533,30 @@ end
 
 local function OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
 	debug("OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+end 
+
+-- Trade skills event
+
+local SkillGainStrings = {
+	_G.ERR_SKILL_UP_SI,
+}
+
+local function ParseSkillEvent(chatmsg)
+	for _, st in ipairs(SkillGainStrings) do
+		local skillName, level = FLogDeformat(chatmsg, st)
+		if level then
+			return skillName, level
+		end
+	end
+end
+
+local function OnSkillsEvent(text)
+	-- debug("OnSkillsEvent - text:"..text)
+	local skillName, level = ParseSkillEvent(text)
+	if level then 
+		FLogSVSkill[skillName] = (FLogSVSkill[skillName] or 0) + 1 
+		RefreshSChildFrame()
+	end 
 end 
 
 -- XP events
@@ -609,7 +642,7 @@ local function OnLootOpened(autoLoot)
 	local mobName = UnitName("target")
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if (not mobName and SkillName) or (SkillName == L["Skinning"]) then mobName = SkillName end 
-	debug("OnLootOpened - mobName = "..mobName)
+	-- debug("OnLootOpened - mobName = "..mobName)
 	LastMobLoot = {}
 	SkillName = nil 
 	SkillNameTime = nil 
@@ -879,6 +912,7 @@ end
 
 local function OnEvent(event, ...)
 	if FLogSVEnabled then 
+		-- debug(event)
 		if event == "LOOT_OPENED" then
 			OnLootOpened(...)			
 		elseif event == "CHAT_MSG_LOOT" then
@@ -889,6 +923,11 @@ local function OnEvent(event, ...)
 			OnCombatHonorEvent(...);			
 		elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
 			OnCombatXPEvent(...);			
+		elseif event == "CHAT_MSG_SKILL" then 
+			OnSkillsEvent(...);			
+		elseif event == "CHAT_MSG_OPENING" then 
+			debug("CHAT_MSG_OPENING")
+			debug(...)
 		elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then 
 			OnCombatLogEvent(...);		
 		elseif event == "CHAT_MSG_CURRENCY" then 
@@ -1058,8 +1097,10 @@ FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
 FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
 FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
+FLogFrame:RegisterEvent("CHAT_MSG_SKILL")
 FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
+FLogFrame:RegisterEvent("CHAT_MSG_OPENING")
 FLogFrame:RegisterEvent("PLAYER_LOGOUT")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
@@ -1911,6 +1952,13 @@ SlashCmdList["LH"] = function(msg)
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then
 			ToggleWindow()
+		elseif "DEBUG" == cmd then 
+			debugEnabled = not debugEnabled
+			if debugEnabled then 
+				out("Debug mode enabled")
+			else 
+				out("Debug mode disabled")
+			end 
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
