@@ -218,17 +218,8 @@ local function ReportSession()
 				for j = 1, #FLogSVDrops[mobName][itemLink] do
 					local report = "  "..itemLink;
 					local quantity = FLogSVDrops[mobName][itemLink][j][1];
-					local rollType = FLogSVDrops[mobName][itemLink][j][2];
-					local roll = FLogSVDrops[mobName][itemLink][j][3];
 					if quantity > 1 then
 						report = report.."x"..quantity;
-					end
-					if (rollType == LOOT_ROLL_TYPE_NEED) then
-						report = report.." ("..L["need"]..roll..")";
-					elseif (rollType == LOOT_ROLL_TYPE_GREED) then
-						report = report.." ("..L["greed"]..roll..")";
-					elseif (rollType == LOOT_ROLL_TYPE_DISENCHANT) then
-						report = report.." ("..L["disenchant"]..roll..")";
 					end
 					SendReport(report);
 				end
@@ -480,35 +471,15 @@ end
 local function tinsert(mobName, itemLink, quantity, rollType, roll)
 -- inserts into FLogSVDrops
 	-- print(tostring(mobName)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(rollType)..", "..tostring(roll));
-	if (mobName and itemLink and quantity and rollType and roll) then		
-		if FLogSVDrops[mobName] then		
-			if FLogSVDrops[mobName][itemLink] then				
-				if rollType == -1 then
-					local f = -1;
-					for i = 1, #FLogSVDrops[mobName][itemLink] do
-						if FLogSVDrops[mobName][itemLink][i][2] == -1 then
-							f = i;
-							i = #FLogSVDrops[mobName][itemLink] + 1;
-						end
-					end
-					if f > 0 then
-						FLogSVDrops[mobName][itemLink][f][1] = FLogSVDrops[mobName][itemLink][f][1] + quantity;
-						SVLastChange = date("%d.%m.%y - %H:%M");
-					else
-						tinsert(FLogSVDrops[mobName][itemLink], {quantity, rollType, roll});
-						SVLastChange = date("%d.%m.%y - %H:%M");
-					end
-				else
-					tinsert(FLogSVDrops[mobName][itemLink], {quantity, rollType, roll});
-					SVLastChange = date("%d.%m.%y - %H:%M");
-				end
-			else
-				FLogSVDrops[mobName][itemLink] = {{quantity, rollType, roll}};
-				SVLastChange = date("%d.%m.%y - %H:%M");
-			end
+	if (mobName and itemLink and quantity) then		
+		if not FLogSVDrops[mobName] then		
+			FLogSVDrops[mobName] = {}
+		end 
+		if FLogSVDrops[mobName][itemLink] then
+			FLogSVDrops[mobName][itemLink][1] = FLogSVDrops[mobName][itemLink][1] + quantity
+			SVLastChange = date("%d.%m.%y - %H:%M");
 		else
-			FLogSVDrops[mobName] = {};
-			FLogSVDrops[mobName][itemLink] = {{quantity, rollType, roll}};
+			FLogSVDrops[mobName][itemLink] = {{quantity}};
 			SVLastChange = date("%d.%m.%y - %H:%M");
 		end
 	end
@@ -1954,6 +1925,27 @@ FLogHelpFrameText:SetText(L["Help"]);
 FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
 -- end UI
 
+local function RecalcLootProfit()
+	FLogSVVendor = 0
+	FLogSVAH = 0
+	for mobName, drops in pairs(FLogSVDrops) do	
+		for itemLink, metalist in pairs(drops) do 
+			for j = 1, #metalist do
+				local meta = metalist[j]
+				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+				local value = FLogSVAHValue[itemLink]
+				local quantity = meta[1]
+				if value and value > 0 then 
+					FLogSVAH = FLogSVAH + value * quantity
+				else
+					FLogSVVendor = FLogSVVendor + (vendorPrice or 0) * quantity
+				end 
+			end 
+		end 
+	end 
+	RefreshSChildFrame()
+end 
+
 -- slash
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
@@ -1988,6 +1980,7 @@ SlashCmdList["LH"] = function(msg)
 				else 
 					out("Removing "..itemLink.." from AH value table")
 				end 
+				RecalcLootProfit()
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
 			end 
