@@ -4,7 +4,7 @@
 ## Author: SirMezO @EU-Aegwynn, E1ila
 ## Version: v1.0
 ## SavedVariables: FLogSVItemRarity, FLogSVOptionReportTo, FLogSVOptionGroupType, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
-## SavedVariablesPerCharacter: FLogSVDrops, FLogSVKills, SVWhisperBox, SVVersion, SVLastChange, FLogSVDebug, FLogSVGold, FLogSVVendor, FLogSVEnabled, FLogSVXP, FLogSVHonor, FLogSVStartTime, FLogSVTotalSeconds, FLogSVRep, FLogSVSkill
+## SavedVariablesPerCharacter: FLogSVDrops, FLogSVKills, SVWhisperBox, SVVersion, SVLastChange, FLogSVDebug, FLogSVGold, FLogSVVendor, FLogSVEnabled, FLogSVXP, FLogSVHonor, FLogSVStartTime, FLogSVTotalSeconds, FLogSVRep, FLogSVSkill, FLogSVAH
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua
 libs\LibDataBroker-1.1.lua

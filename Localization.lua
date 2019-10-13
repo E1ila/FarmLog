@@ -44,6 +44,7 @@ function FarmLog_BuildLocalization(context)
     L["loaded-welcome"] = "Loaded, type |cff00ff00/fl|r or |cff00ff00/farmlog|r to start/end a farm session, |cff00ff00/fl help|r for more options";
     L["window-title"] = "Session Yield";
     L["reset-title"] = "Reset"
+    L["Auction House"] = "Auction House"
     L["reputation"] = "reputation"
     L["levels"] = "levels"
     L["Skills"] = "Skills"

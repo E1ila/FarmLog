@@ -8,6 +8,7 @@ FLogSVGold = 0
 FLogSVDrops = {}
 FLogSVKills = {}
 FLogSVVendor = 0
+FLogSVAH = 0
 FLogSVXP = 0
 FLogSVRep = {}
 FLogSVSkill = {}
@@ -327,6 +328,11 @@ local function RefreshSChildFrame()
 		i = i + 1;
 	end 
 
+	if FLogSVAH > 0 then 
+		AddItem(L["Auction House"])
+		AddItem("    "..GetCoinTextureString(FLogSVAH))
+	end 
+
 	if FLogSVGold > 0 then 
 		AddItem(L["Money"])
 		AddItem("    "..GetCoinTextureString(FLogSVGold))
@@ -456,6 +462,7 @@ local function ClearLog()
 	FLogSVSkill = {}
 	FLogSVGold = 0
 	FLogSVVendor = 0
+	FLogSVAH = 0
 	FLogSVXP = 0
 	FLogSVHonor = 0
 	FLogSVRep = {}
@@ -746,8 +753,13 @@ local function OnLootEvent(text)
 			mobName == L["Mining"] or 
 			mobName == L["Fishing"] 
 		)) 
-	then			
-		FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
+	then	
+		local ahValue = FLogSVAHValue[itemLink]
+		if ahValue and ahValue > 0 then 
+			FLogSVAH = (FLogSVAH or 0) + ahValue
+		else 		
+			FLogSVVendor = (FLogSVVendor or 0) + (vendorPrice or 0)
+		end 
 
 		tinsert(mobName, itemLink, (quantity or 1), -1, -1);
 		RefreshSChildFrame();
