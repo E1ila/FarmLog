@@ -1977,7 +1977,7 @@ SlashCmdList["LH"] = function(msg)
 					out("Removing "..itemLink.." from AH value table")
 				end 
 			else 
-				out("Incorrect usage of command write |cff0000ff/fl set [ITEM_LINK] [PRICE_GOLD]|r")
+				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
 			ClearLog()
