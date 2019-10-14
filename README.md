@@ -20,6 +20,17 @@ Logs loot, monster kills, honor and instances. Know exactly what your farm sessi
 ### What it is for
 You can track your farming session and know how much gold/hour you make. Good for general grinding, instance item farming, rep farm, tradeskill work, honor farm, know how many you killed in a rare BoE farm, etc etc.
 
+### How to install
+* Download, extract (if zipped)
+* Make sure folder doesn't have `-master` surffix
+* Copy `FarmLog` folder to your `WoW\Interface\AddOns` folder
+
+### How to use
+* /fl - toggle logging on/off
+* /fl r - reset log
+* /fl s - shows log
+* /fl set <ITEMLINK> <GOLDVALUE> - sets AH value of an item, in gold
+
 ### To do
 * Count instance IDs (total & last hour)
 * Allow named sessions, save data per session seperately
