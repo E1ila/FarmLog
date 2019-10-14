@@ -1965,6 +1965,12 @@ SlashCmdList["LH"] = function(msg)
 			else 
 				out("Debug mode disabled")
 			end 
+		elseif "HELP" == cmd or "H" == cmd then 
+			out("Use FarmLog to track your grinding session yield. Options:")
+			out(" |cff00ff00/fl|r toggle logging on/off")
+			out(" |cff00ff00/fl r|r reset log")
+			out(" |cff00ff00/fl s|r shows log")
+			out(" |cff00ff00/fl set <ITEMLINK> <GOLDVALUE>|r sets AH value of an item, in gold")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
