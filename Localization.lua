@@ -23,6 +23,7 @@ function FarmLog_BuildLocalization(context)
     L["Report2"] = "Last change on ";
     L["Report:"] = "Report to:";
     L["Money"] = "Money"
+    L["Money Looted"] = "Money Looted"
     L["Vendor"] = "Vendor"
     L["XP"] = "XP"
     L["ChatFrame1"] = "ChatFrame1";

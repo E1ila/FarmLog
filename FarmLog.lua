@@ -7,6 +7,7 @@ FLogSVAHValue = {}
 FLogSVSessions = {}
 FLogSVDebug = true
 FLogSVEnabled = false
+FLogSVCurrentSession = "default"
 
 local debugEnabled = false
 local inIni = false;
@@ -70,51 +71,8 @@ end
 
 -- Session management ------------------------------------------------------------
 
-local function ResumeSession() 
-	if not FLogSVEnabled then 
-		FLogSVEnabled = true 
-		sessionStartTime = time()
-		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
-	end 
-end 
-
-local function PauseSession()
-	if FLogSVEnabled then 
-		FLogSVEnabled = false 
-		if sessionStartTime then 
-			local delta = time() - sessionStartTime
-			IncreaseSessionVar("seconds", delta)
-			sessionStartTime = nil
-		end 
-
-		FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
-		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-	end 
-end 
-
-local function StartSession(sessionName) 
-	PauseSession() 
-
-	if not FLogSVSessions[sessionName] then 
-		FLogSVSessions[sessionName] = {
-			["drops"] = {},
-			["kills"] = {},
-			["skill"] = {},
-			["rep"] = {},
-			["gold"] = 0,
-			["vendor"] = 0,
-			["ah"] = 0,
-			["xp"] = 0,
-			["honor"] = 0,
-			["seconds"] = 0,
-		}
-	end 
-	FLogSVCurrentSession = sessionName
-	ResumeSession()
-end 
-
 local function GetSessionVar(varName)
-	return FLogSVSessions[FLogSVCurrentSession][varName]
+	return (FLogSVSessions[FLogSVCurrentSession] or {})[varName]
 end 
 
 local function SetSessionVar(varName, value)
@@ -129,7 +87,76 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 	FLogSVSessions[FLogSVCurrentSession][varName][entry] = (FLogSVSessions[FLogSVCurrentSession][varName][entry] or 0) + incValue 
 end 
 
+local function ResumeSession() 
+	sessionStartTime = time()
+	FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
+end 
+
+local function PauseSession()
+	if sessionStartTime then 
+		local delta = time() - sessionStartTime
+		IncreaseSessionVar("seconds", delta)
+		sessionStartTime = nil
+	end 
+
+	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
+	FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
+end 
+
+local function ResetSessionVars()
+	FLogSVSessions[FLogSVCurrentSession] = {
+		["drops"] = {},
+		["kills"] = {},
+		["skill"] = {},
+		["rep"] = {},
+		["gold"] = 0,
+		["vendor"] = 0,
+		["ah"] = 0,
+		["xp"] = 0,
+		["honor"] = 0,
+		["seconds"] = 0,
+	}
+end 
+
+local function StartSession(sessionName) 
+	if FLogSVEnabled then 
+		PauseSession() 
+	end 
+
+	FLogSVCurrentSession = sessionName
+	if not FLogSVSessions[sessionName] then 
+		ResetCurrentSession()
+	end 
+	ResumeSession()
+	FLogSVEnabled = true 
+end 
+
 -- Reporting ------------------------------------------------------------
+
+local function ResetSession()
+	-- HideSChildFrame(1);
+	-- FLogFrameShowButton:Disable();
+	-- FLogFrameClearButton:Disable();
+	-- SVLastChange = date("%d.%m.%y - %H:%M");
+	PauseSession()
+	ResetSessionVars()
+	out("Reset session |cff6666ff"..FLogSVCurrentSession)
+end
+
+local function InsertLoot(mobName, itemLink, quantity)
+	-- out(mobName.." / "..itemLink.." / "..quantity);
+	if (mobName and itemLink and quantity) then		
+		local sessionDrops = GetSessionVar("drops")
+		if not sessionDrops[mobName] then		
+			sessionDrops[mobName] = {}
+		end 
+		if sessionDrops[mobName][itemLink] then
+			sessionDrops[mobName][itemLink][1][1] = sessionDrops[mobName][itemLink][1][1] + quantity
+		else
+			sessionDrops[mobName][itemLink] = {{quantity}};
+		end
+	end
+end
 
 local function SortLog(db)
 -- Sort the userNames of the FarmLog alphabetically.
@@ -342,45 +369,38 @@ local function RefreshSChildFrame()
 	end 
 
 	if goldPerHour > 0 then 
-		AddItem(L["Gold / Hour"])
-		AddItem("    "..GetCoinTextureString(goldPerHour))
+		AddItem(L["Gold / Hour"] .. " " .. GetCoinTextureString(goldPerHour))
 	end 
 
 	local sessionAH = GetSessionVar("ah")
 	if sessionAH > 0 then 
-		AddItem(L["Auction House"])
-		AddItem("    "..GetCoinTextureString(sessionAH))
+		AddItem(L["Auction House"].." "..GetCoinTextureString(sessionAH))
 	end 
 
 	local sessionGold = GetSessionVar("gold")
 	if sessionGold > 0 then 
-		AddItem(L["Money"])
-		AddItem("    "..GetCoinTextureString(sessionGold))
+		AddItem(L["Money"].." "..GetCoinTextureString(sessionGold))
 	end 
 
 	local sessionVendor = GetSessionVar("vendor")
 	if sessionVendor > 0 then 
-		AddItem(L["Vendor"])
-		AddItem("    "..GetCoinTextureString(sessionVendor))
+		AddItem(L["Vendor"].." "..GetCoinTextureString(sessionVendor))
 	end 
 
 	local sessionXP = GetSessionVar("xp")
 	if sessionXP > 0 then 
-		AddItem(L["XP"])
-		AddItem("    "..sessionXP)
+		AddItem(L["XP"].." "..sessionXP)
 	end 
 
 	local sessionRep = GetSessionVar("rep")
 	for faction, rep in pairs(sessionRep) do 
-		AddItem(faction)
-		AddItem("    "..rep.." "..L["reputation"])
+		AddItem(rep.." "..faction.." "..L["reputation"])
 	end 
 
 	local firstSkill = true 
 	local sessionSkill = GetSessionVar("skill")
 	for skillName, levels in pairs(sessionSkill) do 
-		if firstSkill then AddItem(L["Skills"]) end 
-		AddItem("    "..skillName.." +"..levels)
+		AddItem("+"..levels.." "..skillName)
 	end 
 
 	local sessionKills = GetSessionVar("kills")
@@ -480,30 +500,6 @@ local function RefreshSChildFrame()
 	end
 end
 
-local function ClearLog()	
-	HideSChildFrame(1);
-	FLogFrameShowButton:Disable();
-	FLogFrameClearButton:Disable();
-	SVLastChange = date("%d.%m.%y - %H:%M");
-end
-
-local function tinsert(mobName, itemLink, quantity, rollType, roll)
-	-- print(tostring(mobName)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(rollType)..", "..tostring(roll));
-	local sessionDrops = GetSessionVar("drops")
-	if (mobName and itemLink and quantity) then		
-		if not sessionDrops[mobName] then		
-			sessionDrops[mobName] = {}
-		end 
-		if sessionDrops[mobName][itemLink] then
-			sessionDrops[mobName][itemLink][1][1] = sessionDrops[mobName][itemLink][1][1] + quantity
-			SVLastChange = date("%d.%m.%y - %H:%M");
-		else
-			sessionDrops[mobName][itemLink] = {{quantity}};
-			SVLastChange = date("%d.%m.%y - %H:%M");
-		end
-	end
-end
-
 local function ToggleWindow()
 	if FLogFrame:IsShown() then
 		FLogFrame:Hide()
@@ -515,14 +511,15 @@ end
 
 local function ToggleLogging() 
 	if FLogSVEnabled then 
+		FLogSVEnabled = false 
 		PauseSession()
-		out("|cffffff00Farm session paused|r")
+		out("|cffffff00Farm session |cff6666ff"..FLogSVCurrentSession.."|r paused|r")
 	else 
 		StartSession(FLogSVCurrentSession or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("|cffffff00Farm session started|r")
+			out("Farm session |cff6666ff"..FLogSVCurrentSession.."|r started")
 		else 
-			out("|cffffff00Farm session resumed|r")
+			out("Farm session |cff6666ff"..FLogSVCurrentSession.."|r resumed")
 		end 	
 	end 
 end 
@@ -778,7 +775,7 @@ local function OnLootEvent(text)
 			IncreaseSessionVar("vendor", vendorPrice or 0) 		
 		end 
 
-		tinsert(mobName, itemLink, (quantity or 1), -1, -1);
+		InsertLoot(mobName, itemLink, (quantity or 1));
 		RefreshSChildFrame();
 	end
 end
@@ -876,7 +873,6 @@ local function OnAddonLoaded()
 	
 	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
 		-- migrate 1 session into multi session DB
-		FLogSVCurrentSession = "default"
 		FLogSVSessions[FLogSVCurrentSession] = {
 			["drops"] = FLogSVDrops,
 			["kills"] = FLogSVKills,
@@ -891,11 +887,12 @@ local function OnAddonLoaded()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
+	elseif not FLogSVSessions[FLogSVCurrentSession] then 
+		ResetCurrentSession()
 	end 
 
 	if FLogSVEnabled then 
-		sessionStartTime = time()
-		FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
+		ResumeSession(true)
 	else 
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 	end 
@@ -932,18 +929,18 @@ local function OnEnteringWorld()
 	-- elseif (inIni and inInstance == false) then
 	-- 	inIni = false;			
 	-- end
-	RefreshSChildFrame();
+	-- RefreshSChildFrame();
 end 
 
 -- Instance info
 
 local function OnInstanceInfoEvent()
-	local count = GetNumSavedInstances()
-	debug("OnInstanceInfoEvent - GetNumSavedInstances = "..count)
-	for i = 1, count do 
-		local instanceName, instanceID, instanceReset, instanceDifficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, maxBosses, defeatedBosses = GetSavedInstanceInfo(i)
-		debug("instanceName="..instanceName.." instanceID="..instanceID.." instanceReset="..tostring(instanceReset).." locked="..tostring(locked))
-	end 
+	-- local count = GetNumSavedInstances()
+	-- debug("OnInstanceInfoEvent - GetNumSavedInstances = "..count)
+	-- for i = 1, count do 
+	-- 	local instanceName, instanceID, instanceReset, instanceDifficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, maxBosses, defeatedBosses = GetSavedInstanceInfo(i)
+	-- 	debug("instanceName="..instanceName.." instanceID="..instanceID.." instanceReset="..tostring(instanceReset).." locked="..tostring(locked))
+	-- end 
 end 
 
 -- OnEvent
@@ -1126,9 +1123,9 @@ FLogResetFrameYesButton:SetHeight(20);
 FLogResetFrameYesButton:SetText(L["yes"]);
 FLogResetFrameYesButton:SetPoint("BOTTOMLEFT", 7, 5);
 FLogResetFrameYesButton:SetScript("OnClick", function()
-														ClearLog();
-														FLogResetFrame:Hide();
-												end);
+	ResetSession()
+		FLogResetFrame:Hide();
+end);
 FLogResetFrameYesButton:SetAlpha(1);
 FLogResetFrameYesButton:Show();
 
@@ -1937,7 +1934,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 													if editName ~= newName then
 														local sessionDrops = GetSessionVar("drops")
 														if #sessionDrops[editName][editItem] == 1 then
-															tinsert(newName, editItem, sessionDrops[editName][editItem][editIdx][1], sessionDrops[editName][editItem][editIdx][2], sessionDrops[editName][editItem][editIdx][3]);
+															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															sessionDrops[editName][editItem] = nil;
 															local x = 0;
 															for a, _ in pairs (sessionDrops[editName]) do																
@@ -1947,7 +1944,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 																sessionDrops[editName] = nil;
 															end
 														else
-															tinsert(newName, editItem, sessionDrops[editName][editItem][editIdx][1], sessionDrops[editName][editItem][editIdx][2], sessionDrops[editName][editItem][editIdx][3]);
+															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
 														RefreshSChildFrame();
@@ -2063,18 +2060,16 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")
 			for sessionName, _ in pairs(FLogSVSessions) do 
-				out(" - |cff0000ff"..sessionName)
+				out(" - |cff6666ff"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
 			FLogSVSessions[arg1] = nil 
-			out("Deleted session |cffff0000"..arg1)
+			out("Deleted session |cff6666ff"..arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
-			out("Switching session to |cff00ff00"..arg1)
+			out("Switching session to |cff6666ff"..arg1)
 			StartSession(arg1)
 		elseif  "RESET" == cmd or "R" == cmd then
-			PauseSession()
-			FLogSVSessions[FLogSVCurrentSession] = nil 
-			out("Reset session |cffffff00"..FLogSVCurrentSession)
+			ResetSession()
 		else 
 			out("Unknown command "..cmd)
 		end 
