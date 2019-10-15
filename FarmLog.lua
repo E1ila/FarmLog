@@ -125,7 +125,7 @@ local function StartSession(sessionName)
 
 	FLogSVCurrentSession = sessionName
 	if not FLogSVSessions[sessionName] then 
-		ResetCurrentSession()
+		ResetSessionVars()
 	end 
 	ResumeSession()
 	FLogSVEnabled = true 
@@ -888,7 +888,7 @@ local function OnAddonLoaded()
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
 	elseif not FLogSVSessions[FLogSVCurrentSession] then 
-		ResetCurrentSession()
+		ResetSessionVars()
 	end 
 
 	if FLogSVEnabled then 
