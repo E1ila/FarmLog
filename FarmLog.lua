@@ -42,14 +42,14 @@ local SPELL_SKINNING = {
 }
 local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
 
-local function debug(text)
-	if FLogSVDebug then 
-		print("|cffffff00FarmLog|r "..text)
-	end 
-end 
-
 local function out(text)
 	print(" |cffff8800<|cffffbb00FarmLog|cffff8800>|r "..text)
+end 
+
+local function debug(text)
+	if FLogSVDebug then 
+		out(text)
+	end 
 end 
 
 local function tobool(arg1)
@@ -140,7 +140,7 @@ local function ResetSession()
 	-- SVLastChange = date("%d.%m.%y - %H:%M");
 	PauseSession()
 	ResetSessionVars()
-	out("Reset session |cff6666ff"..FLogSVCurrentSession)
+	out("Reset session |cff9999ff"..FLogSVCurrentSession)
 end
 
 local function InsertLoot(mobName, itemLink, quantity)
@@ -513,13 +513,13 @@ local function ToggleLogging()
 	if FLogSVEnabled then 
 		FLogSVEnabled = false 
 		PauseSession()
-		out("|cffffff00Farm session |cff6666ff"..FLogSVCurrentSession.."|r paused|r")
+		out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r paused|r")
 	else 
 		StartSession(FLogSVCurrentSession or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff6666ff"..FLogSVCurrentSession.."|r started")
+			out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r started")
 		else 
-			out("Farm session |cff6666ff"..FLogSVCurrentSession.."|r resumed")
+			out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r resumed")
 		end 	
 	end 
 end 
@@ -786,8 +786,8 @@ local function OnAddonLoaded()
 	out(L["loaded-welcome"]);
 	if FLogSVItemRarity == nil then
 		FLogSVItemRarity = {};
-		FLogSVItemRarity[0]=false; --poor (grey)
-		FLogSVItemRarity[1]=false; --common (white)
+		FLogSVItemRarity[0]=true; --poor (grey)
+		FLogSVItemRarity[1]=true; --common (white)
 		FLogSVItemRarity[2]=true; --uncommon (green)
 		FLogSVItemRarity[3]=true; --rare (blue)
 		FLogSVItemRarity[4]=true; --epic (purple)
@@ -2060,13 +2060,13 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")
 			for sessionName, _ in pairs(FLogSVSessions) do 
-				out(" - |cff6666ff"..sessionName)
+				out(" - |cff9999ff"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
 			FLogSVSessions[arg1] = nil 
-			out("Deleted session |cff6666ff"..arg1)
+			out("Deleted session |cff9999ff"..arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
-			out("Switching session to |cff6666ff"..arg1)
+			out("Switching session to |cff9999ff"..arg1)
 			StartSession(arg1)
 		elseif  "RESET" == cmd or "R" == cmd then
 			ResetSession()
