@@ -1,4 +1,4 @@
-﻿## Interface: 60200
+﻿## Interface: 11302
 ## Title: FarmLog
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 ## Author: SirMezO @EU-Aegwynn, E1ila

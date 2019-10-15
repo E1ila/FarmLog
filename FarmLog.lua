@@ -36,6 +36,8 @@ local LastMobLoot = {}
 local SkillName = nil 
 local SkillNameTime = nil 
 local LastUpdate = 0
+local LastGPHUpdate = 0
+local GPH = 0
 
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
@@ -319,6 +321,11 @@ local function RefreshSChildFrame()
 		i = i + 1;
 	end 
 
+	if GPH > 0 then 
+		AddItem(L["Gold / Hour"])
+		AddItem("    "..GetCoinTextureString(GPH))
+	end 
+
 	if FLogSVAH > 0 then 
 		AddItem(L["Auction House"])
 		AddItem("    "..GetCoinTextureString(FLogSVAH))
@@ -457,6 +464,7 @@ local function ClearLog()
 	FLogSVXP = 0
 	FLogSVHonor = 0
 	FLogSVRep = {}
+	GPH = 0
 	if FLogSVStartTime then 
 		FLogSVStartTime = time()
 	end 
@@ -893,6 +901,17 @@ local function OnEnteringWorld()
 	RefreshSChildFrame();
 end 
 
+-- Instance info
+
+local function OnInstanceInfoEvent()
+	local count = GetNumSavedInstances()
+	debug("OnInstanceInfoEvent - GetNumSavedInstances = "..count)
+	for i = 1, count do 
+		local instanceName, instanceID, instanceReset, instanceDifficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, maxBosses, defeatedBosses = GetSavedInstanceInfo(i)
+		debug("instanceName="..instanceName.." instanceID="..instanceID.." instanceReset="..tostring(instanceReset).." locked="..tostring(locked))
+	end 
+end 
+
 -- OnEvent
 
 local function OnEvent(event, ...)
@@ -927,11 +946,13 @@ local function OnEvent(event, ...)
 	end 
 
 	if event == "PLAYER_ENTERING_WORLD" then
-		OnEnteringWorld()
+		OnEnteringWorld(...)
 	elseif event == "ADDON_LOADED" and ... == "FarmLog" then		
-		OnAddonLoaded()
+		OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
-		EndSession()
+		EndSession(...)
+	elseif event == "UPDATE_INSTANCE_INFO" then 
+		OnInstanceInfoEvent(...)
 	end
 end
 
@@ -939,8 +960,14 @@ local function OnUpdate()
 	if FLogSVEnabled and FLogSVStartTime then 
 		local now = time()
 		if now - LastUpdate >= 1 then 
-			FLogFrameTitleText:SetText(secondsToClock(FLogSVTotalSeconds + now - FLogSVStartTime));
+			local sessionTime = FLogSVTotalSeconds + now - FLogSVStartTime
+			FLogFrameTitleText:SetText(secondsToClock(sessionTime));
 			LastUpdate = now 
+			if now - LastGPHUpdate >= 60 and sessionTime > 0 then 
+				GPH = (FLogSVAH + FLogSVVendor + FLogSVGold) / (sessionTime / 3600)
+				LastGPHUpdate = now 
+				RefreshSChildFrame()
+			end 
 		end 
 	end 
 	if SkillNameTime then 
@@ -1087,6 +1114,7 @@ FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
 FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
 FLogFrame:RegisterEvent("CHAT_MSG_OPENING")
 FLogFrame:RegisterEvent("PLAYER_LOGOUT")
+FLogFrame:RegisterEvent("UPDATE_INSTANCE_INFO")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
 FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
 FLogFrame:SetScript("OnUpdate", function(self, ...) OnUpdate(...) end);

@@ -3,6 +3,7 @@ Logs loot, monster kills, honor and instances. Know exactly what your farm sessi
 
 ### What it does
 * Tracks 
+    * Shows Gold/Hour of active farming session
     * Farm session time with a stopwatch
     * Mob kills, counts how many of each mob was killed
     * Loot from mobs and quests
