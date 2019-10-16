@@ -1,5 +1,5 @@
 ﻿FarmLogNS = {}
-FarmLogNS.FLogVersionNumber = "1.1"
+FarmLogNS.FLogVersionNumber = "1.2"
 FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
 FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
 
@@ -8,10 +8,10 @@ FLogSVSessions = {}
 FLogSVDebug = true
 FLogSVEnabled = false
 FLogSVCurrentSession = "default"
+FLogSVInInstance = false 
+FLogSVAutoSwitchOnInstances = true
 
 local debugEnabled = false
-local inIni = false;
-local lastIni = nil;
 local editName = "";
 local editItem = "";
 local editIdx = -1;
@@ -72,6 +72,8 @@ local function secondsToClock(seconds)
 end
 
 local function GetShortCoinTextureString(money)
+	if not money or tostring(money) == "nan"  then money = 0 end 
+	-- out("money = "..tostring(money))
 	if money > 100000 then 
 		money = math.floor(money / 10000) * 10000
 	elseif money > 10000 then 
@@ -167,6 +169,7 @@ local function ResetSession()
 	PauseSession()
 	ResetSessionVars()
 	out("Reset session |cff99ff00"..FLogSVCurrentSession)
+	FLogRefreshSChildFrame()
 end
 
 local function InsertLoot(mobName, itemLink, quantity)
@@ -968,19 +971,20 @@ end
 -- Entering World
 
 local function OnEnteringWorld() 
-	-- local inInstance, _ = IsInInstance();
-	-- inInstance = tobool(inInstance);
-	-- local iniName = GetInstanceInfo();		
-	-- if ((inIni == false and inInstance) and not(lastIni == iniName)) then
-	-- 	inIni = true;
-	-- 	lastIni = iniName;
-	-- 	if ((IsInRaid() and FLogSVOptionGroupType["Raid"]) or (UnitInParty("Player") and not IsInRaid() and FLogSVOptionGroupType["Party"]) or (FLogSVOptionGroupType["Solo"] and not IsInRaid() and not UnitInParty("Player"))) then
-	-- 		FLogResetFrame:Show();
-	-- 	end
-	-- elseif (inIni and inInstance == false) then
-	-- 	inIni = false;			
-	-- end
-	-- FLogRefreshSChildFrame();
+	local inInstance, _ = IsInInstance();
+	inInstance = tobool(inInstance);
+	local instanceName = GetInstanceInfo();		
+	if not FLogSVInInstance and inInstance and FLogSVLastInstanceName ~= instanceName then
+		FLogSVInInstance = true;
+		FLogSVLastInstanceName = instanceName;
+		if (IsInRaid() and FLogSVOptionGroupType["Raid"]) or (UnitInParty("Player") and not IsInRaid() and FLogSVOptionGroupType["Party"]) or (FLogSVOptionGroupType["Solo"] and not IsInRaid() and not UnitInParty("Player")) then
+			-- FLogResetFrame:Show();
+			StartSession(instanceName)
+		end
+	elseif (FLogSVInInstance and inInstance == false) then
+		FLogSVInInstance = false;			
+	end
+	FLogRefreshSChildFrame();
 end 
 
 -- Instance info
@@ -2101,6 +2105,7 @@ SlashCmdList["LH"] = function(msg)
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
 			out(" |cff00ff00/fl |cff00ff88r|cff00ff00eset|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
+			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
@@ -2132,6 +2137,13 @@ SlashCmdList["LH"] = function(msg)
 			out("Switching session to |cff99ff00"..arg1)
 			StartSession(arg1)
 			FLogRefreshSChildFrame() 
+		elseif "ASI" == cmd then 
+			FLogSVAutoSwitchOnInstances = not FLogSVAutoSwitchOnInstances 
+			if not FLogSVAutoSwitchOnInstances then 
+				out("Auto switching in instances |cffff4444"..L["disabled"])
+			else 
+				out("Auto switching in instances |cff44ff44"..L["enabled"])
+			end 
 		elseif  "RESET" == cmd or "R" == cmd then
 			ResetSession()
 		else 

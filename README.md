@@ -43,9 +43,13 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 
 ### Changes 
+* 1.2
+    * Auto start session when entering an instance, with current instance name for session name.
 * 1.1 
     * Sessions! You can now keep multiple session, read about it and how to use it above.
     * Removed "Reset Data" offer when entering an instance or after `/reload`.
+* 1.0 
+    * Initial release.
 
 ### To do
 * Count instance IDs (total & last hour)
@@ -57,6 +61,9 @@ Another thing is that the more time & data you have per session, the more accura
 * Support Chest / Container opening
 * Track deaths
 * Show repair bill
+* Allow listing loot without mob names
+* Suggest auto start/stop session on instance
+* Add pause/resume button on window
 
 This addon was based on the LootHistory addon which tracks who received which loot -
 https://www.curseforge.com/wow/addons/loothistory

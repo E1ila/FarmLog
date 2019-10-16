@@ -2,6 +2,8 @@
 function FarmLog_BuildLocalization(context)
     --begin localization
     local L = {};
+    L["disabled"] = "disabled"
+    L["enabled"] = "enabled"
     L["yes"] = "Yes";
     L["no"] = "No";
     L["reset"] = "Reset Data?";	
