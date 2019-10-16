@@ -24,6 +24,7 @@ local FLogFrameTitleText
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
 local listMode = false
+local gphNeedsUpdate = false 
 local sessionStartTime = nil 
 local lastMobLoot = {}
 local skillName = nil 
@@ -69,6 +70,15 @@ local function secondsToClock(seconds)
 		return hours..":"..mins..":"..secs
 	end
 end
+
+local function GetShortCoinTextureString(money)
+	if money > 100000 then 
+		money = math.floor(money / 10000) * 10000
+	elseif money > 10000 then 
+		money = math.floor(money / 100) * 100
+	end 
+	return GetCoinTextureString(money)
+end 
 
 -- Session management ------------------------------------------------------------
 
@@ -120,8 +130,11 @@ local function ResetSessionVars()
 end 
 
 local function StartSession(sessionName, dontPause) 
-	if FLogSVEnabled and not dontPause then 
-		PauseSession() 
+	if FLogSVEnabled then 
+		gphNeedsUpdate = true 
+		if not dontPause then 
+			PauseSession() 
+		end 
 	end 
 
 	FLogSVCurrentSession = sessionName
@@ -468,10 +481,10 @@ function FLogRefreshSChildFrame()
 
 	local function AddSessionYieldItems() 
 		AddItem(" --- "..L["Session"]..": "..FLogSVCurrentSession.." ---")
-		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetCoinTextureString(goldPerHour)) end 
-		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetCoinTextureString(GetSessionVar("ah"))) end 
-		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetCoinTextureString(GetSessionVar("gold"))) end 
-		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetCoinTextureString(GetSessionVar("vendor"))) end 
+		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
+		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
+		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
+		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
 		if GetSessionVar("xp") > 0 then AddItem(L["XP"].." "..GetSessionVar("xp")) end 
 		for faction, rep in pairs(GetSessionVar("rep")) do AddItem(rep.." "..faction.." "..L["reputation"]) end 
 		for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
@@ -513,7 +526,7 @@ function FLogRefreshSChildFrame()
 	local function AddSessionListItems() 
 		for name, session in pairs(FLogSVSessions) do 
 			local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
-			local text = name .. " " .. GetCoinTextureString(gph) .. " " .. L["G/H"]
+			local text = name .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
 			AddItem(text, true)
 			SetItemTooltip()
 			SetItemActions(GetOnLogSessionItemClick(name))
@@ -844,7 +857,7 @@ local function OnAddonLoaded()
 	end
 	if FLogSVOptionGroupType == nil then 
 		FLogSVOptionGroupType = {};
-		FLogSVOptionGroupType["Solo"]=false;
+		FLogSVOptionGroupType["Solo"]=true;
 		FLogSVOptionGroupType["Party"]=true;
 		FLogSVOptionGroupType["Raid"]=true;
 	end
@@ -932,6 +945,7 @@ local function OnAddonLoaded()
 		ResumeSession(true)
 	else 
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
+		gphNeedsUpdate = true 
 	end 
 	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
 
@@ -1025,12 +1039,13 @@ local function OnEvent(event, ...)
 end
 
 local function OnUpdate() 
-	if FLogSVEnabled and sessionStartTime and GetSessionVar("seconds") then 
+	if gphNeedsUpdate or FLogSVEnabled then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
-			local sessionTime = GetSessionVar("seconds") + now - sessionStartTime
+			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
 			FLogFrameTitleText:SetText(secondsToClock(sessionTime));
 			lastUpdate = now 
+			gphNeedsUpdate = false 
 			if now - lastGPHUpdate >= 60 and sessionTime > 0 then 
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGPHUpdate = now 
@@ -2098,7 +2113,7 @@ SlashCmdList["LH"] = function(msg)
 				end				
 				FLogSVAHValue[itemLink] = value 
 				if value and value > 0 then 
-					out("Setting AH value of "..itemLink.." to "..GetCoinTextureString(value))
+					out("Setting AH value of "..itemLink.." to "..GetShortCoinTextureString(value))
 				else 
 					out("Removing "..itemLink.." from AH value table")
 				end 
