@@ -23,6 +23,7 @@ local FLogFrameSChildContentTable = {};
 local FLogFrameTitleText
 local L = FarmLog_BuildLocalization(FarmLogNS)
 
+local listMode = false
 local sessionStartTime = nil 
 local lastMobLoot = {}
 local skillName = nil 
@@ -71,8 +72,8 @@ end
 
 -- Session management ------------------------------------------------------------
 
-local function GetSessionVar(varName)
-	return (FLogSVSessions[FLogSVCurrentSession] or {})[varName]
+local function GetSessionVar(varName, sessionName)
+	return (FLogSVSessions[sessionName or FLogSVCurrentSession] or {})[varName]
 end 
 
 local function SetSessionVar(varName, value)
@@ -118,8 +119,8 @@ local function ResetSessionVars()
 	}
 end 
 
-local function StartSession(sessionName) 
-	if FLogSVEnabled then 
+local function StartSession(sessionName, dontPause) 
+	if FLogSVEnabled and not dontPause then 
 		PauseSession() 
 	end 
 
@@ -131,6 +132,18 @@ local function StartSession(sessionName)
 	FLogSVEnabled = true 
 end 
 
+local function DeleteSession(name) 
+	FLogSVSessions[name] = nil 
+	if FLogSVCurrentSession == name then 
+		StartSession("default", true)
+	end 
+	if FLogSVCurrentSession == name and name == "default" then 
+		out("Reset the |cff99ff00"..name.."|r session")
+	else 
+		out("Deleted session |cff99ff00"..name)
+	end 
+end 
+
 -- Reporting ------------------------------------------------------------
 
 local function ResetSession()
@@ -140,7 +153,7 @@ local function ResetSession()
 	-- SVLastChange = date("%d.%m.%y - %H:%M");
 	PauseSession()
 	ResetSessionVars()
-	out("Reset session |cff9999ff"..FLogSVCurrentSession)
+	out("Reset session |cff99ff00"..FLogSVCurrentSession)
 end
 
 local function InsertLoot(mobName, itemLink, quantity)
@@ -265,8 +278,8 @@ end
 
 local function AddToChatFrameEditBox(itemLink)
 	-- Copy itemLink into ChatFrame
-	local x = {SELECTED_DOCK_FRAME:GetChildren()};
-	local editbox = x[4];
+	local chatFrame = SELECTED_DOCK_FRAME
+	local editbox = chatFrame.editBox
 	if editbox then
 		if editbox:HasFocus() then
 			editbox:SetText(editbox:GetText()..itemLink);
@@ -276,7 +289,61 @@ local function AddToChatFrameEditBox(itemLink)
 		end
 	end
 end
-	
+
+local function GetOnLogItemClick(itemLink) 
+	return function(self, button)
+		if IsShiftKeyDown() then
+		--copy into chatframe
+			AddToChatFrameEditBox(itemLink);
+		elseif IsControlKeyDown() then
+		--preview item
+			DressUpItemLink(itemLink);
+		elseif IsAltKeyDown() then
+		--edit
+			editName = mobName;
+			editItem = itemLink;
+			editIdx = j;
+			if quantity > 1 then
+				FLogEditFrameItem:SetText(itemLink.."x"..quantity);
+			else
+				FLogEditFrameItem:SetText(itemLink);
+			end																									
+			FLogEditFrameOwnerBox:SetText(mobName);
+			FLogEditFrame:Show();
+			FLogEditFrameOwnerBox:SetFocus(true);												
+		end
+	end 
+end
+
+local function GetOnLogSessionItemClick(sessionName) 
+	return function(self, button)
+		if button == "RightButton" then 
+			DeleteSession(sessionName)
+			FLogRefreshSChildFrame()
+		else 
+			if IsAltKeyDown() then
+			--edit
+				editName = sessionName;
+				editItem = sessionName;
+				editIdx = j;
+				if quantity > 1 then
+					FLogEditFrameItem:SetText(itemLink.."x"..quantity);
+				else
+					FLogEditFrameItem:SetText(itemLink);
+				end																									
+				FLogEditFrameOwnerBox:SetText(mobName);
+				FLogEditFrame:Show();
+				FLogEditFrameOwnerBox:SetFocus(true);												
+			else 
+				listMode = false 
+				out("Farm session |cff99ff00"..sessionName.."|r resumed")
+				StartSession(sessionName)
+				FLogRefreshSChildFrame()
+			end
+		end 
+	end 
+end
+
 local function CreateSChild(j)
 	local x = #FLogFrameSChildContentTable;
 	if x == 0 then
@@ -351,12 +418,12 @@ local function HideSChildFrame(j)
 	end
 end
 
-local function RefreshSChildFrame()
+function FLogRefreshSChildFrame()
 --Refresh the SChildFrame
 	local n = #FLogFrameSChildContentTable;
 	local i = 1;
 
-	local function AddItem(text) 
+	local function AddItem(text, dontIncrease) 
 		if i > n then CreateSChild(1) end
 		FLogFrameSChildContentTable[i][1]:SetText(text);
 		FLogFrameSChildContentTable[i][2]:SetTexture(nil);
@@ -365,131 +432,101 @@ local function RefreshSChildFrame()
 		FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", nil);
 		FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", nil);
 		FLogFrameSChildContentTable[i][0]:Show();
-		i = i + 1;
-	end 
-
-	if goldPerHour > 0 then 
-		AddItem(L["Gold / Hour"] .. " " .. GetCoinTextureString(goldPerHour))
-	end 
-
-	local sessionAH = GetSessionVar("ah")
-	if sessionAH > 0 then 
-		AddItem(L["Auction House"].." "..GetCoinTextureString(sessionAH))
-	end 
-
-	local sessionGold = GetSessionVar("gold")
-	if sessionGold > 0 then 
-		AddItem(L["Money"].." "..GetCoinTextureString(sessionGold))
-	end 
-
-	local sessionVendor = GetSessionVar("vendor")
-	if sessionVendor > 0 then 
-		AddItem(L["Vendor"].." "..GetCoinTextureString(sessionVendor))
-	end 
-
-	local sessionXP = GetSessionVar("xp")
-	if sessionXP > 0 then 
-		AddItem(L["XP"].." "..sessionXP)
-	end 
-
-	local sessionRep = GetSessionVar("rep")
-	for faction, rep in pairs(sessionRep) do 
-		AddItem(rep.." "..faction.." "..L["reputation"])
-	end 
-
-	local firstSkill = true 
-	local sessionSkill = GetSessionVar("skill")
-	for skillName, levels in pairs(sessionSkill) do 
-		AddItem("+"..levels.." "..skillName)
-	end 
-
-	local sessionKills = GetSessionVar("kills")
-	local sortedNames = SortLog(sessionKills);
-	-- add missing mobNames like Herbalism / Mining / Fishing
-	local sessionDrops = GetSessionVar("drops")
-	for name, _ in pairs(sessionDrops) do 
-		if not sessionKills[name] then 
-			tinsert(sortedNames, 1, name)
+		if not dontIncrease then 
+			i = i + 1
 		end 
 	end 
-	for _, mobName in ipairs(sortedNames) do	
-		local FLogSortedItemLinks = SortItems(sessionDrops[mobName] or {});	
-		local section = mobName 
-		if sessionKills[mobName] then 
-			section = section .. " x" .. sessionKills[mobName]
-		end 
-		AddItem(section)	
-		for _, itemLink in ipairs(FLogSortedItemLinks) do			
-			for j = 1, #sessionDrops[mobName][itemLink] do
-				if i > n then
-					CreateSChild(1);
-				end
-				local quantity = sessionDrops[mobName][itemLink][j][1];
-				if quantity > 1 then
-					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink.." x"..quantity);
-					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
-					FLogFrameSChildContentTable[i][3]:SetText("");
-				elseif quantity == 1 then
-					FLogFrameSChildContentTable[i][1]:SetText("    "..itemLink);
-					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
-					FLogFrameSChildContentTable[i][3]:SetText("");
-				end				
-				if (rollType == LOOT_ROLL_TYPE_NEED) then
-					FLogFrameSChildContentTable[i][2]:SetTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Up");
-					FLogFrameSChildContentTable[i][3]:SetText(roll);
-				elseif (rollType == LOOT_ROLL_TYPE_GREED) then
-					FLogFrameSChildContentTable[i][2]:SetTexture("Interface\\Buttons\\UI-GroupLoot-Coin-Up");
-					FLogFrameSChildContentTable[i][3]:SetText(roll);
-				elseif (rollType == LOOT_ROLL_TYPE_DISENCHANT) then
-					FLogFrameSChildContentTable[i][2]:SetTexture("Interface\\Buttons\\UI-GroupLoot-DE-Up");
-					FLogFrameSChildContentTable[i][3]:SetText(roll);
-				elseif (rollType == LOOT_ROLL_TYPE_PASS) then
-					FLogFrameSChildContentTable[i][2]:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up");
-				else
-					FLogFrameSChildContentTable[i][2]:SetTexture(nil);
-				end								
-				FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", function(self)
-													self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
-													self:SetBackdropColor(0.8,0.8,0.8,0.9);
-													if FLogSVTooltip then
-														GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-														GameTooltip:SetHyperlink(itemLink);
-														GameTooltip:Show();
-													end
-													end);
-				FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", function(self)
-													if FLogSVTooltip then
-														GameTooltip_Hide();
-													end
-													self:SetBackdrop(nil);
-												end);				
-				FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", function(self, button)
-													if IsShiftKeyDown() then
-													--copy into chatframe
-														AddToChatFrameEditBox(itemLink);
-													elseif IsControlKeyDown() then
-													--preview item
-														DressUpItemLink(itemLink);
-													elseif IsAltKeyDown() then
-													--edit
-														editName = mobName;
-														editItem = itemLink;
-														editIdx = j;
-														if quantity > 1 then
-															FLogEditFrameItem:SetText(itemLink.."x"..quantity);
-														else
-															FLogEditFrameItem:SetText(itemLink);
-														end																									
-														FLogEditFrameOwnerBox:SetText(mobName);
-														FLogEditFrame:Show();
-														FLogEditFrameOwnerBox:SetFocus(true);												
-													end
-												end);
-				FLogFrameSChildContentTable[i][0]:Show();
-				i = i + 1;
+
+	local function SetItemTooltip(itemLink, text)
+		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", function(self)
+			self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
+			self:SetBackdropColor(0.8,0.8,0.8,0.6);
+			if FLogSVTooltip then
+				GameTooltip:SetOwner(self, "ANCHOR_LEFT");
+				if itemLink then 
+					GameTooltip:SetHyperlink(itemLink);
+				elseif text then 
+					GameTooltip:SetText(text);
+				end 					
+				GameTooltip:Show();
 			end
-		end		
-	end
+		end);
+		FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", function(self)
+			if FLogSVTooltip then
+				GameTooltip_Hide();
+			end
+			self:SetBackdrop(nil);
+		end);		
+	end 
+
+	local function SetItemActions(callback) 
+		FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", function(self, ...)
+			self:SetBackdrop(nil);
+			callback(self, ...)
+		end);
+	end 
+
+	local function AddSessionYieldItems() 
+		AddItem(" --- "..L["Session"]..": "..FLogSVCurrentSession.." ---")
+		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetCoinTextureString(goldPerHour)) end 
+		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetCoinTextureString(GetSessionVar("ah"))) end 
+		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetCoinTextureString(GetSessionVar("gold"))) end 
+		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetCoinTextureString(GetSessionVar("vendor"))) end 
+		if GetSessionVar("xp") > 0 then AddItem(L["XP"].." "..GetSessionVar("xp")) end 
+		for faction, rep in pairs(GetSessionVar("rep")) do AddItem(rep.." "..faction.." "..L["reputation"]) end 
+		for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
+
+		local sessionKills = GetSessionVar("kills")
+		local sortedNames = SortLog(sessionKills);
+		-- add missing mobNames like Herbalism / Mining / Fishing
+		local sessionDrops = GetSessionVar("drops")
+		for name, _ in pairs(sessionDrops) do 
+			if not sessionKills[name] then 
+				tinsert(sortedNames, 1, name)
+			end 
+		end 
+		for _, mobName in ipairs(sortedNames) do	
+			local sortedItemLinks = SortItems(sessionDrops[mobName] or {});	
+			local section = mobName 
+			if sessionKills[mobName] then 
+				section = section .. " x" .. sessionKills[mobName]
+			end 
+			AddItem(section)	
+			for _, itemLink in ipairs(sortedItemLinks) do			
+				for j = 1, #sessionDrops[mobName][itemLink] do
+					if i > n then
+						CreateSChild(1);
+					end
+					local quantity = sessionDrops[mobName][itemLink][j][1];
+					local itemText = "    "..itemLink
+					if quantity > 1 then itemText = itemText.." x"..quantity end
+					AddItem(itemText, true)
+					SetItemTooltip(itemLink)
+					SetItemActions(GetOnLogItemClick(itemLink))
+					FLogFrameSChildContentTable[i][0]:Show();
+					i = i + 1
+				end
+			end		
+		end
+	end 
+
+	local function AddSessionListItems() 
+		for name, session in pairs(FLogSVSessions) do 
+			local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
+			local text = name .. " " .. GetCoinTextureString(gph) .. " " .. L["G/H"]
+			AddItem(text, true)
+			SetItemTooltip()
+			SetItemActions(GetOnLogSessionItemClick(name))
+			i = i + 1
+		end 
+	end 
+
+	if listMode then 
+		AddSessionListItems()
+	else 
+		AddSessionYieldItems()
+	end 
+
 	HideSChildFrame(i);	
 	if (FLogFrameSChildContentTable[1] and FLogFrameSChildContentTable[1][0] and FLogFrameSChildContentTable[1][0]:IsShown()) then		
 		FLogFrameShowButton:Enable();		
@@ -513,13 +550,13 @@ local function ToggleLogging()
 	if FLogSVEnabled then 
 		FLogSVEnabled = false 
 		PauseSession()
-		out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r paused|r")
+		out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r paused|r")
 	else 
 		StartSession(FLogSVCurrentSession or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r started")
+			out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r started")
 		else 
-			out("Farm session |cff9999ff"..FLogSVCurrentSession.."|r resumed")
+			out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r resumed")
 		end 	
 	end 
 end 
@@ -572,7 +609,7 @@ local function OnSkillsEvent(text)
 	local skillName, level = ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		RefreshSChildFrame()
+		FLogRefreshSChildFrame()
 	end 
 end 
 
@@ -613,7 +650,7 @@ local function OnCombatXPEvent(text)
 	local xp = ParseXPEvent(text)
 	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	RefreshSChildFrame()
+	FLogRefreshSChildFrame()
 end 
 
 -- Faction change 
@@ -637,7 +674,7 @@ local function OnCombatFactionChange(text)
 	local faction, rep = ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionVar("rep", rep)
-		RefreshSChildFrame()
+		FLogRefreshSChildFrame()
 	end 
 end 
 
@@ -651,7 +688,7 @@ local function OnCombatLogEvent()
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		RefreshSChildFrame()
+		FLogRefreshSChildFrame()
 	end 
 end 
 
@@ -713,7 +750,7 @@ end
 local function OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	RefreshSChildFrame()
+	FLogRefreshSChildFrame()
 end 
 
 -- Loot receive event
@@ -776,7 +813,7 @@ local function OnLootEvent(text)
 		end 
 
 		InsertLoot(mobName, itemLink, (quantity or 1));
-		RefreshSChildFrame();
+		FLogRefreshSChildFrame();
 	end
 end
 
@@ -911,7 +948,7 @@ local function OnAddonLoaded()
 	if not FLogSVLockMinimapButton then		
 		FLogMinimapButton:RegisterForDrag("LeftButton");			
 	end
-	RefreshSChildFrame();
+	FLogRefreshSChildFrame();
 end 
 
 -- Entering World
@@ -929,7 +966,7 @@ local function OnEnteringWorld()
 	-- elseif (inIni and inInstance == false) then
 	-- 	inIni = false;			
 	-- end
-	-- RefreshSChildFrame();
+	-- FLogRefreshSChildFrame();
 end 
 
 -- Instance info
@@ -988,7 +1025,7 @@ local function OnEvent(event, ...)
 end
 
 local function OnUpdate() 
-	if FLogSVEnabled and sessionStartTime then 
+	if FLogSVEnabled and sessionStartTime and GetSessionVar("seconds") then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - sessionStartTime
@@ -997,7 +1034,7 @@ local function OnUpdate()
 			if now - lastGPHUpdate >= 60 and sessionTime > 0 then 
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGPHUpdate = now 
-				RefreshSChildFrame()
+				FLogRefreshSChildFrame()
 			end 
 		end 
 	end 
@@ -1208,19 +1245,31 @@ FLogFrameTitleText:SetText(L["window-title"]);
 FLogFrameTitleText:SetPoint("CENTER");
 
 local FLogFrameOptions = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
-FLogFrameOptions:SetWidth(15);
-FLogFrameOptions:SetHeight(15);
+FLogFrameOptions:SetWidth(20);
+FLogFrameOptions:SetHeight(20);
 FLogFrameOptions:SetText("O");
 FLogFrameOptions:SetPoint("TOPLEFT", 5, -5);
 FLogFrameOptions:SetScript("OnClick", function()
-												if FLogOptionsFrame:IsShown() then
-													FLogOptionsFrame:Hide();													
-												elseif not FLogOptionsFrame:IsShown() then
-													FLogOptionsFrame:Show();
-												end											
-											 end);
+	if FLogOptionsFrame:IsShown() then
+		FLogOptionsFrame:Hide();													
+	elseif not FLogOptionsFrame:IsShown() then
+		FLogOptionsFrame:Show();
+	end											
+end);
 FLogFrameOptions:SetAlpha(1);
 FLogFrameOptions:Show();
+
+local FLogFrameList = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
+FLogFrameList:SetWidth(20);
+FLogFrameList:SetHeight(20);
+FLogFrameList:SetText("L");
+FLogFrameList:SetPoint("TOPLEFT", 25, -5);
+FLogFrameList:SetScript("OnClick", function()
+	listMode = not listMode
+	FLogRefreshSChildFrame()
+end);
+FLogFrameList:SetAlpha(1);
+FLogFrameList:Show();
 
 local FLogFrameClose = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
 FLogFrameClose:SetWidth(15);
@@ -1947,7 +1996,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
-														RefreshSChildFrame();
+														FLogRefreshSChildFrame();
 													end
 													FLogEditFrame:Hide();													
 												end);
@@ -2007,7 +2056,7 @@ local function RecalcLootProfit()
 	end 
 	SetSessionVar("vendor", sessionVendor)
 	SetSessionVar("ah", sessionAH)
-	RefreshSChildFrame()
+	FLogRefreshSChildFrame()
 end 
 
 -- slash
@@ -2031,11 +2080,11 @@ SlashCmdList["LH"] = function(msg)
 		elseif "HELP" == cmd or "H" == cmd then 
 			out("Use FarmLog to track your grinding session yield. Options:")
 			out(" |cff00ff00/fl|r toggle logging on/off")
-			out(" |cff00ff00/fl show|r shows log window")
-			out(" |cff00ff00/fl switch <session_name>|r switch to a different session")
-			out(" |cff00ff00/fl list|r list sessions")
+			out(" |cff00ff00/fl |cff00ff88s|cff00ff00how|r shows log window")
+			out(" |cff00ff00/fl s|cff00ff88w|cff00ff00itch <session_name>|r switch to a different session")
+			out(" |cff00ff00/fl |cff00ff88l|cff00ff00ist|r list sessions")
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
-			out(" |cff00ff00/fl reset|r reset current session")
+			out(" |cff00ff00/fl |cff00ff88r|cff00ff00eset|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
@@ -2060,14 +2109,14 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")
 			for sessionName, _ in pairs(FLogSVSessions) do 
-				out(" - |cff9999ff"..sessionName)
+				out(" - |cff99ff00"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
-			FLogSVSessions[arg1] = nil 
-			out("Deleted session |cff9999ff"..arg1)
+			DeleteSession(arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
-			out("Switching session to |cff9999ff"..arg1)
+			out("Switching session to |cff99ff00"..arg1)
 			StartSession(arg1)
+			FLogRefreshSChildFrame() 
 		elseif  "RESET" == cmd or "R" == cmd then
 			ResetSession()
 		else 

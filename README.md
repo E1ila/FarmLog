@@ -38,8 +38,9 @@ Many times you pause your farming to do something else in game, like doing an in
 
 Another thing is that the more time & data you have per session, the more accurate gold/hour metric you're going to see. For example, you can `/fl switch Herbing` when collecting herbs and `/fl switch Fishing` whenever you fish, do that for a week and you'll get a reasonably accurate gold/hour metric.
 
-![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
-![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
+![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
+![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 
 ### Changes 
 * 1.1 

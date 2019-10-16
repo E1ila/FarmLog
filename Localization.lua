@@ -46,6 +46,7 @@ function FarmLog_BuildLocalization(context)
     L["window-title"] = "Session Yield";
     L["reset-title"] = "Reset"
     L["Auction House"] = "Auction House"
+    L["Session"] = "Session"
     L["reputation"] = "reputation"
     L["levels"] = "levels"
     L["Skills"] = "Skills"
@@ -55,6 +56,7 @@ function FarmLog_BuildLocalization(context)
     L["Skinning"] = "Skinning"
     L["Unknown"] = "Unknown"
     L["Gold / Hour"] = "Gold / Hour"
+    L["G/H"] = "G/H"
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
