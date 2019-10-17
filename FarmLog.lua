@@ -1,7 +1,6 @@
-﻿FarmLogNS = {}
-FarmLogNS.FLogVersionNumber = "1.2"
-FarmLogNS.FLogVersion = "FarmLog v"..FarmLogNS.FLogVersionNumber
-FarmLogNS.FLogVersionShort = "(v"..FarmLogNS.FLogVersionNumber..")"
+﻿local VERSION = 1.3
+local APPNAME = "FarmLog"
+local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
 FLogSVAHValue = {}
 FLogSVSessions = {}
@@ -21,7 +20,7 @@ local FLogMinWidth = (300);
 local FLogMinHeight = (200);
 local FLogFrameSChildContentTable = {};
 local FLogFrameTitleText
-local L = FarmLog_BuildLocalization(FarmLogNS)
+local L = FarmLog_BuildLocalization()
 
 local listMode = false
 local gphNeedsUpdate = false 
@@ -72,7 +71,7 @@ local function secondsToClock(seconds)
 end
 
 local function GetShortCoinTextureString(money)
-	if not money or tostring(money) == "nan"  then money = 0 end 
+	if not money or tostring(money) == "nan"  then return "--" end 
 	-- out("money = "..tostring(money))
 	if money > 100000 then 
 		money = math.floor(money / 10000) * 10000
@@ -271,7 +270,7 @@ local function ReportSession()
 	local sessionDrops = GetSessionVar("drops")
 	if (sessionDrops and FLogFrameSChildContentTable[1][0]:IsShown()) then
 		local sortedNames = SortLog(sessionDrops);
-		SendReport(L["Report"]..FarmLogNS.FLogVersionShort..":");
+		SendReport(L["Report"]..APPNAME..":");
 		SendReport(L["Report2"]..tostring(SVLastChange));
 		for _, mobName in ipairs(sortedNames) do
 			local FLogSortedItemLinks = SortItems(sessionDrops[mobName]);
@@ -836,7 +835,7 @@ end
 -- Addon Loaded
 
 local function OnAddonLoaded()
-	out(L["loaded-welcome"]);
+	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 	if FLogSVItemRarity == nil then
 		FLogSVItemRarity = {};
 		FLogSVItemRarity[0]=true; --poor (grey)
@@ -1033,7 +1032,7 @@ local function OnEvent(event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" then
 		OnEnteringWorld(...)
-	elseif event == "ADDON_LOADED" and ... == "FarmLog" then		
+	elseif event == "ADDON_LOADED" and ... == APPNAME then		
 		OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
 		PauseSession(...)
@@ -2106,6 +2105,7 @@ SlashCmdList["LH"] = function(msg)
 			out(" |cff00ff00/fl |cff00ff88r|cff00ff00eset|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
+			out(" |cff00ff00/fl ren <new_name>|r renames current session")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
@@ -2136,6 +2136,12 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "SWITCH" == cmd or "W" == cmd then
 			out("Switching session to |cff99ff00"..arg1)
 			StartSession(arg1)
+			FLogRefreshSChildFrame() 
+		elseif  "REN" == cmd then
+			out("Renaming session from |cff99ff00"..FLogSVCurrentSession.."|r to |cff99ff00"..arg1)
+			FLogSVSessions[arg1] = FLogSVSessions[FLogSVCurrentSession]
+			FLogSVSessions[FLogSVCurrentSession] = nil 
+			FLogSVCurrentSession = arg1 
 			FLogRefreshSChildFrame() 
 		elseif "ASI" == cmd then 
 			FLogSVAutoSwitchOnInstances = not FLogSVAutoSwitchOnInstances 
