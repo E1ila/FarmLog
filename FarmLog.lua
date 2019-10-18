@@ -1,4 +1,4 @@
-﻿local VERSION = 1.4
+﻿local VERSION = 1.5
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -479,7 +479,7 @@ function FLogRefreshSChildFrame()
 
 	local function AddSessionYieldItems() 
 		AddItem(" --- "..L["Session"]..": "..FLogVars["currentSession"].." ---")
-		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
+		if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
 		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
 		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
 		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
@@ -524,7 +524,10 @@ function FLogRefreshSChildFrame()
 	local function AddSessionListItems() 
 		for name, session in pairs(FLogVars["sessions"]) do 
 			local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
-			local text = name .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
+			local text = name
+			if gph and gph > 0 and tostring(gph) ~= "nan" then 
+				text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
+			end 
 			AddItem(text, true)
 			SetItemTooltip()
 			SetItemActions(GetOnLogSessionItemClick(name))
