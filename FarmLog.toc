@@ -1,7 +1,7 @@
 ﻿## Interface: 11302
 ## Title: FarmLog
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
-## Author: SirMezO @EU-Aegwynn, E1ila
+## Author: SirMezO @EU-Aegwynn, Kof @Shazzrah
 ## Version: v1.0
 ## SavedVariables: FLogGlobalVars, FLogSVDebugMode, FLogSVItemRarity, FLogSVOptionReportTo, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
 ## SavedVariablesPerCharacter: FLogVars, FLogSVEnabled, FLogSVSessions, FLogSVCurrentSession, FLogSVLastInstance, FLogSVInInstance, FLogSVAutoSwitchOnInstances

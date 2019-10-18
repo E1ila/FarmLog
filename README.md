@@ -43,6 +43,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 
 ### Changes 
+* 1.4
+    * New saved variables database format
+* 1.3 
+    * Allowing to rename sessions
 * 1.2
     * Auto start session when entering an instance, with current instance name for session name.
 * 1.1 
