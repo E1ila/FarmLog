@@ -1,4 +1,4 @@
-﻿local VERSION = 1.3
+﻿local VERSION = 1.4
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -24,12 +24,12 @@ FLogVars = {
 		["point"] = "CENTER",
 		["x"] = 0,
 		["y"] = 0,
-	}
+	},
 	["minimapButtonPosision"] = {
 		["point"] = "TOP",
 		["x"] = 0,
 		["y"] = 0,
-	}
+	},
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
 	["version"] = VERSION,
@@ -108,19 +108,19 @@ end
 -- Session management ------------------------------------------------------------
 
 local function GetSessionVar(varName, sessionName)
-	return (FLogVars["sessions"][sessionName or FLogVar["currentSession"]] or {})[varName]
+	return (FLogVars["sessions"][sessionName or FLogVars["currentSession"]] or {})[varName]
 end 
 
 local function SetSessionVar(varName, value)
-	FLogVars["sessions"][FLogVar["currentSession"]][varName] = value 
+	FLogVars["sessions"][FLogVars["currentSession"]][varName] = value 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	FLogVars["sessions"][FLogVar["currentSession"]][varName] = (FLogVars["sessions"][FLogVar["currentSession"]][varName] or 0) + incValue 
+	FLogVars["sessions"][FLogVars["currentSession"]][varName] = (FLogVars["sessions"][FLogVars["currentSession"]][varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
-	FLogVars["sessions"][FLogVar["currentSession"]][varName][entry] = (FLogVars["sessions"][FLogVar["currentSession"]][varName][entry] or 0) + incValue 
+	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = (FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] or 0) + incValue 
 end 
 
 local function ResumeSession() 
@@ -142,7 +142,7 @@ local function PauseSession()
 end 
 
 local function ResetSessionVars()
-	FLogVars["sessions"][FLogVar["currentSession"]] = {
+	FLogVars["sessions"][FLogVars["currentSession"]] = {
 		["drops"] = {},
 		["kills"] = {},
 		["skill"] = {},
@@ -164,7 +164,7 @@ local function StartSession(sessionName, dontPause)
 		end 
 	end 
 
-	FLogVar["currentSession"] = sessionName
+	FLogVars["currentSession"] = sessionName
 	if not FLogVars["sessions"][sessionName] then 
 		ResetSessionVars()
 	end 
@@ -174,10 +174,10 @@ end
 
 local function DeleteSession(name) 
 	FLogVars["sessions"][name] = nil 
-	if FLogVar["currentSession"] == name then 
+	if FLogVars["currentSession"] == name then 
 		StartSession("default", true)
 	end 
-	if FLogVar["currentSession"] == name and name == "default" then 
+	if FLogVars["currentSession"] == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
 	else 
 		out("Deleted session |cff99ff00"..name)
@@ -193,7 +193,7 @@ local function ResetSession()
 	-- SVLastChange = date("%d.%m.%y - %H:%M");
 	PauseSession()
 	ResetSessionVars()
-	out("Reset session |cff99ff00"..FLogVar["currentSession"])
+	out("Reset session |cff99ff00"..FLogVars["currentSession"])
 	FLogRefreshSChildFrame()
 end
 
@@ -508,7 +508,7 @@ function FLogRefreshSChildFrame()
 	end 
 
 	local function AddSessionYieldItems() 
-		AddItem(" --- "..L["Session"]..": "..FLogVar["currentSession"].." ---")
+		AddItem(" --- "..L["Session"]..": "..FLogVars["currentSession"].." ---")
 		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
 		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
 		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
@@ -591,13 +591,13 @@ local function ToggleLogging()
 	if FLogVars["enabled"] then 
 		FLogVars["enabled"] = false 
 		PauseSession()
-		out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r paused|r")
+		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
 	else 
-		StartSession(FLogVar["currentSession"] or "default")
+		StartSession(FLogVars["currentSession"] or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r started")
+			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r started")
 		else 
-			out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r resumed")
+			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
 		end 	
 	end 
 end 
@@ -862,7 +862,7 @@ local function OnAddonLoaded()
 	-- migration
 	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
 		-- migrate 1 session into multi session DB
-		FLogVars["sessions"][FLogVar["currentSession"]] = {
+		FLogVars["sessions"][FLogVars["currentSession"]] = {
 			["drops"] = FLogSVDrops,
 			["kills"] = FLogSVKills,
 			["skill"] = FLogSVSkill,
@@ -876,7 +876,7 @@ local function OnAddonLoaded()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars["sessions"][FLogVar["currentSession"]] then 
+	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
 		ResetSessionVars()
 	end 
 
@@ -969,9 +969,9 @@ local function OnEnteringWorld()
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
-	if not FLogVars["inInstance"] and inInstance and FLogVar["instanceName"] ~= instanceName then
+	if not FLogVars["inInstance"] and inInstance and FLogVars["instanceName"] ~= instanceName then
 		FLogVars["inInstance"] = true;
-		FLogVar["instanceName"] = instanceName;
+		FLogVars["instanceName"] = instanceName;
 		StartSession(instanceName)
 	elseif (FLogVars["inInstance"] and inInstance == false) then
 		FLogVars["inInstance"] = false;			
@@ -2130,10 +2130,10 @@ SlashCmdList["LH"] = function(msg)
 			StartSession(arg1)
 			FLogRefreshSChildFrame() 
 		elseif  "REN" == cmd then
-			out("Renaming session from |cff99ff00"..FLogVar["currentSession"].."|r to |cff99ff00"..arg1)
-			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVar["currentSession"]]
-			FLogVars["sessions"][FLogVar["currentSession"]] = nil 
-			FLogVar["currentSession"] = arg1 
+			out("Renaming session from |cff99ff00"..FLogVars["currentSession"].."|r to |cff99ff00"..arg1)
+			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]
+			FLogVars["sessions"][FLogVars["currentSession"]] = nil 
+			FLogVars["currentSession"] = arg1 
 			FLogRefreshSChildFrame() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
