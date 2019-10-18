@@ -1,6 +1,5 @@
 
 function FarmLog_BuildLocalization(context)
-    --begin localization
     local L = {};
     L["disabled"] = "disabled"
     L["enabled"] = "enabled"
@@ -60,65 +59,11 @@ function FarmLog_BuildLocalization(context)
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
-    L["loot"] = "loot: "; --AddOn needs correct localization to work!!!
-    L["you"] = "You"; --AddOn needs correct localization to work!!!
+    L["loot"] = "loot: ";
+    L["you"] = "You";
+    L["Resume"] = "Resume";
+    L["Pause"] = "Pause";
     if (GetLocale() == "enUS") then
-    elseif (GetLocale() == "deDE") then
-        L["yes"] = "Ja";
-        L["no"] = "Nein";
-        L["reset"] = "Daten löschen?";	
-        L["clear"] = "Löschen";
-        L["report"] = "Berichten";
-        L["Log-Options:"] = "Log-Optionen:";
-        L["poor"] = "Schlechte Gegenstände";
-        L["common"] = "Gewöhnliche Gegenstände";
-        L["uncommon"] = "Gute Gegenstände";
-        L["rare"] = "Rare Gegenstände";
-        L["epic"] = "Epische Gegenstände";
-        L["legendary"] = "Legendäre Gegenstände";
-        L["artifact"] = "Artefakte";
-        L["heirloom"] = "Erbstücke"
-        L["solo"] = "Solo";
-        L["party"] = "Gruppe";
-        L["raid"] = "Schlachtzug";
-        L["Report"] = "FLogSVDrops-Bericht ";
-        L["Report2"] = "Letzte Änderung am ";
-        L["Report:"] = "Bericht an:";
-        L["ChatFrame1"] = "ChatFrame1";
-        L["/say"] = "/sagen";
-        L["/yell"] = "/schreien";
-        L["/party"] = "/gruppe";
-        L["/raid"] = "/schlachtzug";
-        L["/guild"] = "/gilde";
-        L["/whisper:"] = "/flüstern:";
-        L["General-Options:"] = "Allgemeine Optionen:";
-        L["lockFrames"] = "Fenster sperren";
-        L["enableMinimapButton"] = "Minimap-Button anzeigen";
-        L["lockMinimapButton"] = "Minimap-Button sperren";
-        L["LDBClick"] = "Links-Klicken um FarmLog zu öffnen|nRechts-Klicken um Blizzard-FarmLog zu öffnen";
-        L["Help"] = "O = Optionen|n? = Hilfe|nX = Fenster schließen|n|n- Mouseover zum hervorheben der Zeile und um den Item-Tooltip anzuzeigen|n- Shift-Klick um den ItemLink in die Chatframe-EditBox einzufügen|n- Alt-Klick um den Besitzer der / des ausgewählten Items zu ändern|n|nBerichten = FLogSVDrops-Bericht erstellen|nReset = FLogSVDrops zurücksetzen";
-        L["tooltip"] = "Item-Tolltip anzeigen";
-        L["need"] = "B: ";
-        L["greed"] = "G: ";
-        L["disenchant"] = "E: ";
-        L["loot"] = "Beute: ";
-        L["you"] = "Ihr";
-    elseif (GetLocale() == "zhCN") then
-        L["loot"] = "获得了物品: "; 
-        L["you"] = "你";
-    else
-        --[[ 
-        feel free to create the following localizations (you can contact me via curse.com):
-        "frFR": French
-        "koKR": Korean
-        "zhCN": Chinese (simplified)
-        "zhTW": Chinese (traditional)
-        "ruRU": Russian (UI AddOn)
-        "esES": Spanish (Spain)
-        "esMX": Spanish (Mexico)
-        ]]--
-        print("|cffff0000FarmLog: Your WoW-Version isn't compatible. This is caused by localization issues.|r");
     end
-    --end localization
     return L
 end

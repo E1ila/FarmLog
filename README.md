@@ -68,6 +68,7 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow listing loot without mob names
 * Suggest auto start/stop session on instance
 * Add pause/resume button on window
+* Support multiboxing GPH
 
 This addon was based on the LootHistory addon which tracks who received which loot -
 https://www.curseforge.com/wow/addons/loothistory

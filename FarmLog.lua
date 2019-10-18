@@ -38,12 +38,13 @@ FLogVars = {
 local editName = "";
 local editItem = "";
 local editIdx = -1;
-local FLogMaxWidth = (GetScreenWidth() - 50);
-local FLogMaxHeight = (GetScreenHeight() - 50);
+local maxWindowWidth = (GetScreenWidth() - 50);
+local maxWindowHeight = (GetScreenHeight() - 50);
 local FLogMinWidth = (300);
-local FLogMinHeight = (200);
+local minWindowHeight = (200);
 local FLogFrameSChildContentTable = {};
 local FLogFrameTitleText
+local FLogFrameShowButton
 local L = FarmLog_BuildLocalization()
 
 local listMode = false
@@ -104,6 +105,50 @@ local function GetShortCoinTextureString(money)
 	end 
 	return GetCoinTextureString(money, 12)
 end 
+
+local function SortByStringKey(db)
+	local database = {};
+	for name, _ in pairs(db) do	
+		local i = 1
+		local n = #database + 1;
+		while i <= n do			
+			if i == n then
+				tinsert(database, name);
+			elseif name <= database[i] then
+				tinsert(database, i, name);					
+				i = n;			
+			end
+			i = i + 1;
+		end
+	end
+	return database;
+end
+
+local function SortByLinkKey(db)
+	local database = {};
+	for itemLink, _ in pairs(db) do	
+		local name1, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(itemLink);
+		if name1 then
+			local i = 1
+			local n = #database + 1;
+			while i <= n do			
+				if i == n then
+					tinsert(database, itemLink);
+				else
+					local name2, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(database[i]);					
+					if name2 then
+						if name1 <= name2 then
+							tinsert(database, i, itemLink);					
+							i = n;
+						end
+					end
+				end
+				i = i + 1;
+			end
+		end
+	end
+	return database;
+end
 
 -- Session management ------------------------------------------------------------
 
@@ -187,10 +232,6 @@ end
 -- Reporting ------------------------------------------------------------
 
 local function ResetSession()
-	-- HideSChildFrame(1);
-	-- FLogFrameShowButton:Disable();
-	-- FLogFrameClearButton:Disable();
-	-- SVLastChange = date("%d.%m.%y - %H:%M");
 	PauseSession()
 	ResetSessionVars()
 	out("Reset session |cff99ff00"..FLogVars["currentSession"])
@@ -210,54 +251,6 @@ local function InsertLoot(mobName, itemLink, quantity)
 			sessionDrops[mobName][itemLink] = {{quantity}};
 		end
 	end
-end
-
-local function SortLog(db)
--- Sort the userNames of the FarmLog alphabetically.
--- return as table.
-	local database = {};
-	for name, _ in pairs(db) do	
-		local i = 1
-		local n = #database + 1;
-		while i <= n do			
-			if i == n then
-				tinsert(database, name);
-			elseif name <= database[i] then
-				tinsert(database, i, name);					
-				i = n;			
-			end
-			i = i + 1;
-		end
-	end
-	return database;
-end
-
-local function SortItems(db)
--- Sort the ItemLinks of the ItemIDs of the FLogSVDrops[mobName] alphabetically.
--- return as table.
-	local database = {};
-	for itemLink, _ in pairs(db) do	
-		local name1, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(itemLink);
-		if name1 then
-			local i = 1
-			local n = #database + 1;
-			while i <= n do			
-				if i == n then
-					tinsert(database, itemLink);
-				else
-					local name2, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(database[i]);					
-					if name2 then
-						if name1 <= name2 then
-							tinsert(database, i, itemLink);					
-							i = n;
-						end
-					end
-				end
-				i = i + 1;
-			end
-		end
-	end
-	return database;
 end
 
 local function SendReport(message)
@@ -289,29 +282,6 @@ local function SendReport(message)
 		if (not (h == nil)) then
 			SendChatMessage(message, "WHISPER", nil, h);
 		end
-	end
-end
-
-local function ReportSession()
-	local sessionDrops = GetSessionVar("drops")
-	if (sessionDrops and FLogFrameSChildContentTable[1][0]:IsShown()) then
-		local sortedNames = SortLog(sessionDrops);
-		SendReport(L["Report"]..APPNAME..":");
-		SendReport(L["Report2"]..tostring(SVLastChange));
-		for _, mobName in ipairs(sortedNames) do
-			local FLogSortedItemLinks = SortItems(sessionDrops[mobName]);
-			SendReport(mobName..":");
-			for _, itemLink in ipairs(FLogSortedItemLinks) do				
-				for j = 1, #sessionDrops[mobName][itemLink] do
-					local report = "  "..itemLink;
-					local quantity = sessionDrops[mobName][itemLink][j][1];
-					if quantity > 1 then
-						report = report.."x"..quantity;
-					end
-					SendReport(report);
-				end
-			end
-		end		
 	end
 end
 
@@ -518,7 +488,7 @@ function FLogRefreshSChildFrame()
 		for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
 
 		local sessionKills = GetSessionVar("kills")
-		local sortedNames = SortLog(sessionKills);
+		local sortedNames = SortByStringKey(sessionKills);
 		-- add missing mobNames like Herbalism / Mining / Fishing
 		local sessionDrops = GetSessionVar("drops")
 		for name, _ in pairs(sessionDrops) do 
@@ -527,7 +497,7 @@ function FLogRefreshSChildFrame()
 			end 
 		end 
 		for _, mobName in ipairs(sortedNames) do	
-			local sortedItemLinks = SortItems(sessionDrops[mobName] or {});	
+			local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
 			local section = mobName 
 			if sessionKills[mobName] then 
 				section = section .. " x" .. sessionKills[mobName]
@@ -592,6 +562,7 @@ local function ToggleLogging()
 		FLogVars["enabled"] = false 
 		PauseSession()
 		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
+		FLogFrameShowButton:SetText(L["Resume"]);
 	else 
 		StartSession(FLogVars["currentSession"] or "default")
 		if GetSessionVar("seconds") == 0 then 
@@ -599,6 +570,7 @@ local function ToggleLogging()
 		else 
 			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
 		end 	
+		FLogFrameShowButton:SetText(L["Pause"]);
 	end 
 end 
 
@@ -915,19 +887,7 @@ local function OnAddonLoaded()
 	FLogOptionsCheckButtonLog4:SetChecked(FLogGlobalVars["itemQuality"][4]);
 	FLogOptionsCheckButtonLog5:SetChecked(FLogGlobalVars["itemQuality"][5]);
 	FLogOptionsCheckButtonLog6:SetChecked(FLogGlobalVars["itemQuality"][6]);
-	
-	-- FLogOptionsCheckButtonLogSolo:SetChecked(FLogSVOptionGroupType["Solo"]);
-	-- FLogOptionsCheckButtonLogParty:SetChecked(FLogSVOptionGroupType["Party"]);
-	-- FLogOptionsCheckButtonLogRaid:SetChecked(FLogSVOptionGroupType["Raid"]);
-	
-	FLogReportFrameCheckButtonChatFrame:SetChecked(FLogGlobalVars["reportTo"]["ChatFrame1"]);
-	FLogReportFrameCheckButtonSay:SetChecked(FLogGlobalVars["reportTo"]["Say"]);
-	FLogReportFrameCheckButtonYell:SetChecked(FLogGlobalVars["reportTo"]["Yell"]);
-	FLogReportFrameCheckButtonParty:SetChecked(FLogGlobalVars["reportTo"]["Party"]);
-	FLogReportFrameCheckButtonRaid:SetChecked(FLogGlobalVars["reportTo"]["Raid"]);
-	FLogReportFrameCheckButtonGuild:SetChecked(FLogGlobalVars["reportTo"]["Guild"]);
-	FLogReportFrameCheckButtonWhisper:SetChecked(FLogGlobalVars["reportTo"]["Whisper"]);
-	
+
 	FLogOptionsCheckButtonLockFrames:SetChecked(FLogVars["lockFrames"]);
 	FLogOptionsCheckButtonEnableMinimapButton:SetChecked(FLogVars["enableMinimapButton"]);
 	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogVars["lockMinimapButton"]);
@@ -940,8 +900,10 @@ local function OnAddonLoaded()
 	if FLogVars["enabled"] then 
 		ResumeSession(true)
 		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+		FLogFrameShowButton:SetText(L["Pause"])
 	else 
 		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FLogFrameShowButton:SetText(L["Resume"])
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 		gphNeedsUpdate = true 
 	end 
@@ -1062,7 +1024,7 @@ end
 --LDB
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1");
 local dataobj = ldb:GetDataObjectByName("FarmLog") or ldb:NewDataObject("FarmLog", {
-	type = "data source", icon = [[Interface\AddOns\FarmLog\FarmLogLDBIcon]], text = "FarmLog",
+	type = "data source", icon = [[Interface\AddOns\FarmLog\FarmLogLDBIconFarmLogIconON]], text = "FarmLog",
 	OnClick = function(self, button)
 				if button == "RightButton" then
 					ToggleLogging()
@@ -1213,8 +1175,8 @@ FLogFrame:SetScript("OnSizeChanged", function()
 												end
 											end);
 FLogFrame:SetResizable(true);
-FLogFrame:SetMaxResize(FLogMaxWidth, FLogMaxHeight);
-FLogFrame:SetMinResize(FLogMinWidth, FLogMinHeight);										  
+FLogFrame:SetMaxResize(maxWindowWidth, maxWindowHeight);
+FLogFrame:SetMinResize(FLogMinWidth, minWindowHeight);										  
 FLogFrame:Hide();
 tinsert(UISpecialFrames, FLogFrame:GetName());
 
@@ -1334,17 +1296,12 @@ FLogFrameClearButton:SetScript("OnClick", function() FLogResetFrame:Show(); end)
 FLogFrameClearButton:SetAlpha(1);
 FLogFrameClearButton:Show();
 
-local FLogFrameShowButton = CreateFrame("BUTTON", "FLogFrameShowButton", FLogFrame, "UIPanelButtonTemplate");
+FLogFrameShowButton = CreateFrame("BUTTON", "FLogFrameShowButton", FLogFrame, "UIPanelButtonTemplate");
 FLogFrameShowButton:SetWidth(105);
 FLogFrameShowButton:SetHeight(20);
-FLogFrameShowButton:SetText(L["report"]);
+FLogFrameShowButton:SetText(L["Resume"])
 FLogFrameShowButton:SetPoint("BOTTOM", 55, 10);
-FLogFrameShowButton:SetScript("OnClick", function()if FLogReportFrame:IsShown() then
-													FLogReportFrame:Hide();													
-												elseif not FLogReportFrame:IsShown() then
-													FLogReportFrame:Show();
-												end	
-												end);
+FLogFrameShowButton:SetScript("OnClick", function() ToggleLogging() end)
 FLogFrameShowButton:SetAlpha(1);
 FLogFrameShowButton:Show();
 
@@ -1711,224 +1668,6 @@ FLogOptionsCheckButtonTooltip:SetScript("OnClick", function()
 end);
 FLogOptionsCheckButtonTooltip:Show();
 
-local FLogReportFrame = CreateFrame("FRAME", "FLogReportFrame", UIParent);
-FLogReportFrame:SetFrameStrata("HIGH"); 
-FLogReportFrame:SetWidth(200);
-FLogReportFrame:SetHeight(210);
-FLogReportFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogReportFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogReportFrame:SetPoint("CENTER");
-FLogReportFrame:EnableMouse(true);
-FLogReportFrame:RegisterForDrag("LeftButton");
-FLogReportFrame:SetMovable(true);
-FLogReportFrame:SetUserPlaced(true);
-FLogReportFrame:SetScript("OnDragStart", function(this) this:StartMoving(); end);
-FLogReportFrame:SetScript("OnDragStop", function(this) this:StopMovingOrSizing(); end);
-FLogReportFrame:Hide();
-tinsert(UISpecialFrames, FLogReportFrame:GetName());
-
-local FLogReportFrameTop = CreateFrame("FRAME", nil, FLogReportFrame);
-FLogReportFrameTop:SetWidth(120);
-FLogReportFrameTop:SetHeight(25);
-FLogReportFrameTop:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogReportFrameTop:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogReportFrameTop:SetPoint("TOP", 0, 10);
-FLogReportFrameTop:Show();
-
-local FLogReportFrameText = FLogReportFrameTop:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogReportFrameText:SetText(L["Report"]);
-FLogReportFrameText:SetPoint("CENTER");
-
-local FLogReportFrameClose = CreateFrame("BUTTON", nil, FLogReportFrame, "UIPanelButtonTemplate");
-FLogReportFrameClose:SetWidth(15);
-FLogReportFrameClose:SetHeight(15);
-FLogReportFrameClose:SetText("X");
-FLogReportFrameClose:SetPoint("TOPRIGHT", -5, -5);
-FLogReportFrameClose:SetScript("OnClick", function()
-											FLogReportFrame:Hide();											
-										   end);
-FLogReportFrameClose:SetAlpha(1);
-FLogReportFrameClose:Show();
-
-local FLogReportFrameText = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameText:SetTextColor(1.0, 0.8, 0, 0.8);
-FLogReportFrameText:SetWidth(175);
-FLogReportFrameText:SetJustifyH("LEFT");
-FLogReportFrameText:SetText(L["Report:"]);
-FLogReportFrameText:SetPoint("TOPLEFT", 5, -30);
-
-local FLogReportFrameChatFrame = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameChatFrame:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameChatFrame:SetWidth(175);
-FLogReportFrameChatFrame:SetHeight(15);
-FLogReportFrameChatFrame:SetJustifyH("LEFT");
-FLogReportFrameChatFrame:SetText(L["ChatFrame1"]);
-FLogReportFrameChatFrame:SetPoint("TOP", FLogReportFrameText, "BOTTOM", 25, -5);
-
-local FLogReportFrameCheckButtonChatFrame = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonChatFrame", FLogReportFrame);
-FLogReportFrameCheckButtonChatFrame:SetWidth(15);
-FLogReportFrameCheckButtonChatFrame:SetHeight(15);
-FLogReportFrameCheckButtonChatFrame:SetPoint("RIGHT", FLogReportFrameChatFrame, "LEFT", -5, 0);
-FLogReportFrameCheckButtonChatFrame:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonChatFrame:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonChatFrame:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonChatFrame:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonChatFrame:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["ChatFrame1"] = tobool(FLogReportFrameCheckButtonChatFrame:GetChecked()); end);
-FLogReportFrameCheckButtonChatFrame:Show();
-
-local FLogReportFrameSay = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameSay:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameSay:SetWidth(175);
-FLogReportFrameSay:SetHeight(15);
-FLogReportFrameSay:SetJustifyH("LEFT");
-FLogReportFrameSay:SetText(L["/say"]);
-FLogReportFrameSay:SetPoint("TOP", FLogReportFrameChatFrame, "BOTTOM", 0, 0);
-
-local FLogReportFrameCheckButtonSay = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonSay", FLogReportFrame);
-FLogReportFrameCheckButtonSay:SetWidth(15);
-FLogReportFrameCheckButtonSay:SetHeight(15);
-FLogReportFrameCheckButtonSay:SetPoint("RIGHT", FLogReportFrameSay, "LEFT", -5, 0);
-FLogReportFrameCheckButtonSay:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonSay:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonSay:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonSay:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonSay:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Say"] = tobool(FLogReportFrameCheckButtonSay:GetChecked()); end);
-FLogReportFrameCheckButtonSay:Show();
-
-local FLogReportFrameYell = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameYell:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameYell:SetWidth(175);
-FLogReportFrameYell:SetHeight(15);
-FLogReportFrameYell:SetJustifyH("LEFT");
-FLogReportFrameYell:SetText(L["/yell"]);
-FLogReportFrameYell:SetPoint("TOP", FLogReportFrameSay, "BOTTOM", 0, 0);
-
-local FLogReportFrameCheckButtonYell = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonYell", FLogReportFrame);
-FLogReportFrameCheckButtonYell:SetWidth(15);
-FLogReportFrameCheckButtonYell:SetHeight(15);
-FLogReportFrameCheckButtonYell:SetPoint("RIGHT", FLogReportFrameYell, "LEFT", -5, 0);
-FLogReportFrameCheckButtonYell:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonYell:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonYell:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonYell:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonYell:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Yell"] = tobool(FLogReportFrameCheckButtonYell:GetChecked()); end);
-FLogReportFrameCheckButtonYell:Show();
-
-local FLogReportFrameParty = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameParty:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameParty:SetWidth(175);
-FLogReportFrameParty:SetHeight(15);
-FLogReportFrameParty:SetJustifyH("LEFT");
-FLogReportFrameParty:SetText(L["/party"]);
-FLogReportFrameParty:SetPoint("TOP", FLogReportFrameYell, "BOTTOM", 0, 0);
-
-local FLogReportFrameCheckButtonParty = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonParty", FLogReportFrame);
-FLogReportFrameCheckButtonParty:SetWidth(15);
-FLogReportFrameCheckButtonParty:SetHeight(15);
-FLogReportFrameCheckButtonParty:SetPoint("RIGHT", FLogReportFrameParty, "LEFT", -5, 0);
-FLogReportFrameCheckButtonParty:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonParty:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonParty:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonParty:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonParty:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Party"] = tobool(FLogReportFrameCheckButtonParty:GetChecked()); end);
-FLogReportFrameCheckButtonParty:Show();
-
-local FLogReportFrameRaid = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameRaid:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameRaid:SetWidth(175);
-FLogReportFrameRaid:SetHeight(15);
-FLogReportFrameRaid:SetJustifyH("LEFT");
-FLogReportFrameRaid:SetText(L["/raid"]);
-FLogReportFrameRaid:SetPoint("TOP", FLogReportFrameParty, "BOTTOM", 0, 0);
-
-local FLogReportFrameCheckButtonRaid = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonRaid", FLogReportFrame);
-FLogReportFrameCheckButtonRaid:SetWidth(15);
-FLogReportFrameCheckButtonRaid:SetHeight(15);
-FLogReportFrameCheckButtonRaid:SetPoint("RIGHT", FLogReportFrameRaid, "LEFT", -5, 0);
-FLogReportFrameCheckButtonRaid:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonRaid:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonRaid:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonRaid:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");	
-FLogReportFrameCheckButtonRaid:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Raid"] = tobool(FLogReportFrameCheckButtonRaid:GetChecked()); end);
-FLogReportFrameCheckButtonRaid:Show();
-
-local FLogReportFrameGuild = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameGuild:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameGuild:SetWidth(175);
-FLogReportFrameGuild:SetHeight(15);
-FLogReportFrameGuild:SetJustifyH("LEFT");
-FLogReportFrameGuild:SetText(L["/guild"]);
-FLogReportFrameGuild:SetPoint("TOP", FLogReportFrameRaid, "BOTTOM", 0, 0);
-
-local FLogReportFrameCheckButtonGuild = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonGuild", FLogReportFrame);
-FLogReportFrameCheckButtonGuild:SetWidth(15);
-FLogReportFrameCheckButtonGuild:SetHeight(15);
-FLogReportFrameCheckButtonGuild:SetPoint("RIGHT", FLogReportFrameGuild, "LEFT", -5, 0);
-FLogReportFrameCheckButtonGuild:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonGuild:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonGuild:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonGuild:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonGuild:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Guild"] = tobool(FLogReportFrameCheckButtonGuild:GetChecked()); end);
-FLogReportFrameCheckButtonGuild:Show();
-
-local FLogReportFrameWhisper = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogReportFrameWhisper:SetTextColor(1, 1, 1, 0.8);
-FLogReportFrameWhisper:SetWidth(100);
-FLogReportFrameWhisper:SetHeight(15);
-FLogReportFrameWhisper:SetJustifyH("LEFT");
-FLogReportFrameWhisper:SetText(L["/whisper:"]);
-FLogReportFrameWhisper:SetPoint("TOPLEFT", FLogReportFrameGuild, "BOTTOMLEFT");
-
-local FLogReportFrameCheckButtonWhisper = CreateFrame("CHECKBUTTON", "FLogReportFrameCheckButtonWhisper", FLogReportFrame);
-FLogReportFrameCheckButtonWhisper:SetWidth(15);
-FLogReportFrameCheckButtonWhisper:SetHeight(15);
-FLogReportFrameCheckButtonWhisper:SetPoint("RIGHT", FLogReportFrameWhisper, "LEFT", -5, 0);
-FLogReportFrameCheckButtonWhisper:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogReportFrameCheckButtonWhisper:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogReportFrameCheckButtonWhisper:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogReportFrameCheckButtonWhisper:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonWhisper:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Whisper"] = tobool(FLogReportFrameCheckButtonWhisper:GetChecked()); end);
-FLogReportFrameCheckButtonWhisper:Show();
-
-local FLogReportFrameWhisperBox = CreateFrame("EDITBOX", "FLogReportFrameWhisperBox", FLogReportFrame, "InputBoxTemplate")
-FLogReportFrameWhisperBox:SetWidth(90);
-FLogReportFrameWhisperBox:SetHeight(15);
-FLogReportFrameWhisperBox:SetPoint("LEFT", FLogReportFrameWhisper, "RIGHT", -40, -2);
-FLogReportFrameWhisperBox:SetMaxLetters(12);
-FLogReportFrameWhisperBox:SetScript("OnTabPressed", function()
-													local n, r = UnitName("TARGET");
-														if not (n == nil) then
-														FLogReportFrameWhisperBox:SetText(n);
-													end
-												end);
-
-FLogReportFrameWhisperBox:SetScript("OnEnterPressed", function() FLogReportFrameWhisperBox:ClearFocus(); end);
-FLogReportFrameWhisperBox:SetScript("OnTextChanged", function()
-	local h = FLogReportFrameWhisperBox:GetText()
-	if #h == 1 then
-		FLogReportFrameWhisperBox:SetText(strupper(h));
-	elseif #h > 1 then
-		local a = strsub(h, 1, 1);
-		local b = strsub(h, 2);		
-		FLogReportFrameWhisperBox:SetText(strupper(a)..strlower(b));
-	end
-	FLogSVWhisperBox = FLogReportFrameWhisperBox:GetText();
-end);
-FLogReportFrameWhisperBox:SetAutoFocus(false);
-FLogReportFrameWhisperBox:Show();
-
-local FLogReportFrameReportButton = CreateFrame("BUTTON", "FLogReportFrameReportButton", FLogReportFrame, "UIPanelButtonTemplate");
-FLogReportFrameReportButton:SetWidth(180);
-FLogReportFrameReportButton:SetHeight(30);
-FLogReportFrameReportButton:SetText(L["report"]);
-FLogReportFrameReportButton:SetPoint("BOTTOM", FLogReportFrame, "BOTTOM", 0, 10);
-FLogReportFrameReportButton:SetScript("OnClick", function()													
-													ReportSession();													
-												end);
-FLogReportFrameReportButton:SetAlpha(1);
-FLogReportFrameReportButton:Show();
-
 local FLogEditFrame = CreateFrame("FRAME", "FLogEditFrame", UIParent);
 FLogEditFrame:SetFrameStrata("HIGH"); 
 FLogEditFrame:SetWidth(310);
@@ -2108,7 +1847,13 @@ SlashCmdList["LH"] = function(msg)
 			if itemLink and GetItemInfo(itemLink) then 
 				local value = nil 
 				if ((endIndex + 2 ) <= (#arg1)) then
-					value = tonumber(string.sub(arg1, endIndex + 2, #arg1)) * 10000
+					local st = string.sub(arg1, endIndex + 2, #arg1)
+					local priceGold = tonumber(st)
+					if priceGold then 
+						value = priceGold * 10000
+					else 
+						out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]")
+					end 
 				end				
 				FLogGlobalVars["ahPrice"][itemLink] = value 
 				if value and value > 0 then 
