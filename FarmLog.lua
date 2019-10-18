@@ -77,7 +77,7 @@ local function GetShortCoinTextureString(money)
 	elseif money > 10000 then 
 		money = math.floor(money / 100) * 100
 	end 
-	return GetCoinTextureString(money)
+	return GetCoinTextureString(money, 12)
 end 
 
 -- Session management ------------------------------------------------------------
@@ -1922,7 +1922,7 @@ FLogReportFrameWhisperBox:SetScript("OnTextChanged", function()
 		local b = strsub(h, 2);		
 		FLogReportFrameWhisperBox:SetText(strupper(a)..strlower(b));
 	end
-	SVWhisperBox = FLogReportFrameWhisperBox:GetText();
+	FLogSVWhisperBox = FLogReportFrameWhisperBox:GetText();
 end);
 FLogReportFrameWhisperBox:SetAutoFocus(false);
 FLogReportFrameWhisperBox:Show();
