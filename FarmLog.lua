@@ -7,7 +7,8 @@ FLogGlobalVars = {
 	["ahPrice"] = {},
 	["autoSwitchInstances"] = true,
 	["itemQuality"] = {true, true, true, true, true, true, true},
-	["reportTo"] = {}
+	["reportTo"] = {},
+	["version"] = VERSION,
 }
 
 FLogVars = {
@@ -31,6 +32,7 @@ FLogVars = {
 	}
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
+	["version"] = VERSION,
 }
 
 local editName = "";
@@ -857,6 +859,54 @@ end
 local function OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 
+	-- migration
+	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
+		-- migrate 1 session into multi session DB
+		FLogVars["sessions"][FLogVar["currentSession"]] = {
+			["drops"] = FLogSVDrops,
+			["kills"] = FLogSVKills,
+			["skill"] = FLogSVSkill,
+			["rep"] = FLogSVRep,
+			["gold"] = FLogSVGold,
+			["vendor"] = FLogSVVendor,
+			["ah"] = FLogSVAH,
+			["xp"] = FLogSVXP,
+			["honor"] = FLogSVHonor,
+			["seconds"] = FLogSVTotalSeconds,
+		}
+		FLogSVTotalSeconds = nil 
+		out("Migrated previous session into session 'default'.")
+	elseif not FLogVars["sessions"][FLogVar["currentSession"]] then 
+		ResetSessionVars()
+	end 
+
+	if FLogSVAHValue then 
+		FLogGlobalVars["autoSwitchInstances"] = FLogSVAutoSwitchOnInstances
+		FLogGlobalVars["debug"] = FLogSVDebugMode
+		FLogGlobalVars["ahPrice"] = FLogSVAHValue
+		FLogGlobalVars["itemQuality"] = FLogSVItemRarity
+		FLogGlobalVars["reportTo"] = FLogSVOptionReportTo
+		FLogSVAHValue = nil 
+		out("Migrated old global vars into new database format.")
+	end 
+
+	if FLogSVSessions then 
+		FLogVars["sessions"] = FLogSVSessions
+		FLogVars["enabled"] = FLogSVEnabled
+		FLogVars["currentSession"] = FLogSVCurrentSession
+		FLogVars["instanceName"] = FLogSVLastInstance
+		FLogVars["inInstance"] = FLogSVInInstance
+
+		FLogVars["lockFrames"] = FLogSVLockFrames
+		FLogVars["lockMinimapButton"] = FLogSVLockMinimapButton
+		FLogVars["frameRect"] = FLogSVFrame
+		FLogVars["minimapButtonPosision"] = FLogSVMinimapButtonPosition
+		FLogVars["enableMinimapButton"] = FLogSVEnableMinimapButton
+		FLogVars["itemTooltip"] = FLogSVTooltip
+		FLogSVSessions = nil 
+		out("Migrated old character vars into new database format.")
+	end 
+
 	-- init UI
 	FLogOptionsCheckButtonLog0:SetChecked(FLogGlobalVars["itemQuality"][0]);
 	FLogOptionsCheckButtonLog1:SetChecked(FLogGlobalVars["itemQuality"][1]);
@@ -887,26 +937,6 @@ local function OnAddonLoaded()
 	FLogFrame:SetHeight(FLogVars["frameRect"]["height"]);
 	FLogFrame:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 	
-	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
-		-- migrate 1 session into multi session DB
-		FLogVars["sessions"][FLogVar["currentSession"]] = {
-			["drops"] = FLogSVDrops,
-			["kills"] = FLogSVKills,
-			["skill"] = FLogSVSkill,
-			["rep"] = FLogSVRep,
-			["gold"] = FLogSVGold,
-			["vendor"] = FLogSVVendor,
-			["ah"] = FLogSVAH,
-			["xp"] = FLogSVXP,
-			["honor"] = FLogSVHonor,
-			["seconds"] = FLogSVTotalSeconds,
-		}
-		FLogSVTotalSeconds = nil 
-		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars["sessions"][FLogVar["currentSession"]] then 
-		ResetSessionVars()
-	end 
-
 	if FLogVars["enabled"] then 
 		ResumeSession(true)
 		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
