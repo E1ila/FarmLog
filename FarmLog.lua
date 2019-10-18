@@ -4,13 +4,12 @@ local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
 FLogSVAHValue = {}
 FLogSVSessions = {}
-FLogSVDebug = true
+FLogSVDebugMode = false
 FLogSVEnabled = false
 FLogSVCurrentSession = "default"
 FLogSVInInstance = false 
 FLogSVAutoSwitchOnInstances = true
 
-local debugEnabled = false
 local editName = "";
 local editItem = "";
 local editIdx = -1;
@@ -48,7 +47,7 @@ local function out(text)
 end 
 
 local function debug(text)
-	if FLogSVDebug then 
+	if FLogSVDebugMode then 
 		out(text)
 	end 
 end 
@@ -102,6 +101,7 @@ end
 local function ResumeSession() 
 	sessionStartTime = time()
 	FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
+	FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 end 
 
 local function PauseSession()
@@ -113,6 +113,7 @@ local function PauseSession()
 
 	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
 	FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
+	FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 end 
 
 local function ResetSessionVars()
@@ -945,7 +946,9 @@ local function OnAddonLoaded()
 
 	if FLogSVEnabled then 
 		ResumeSession(true)
+		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 	else 
+		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 		gphNeedsUpdate = true 
 	end 
@@ -1090,7 +1093,6 @@ FLogMinimapButton:SetFrameStrata("LOW");
 FLogMinimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight");
 FLogMinimapButton:SetPoint("RIGHT", Minimap, "LEFT");
 FLogMinimapButtonIcon = FLogMinimapButton:CreateTexture(nil, "BACKGROUND");
-FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIcon");
 FLogMinimapButtonIcon:SetPoint("TOPLEFT", 6, -6);
 FLogMinimapButtonIcon:SetPoint("BOTTOMRIGHT", -6, 6);
 FLogMinimapButtonOverlay = FLogMinimapButton:CreateTexture(nil, "OVERLAY");
@@ -2089,8 +2091,8 @@ SlashCmdList["LH"] = function(msg)
 		if  "SHOW" == cmd or "S" == cmd then
 			ToggleWindow()
 		elseif "DEBUG" == cmd then 
-			debugEnabled = not debugEnabled
-			if debugEnabled then 
+			FLogSVDebugMode = not FLogSVDebugMode
+			if FLogSVDebugMode then 
 				out("Debug mode enabled")
 			else 
 				out("Debug mode disabled")
