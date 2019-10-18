@@ -1041,10 +1041,11 @@ local function OnUpdate()
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
 			FLogFrameTitleText:SetText(secondsToClock(sessionTime));
 			lastUpdate = now 
-			gphNeedsUpdate = false 
-			if now - lastGPHUpdate >= 60 and sessionTime > 0 then 
+			if gphNeedsUpdate or (now - lastGPHUpdate >= 60 and sessionTime > 0) then 
+				-- debug("Calculating GPH")
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGPHUpdate = now 
+				gphNeedsUpdate = false 
 				FLogRefreshSChildFrame()
 			end 
 		end 
@@ -2066,6 +2067,7 @@ local function RecalcLootProfit()
 	end 
 	SetSessionVar("vendor", sessionVendor)
 	SetSessionVar("ah", sessionAH)
+	gphNeedsUpdate = true 
 	FLogRefreshSChildFrame()
 end 
 
@@ -2083,9 +2085,9 @@ SlashCmdList["LH"] = function(msg)
 		elseif "DEBUG" == cmd then 
 			FLogGlobalVars["debug"] = not FLogGlobalVars["debug"]
 			if FLogGlobalVars["debug"] then 
-				out("Debug mode enabled")
+				out("Debug mode |cff00ff00enabled")
 			else 
-				out("Debug mode disabled")
+				out("Debug mode |cffff0000disabled")
 			end 
 		elseif "HELP" == cmd or "H" == cmd then 
 			out("Use FarmLog to track your grinding session yield. Options:")
