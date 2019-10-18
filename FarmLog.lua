@@ -2,13 +2,36 @@
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
-FLogSVAHValue = {}
-FLogSVSessions = {}
-FLogSVDebugMode = false
-FLogSVEnabled = false
-FLogSVCurrentSession = "default"
-FLogSVInInstance = false 
-FLogSVAutoSwitchOnInstances = true
+FLogGlobalVars = {
+	["debug"] = false,
+	["ahPrice"] = {},
+	["autoSwitchInstances"] = true,
+	["itemQuality"] = {true, true, true, true, true, true, true},
+	["reportTo"] = {}
+}
+
+FLogVars = {
+	["enabled"] = false,
+	["sessions"] = {},
+	["currentSession"] = "default",
+	["inInstance"] = false,
+	["lockFrames"] = false,
+	["lockMinimapButton"] = false,
+	["frameRect"] = {
+		["width"] = 250,
+		["height"] = 200,
+		["point"] = "CENTER",
+		["x"] = 0,
+		["y"] = 0,
+	}
+	["minimapButtonPosision"] = {
+		["point"] = "TOP",
+		["x"] = 0,
+		["y"] = 0,
+	}
+	["enableMinimapButton"] = true, 
+	["itemTooltip"] = true,
+}
 
 local editName = "";
 local editItem = "";
@@ -47,7 +70,7 @@ local function out(text)
 end 
 
 local function debug(text)
-	if FLogSVDebugMode then 
+	if FLogGlobalVars["debug"] then 
 		out(text)
 	end 
 end 
@@ -83,19 +106,19 @@ end
 -- Session management ------------------------------------------------------------
 
 local function GetSessionVar(varName, sessionName)
-	return (FLogSVSessions[sessionName or FLogSVCurrentSession] or {})[varName]
+	return (FLogVars["sessions"][sessionName or FLogVar["currentSession"]] or {})[varName]
 end 
 
 local function SetSessionVar(varName, value)
-	FLogSVSessions[FLogSVCurrentSession][varName] = value 
+	FLogVars["sessions"][FLogVar["currentSession"]][varName] = value 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	FLogSVSessions[FLogSVCurrentSession][varName] = (FLogSVSessions[FLogSVCurrentSession][varName] or 0) + incValue 
+	FLogVars["sessions"][FLogVar["currentSession"]][varName] = (FLogVars["sessions"][FLogVar["currentSession"]][varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
-	FLogSVSessions[FLogSVCurrentSession][varName][entry] = (FLogSVSessions[FLogSVCurrentSession][varName][entry] or 0) + incValue 
+	FLogVars["sessions"][FLogVar["currentSession"]][varName][entry] = (FLogVars["sessions"][FLogVar["currentSession"]][varName][entry] or 0) + incValue 
 end 
 
 local function ResumeSession() 
@@ -117,7 +140,7 @@ local function PauseSession()
 end 
 
 local function ResetSessionVars()
-	FLogSVSessions[FLogSVCurrentSession] = {
+	FLogVars["sessions"][FLogVar["currentSession"]] = {
 		["drops"] = {},
 		["kills"] = {},
 		["skill"] = {},
@@ -132,27 +155,27 @@ local function ResetSessionVars()
 end 
 
 local function StartSession(sessionName, dontPause) 
-	if FLogSVEnabled then 
+	if FLogVars["enabled"] then 
 		gphNeedsUpdate = true 
 		if not dontPause then 
 			PauseSession() 
 		end 
 	end 
 
-	FLogSVCurrentSession = sessionName
-	if not FLogSVSessions[sessionName] then 
+	FLogVar["currentSession"] = sessionName
+	if not FLogVars["sessions"][sessionName] then 
 		ResetSessionVars()
 	end 
 	ResumeSession()
-	FLogSVEnabled = true 
+	FLogVars["enabled"] = true 
 end 
 
 local function DeleteSession(name) 
-	FLogSVSessions[name] = nil 
-	if FLogSVCurrentSession == name then 
+	FLogVars["sessions"][name] = nil 
+	if FLogVar["currentSession"] == name then 
 		StartSession("default", true)
 	end 
-	if FLogSVCurrentSession == name and name == "default" then 
+	if FLogVar["currentSession"] == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
 	else 
 		out("Deleted session |cff99ff00"..name)
@@ -168,7 +191,7 @@ local function ResetSession()
 	-- SVLastChange = date("%d.%m.%y - %H:%M");
 	PauseSession()
 	ResetSessionVars()
-	out("Reset session |cff99ff00"..FLogSVCurrentSession)
+	out("Reset session |cff99ff00"..FLogVar["currentSession"])
 	FLogRefreshSChildFrame()
 end
 
@@ -236,30 +259,30 @@ local function SortItems(db)
 end
 
 local function SendReport(message)
-	if FLogSVOptionReportTo["ChatFrame1"] then
+	if FLogGlobalVars["reportTo"]["ChatFrame1"] then
 		out(message);
 	end
-	if FLogSVOptionReportTo["Say"] then
+	if FLogGlobalVars["reportTo"]["Say"] then
 		SendChatMessage(message, "SAY");
 	end
-	if FLogSVOptionReportTo["Yell"] then
+	if FLogGlobalVars["reportTo"]["Yell"] then
 		SendChatMessage(message, "YELL");
 	end
-	if FLogSVOptionReportTo["Party"] then
+	if FLogGlobalVars["reportTo"]["Party"] then
 		if GetNumGroupMembers() > 0 then
 			SendChatMessage(message, "PARTY");
 		end
 	end
-	if ((FLogSVOptionReportTo["Raid"]) and (GetNumGroupMembers() > 0)) then
+	if ((FLogGlobalVars["reportTo"]["Raid"]) and (GetNumGroupMembers() > 0)) then
 		SendChatMessage(message, "RAID");
 	end
-	if FLogSVOptionReportTo["Guild"] then
+	if FLogGlobalVars["reportTo"]["Guild"] then
 		local guild = GetGuildInfo("player");		
 		if (not(guild == nil)) then
 			SendChatMessage(message, "GUILD");
 		end
 	end
-	if FLogSVOptionReportTo["Whisper"] then
+	if FLogGlobalVars["reportTo"]["Whisper"] then
 		local h = FLogReportFrameWhisperBox:GetText();
 		if (not (h == nil)) then
 			SendChatMessage(message, "WHISPER", nil, h);
@@ -457,7 +480,7 @@ function FLogRefreshSChildFrame()
 		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", function(self)
 			self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 			self:SetBackdropColor(0.8,0.8,0.8,0.6);
-			if FLogSVTooltip then
+			if FLogVars["itemTooltip"] then
 				GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 				if itemLink then 
 					GameTooltip:SetHyperlink(itemLink);
@@ -468,7 +491,7 @@ function FLogRefreshSChildFrame()
 			end
 		end);
 		FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", function(self)
-			if FLogSVTooltip then
+			if FLogVars["itemTooltip"] then
 				GameTooltip_Hide();
 			end
 			self:SetBackdrop(nil);
@@ -483,7 +506,7 @@ function FLogRefreshSChildFrame()
 	end 
 
 	local function AddSessionYieldItems() 
-		AddItem(" --- "..L["Session"]..": "..FLogSVCurrentSession.." ---")
+		AddItem(" --- "..L["Session"]..": "..FLogVar["currentSession"].." ---")
 		if goldPerHour > 0 then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
 		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
 		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
@@ -527,7 +550,7 @@ function FLogRefreshSChildFrame()
 	end 
 
 	local function AddSessionListItems() 
-		for name, session in pairs(FLogSVSessions) do 
+		for name, session in pairs(FLogVars["sessions"]) do 
 			local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
 			local text = name .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
 			AddItem(text, true)
@@ -563,16 +586,16 @@ local function ToggleWindow()
 end
 
 local function ToggleLogging() 
-	if FLogSVEnabled then 
-		FLogSVEnabled = false 
+	if FLogVars["enabled"] then 
+		FLogVars["enabled"] = false 
 		PauseSession()
-		out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r paused|r")
+		out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r paused|r")
 	else 
-		StartSession(FLogSVCurrentSession or "default")
+		StartSession(FLogVar["currentSession"] or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r started")
+			out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r started")
 		else 
-			out("Farm session |cff99ff00"..FLogSVCurrentSession.."|r resumed")
+			out("Farm session |cff99ff00"..FLogVar["currentSession"].."|r resumed")
 		end 	
 	end 
 end 
@@ -803,25 +826,21 @@ local function OnLootEvent(text)
 		inParty = true;
 	end
 	if (
-		-- ((FLogSVOptionGroupType["Raid"] and inRaid) or 
-		-- (FLogSVOptionGroupType["Party"] and inParty and not inRaid) or
-		-- (FLogSVOptionGroupType["Solo"] and not inParty and not inRaid))
-		-- and 
 		itemType ~= "Money" and 
 		(
-			(FLogSVItemRarity[0] and itemRarity == 0) or
-			(FLogSVItemRarity[1] and itemRarity == 1) or
-			(FLogSVItemRarity[2] and itemRarity == 2) or
-			(FLogSVItemRarity[3] and itemRarity == 3) or
-			(FLogSVItemRarity[4] and itemRarity == 4) or
-			(FLogSVItemRarity[5] and itemRarity == 5) or
-			(FLogSVItemRarity[6] and itemRarity == 6) or 
+			(FLogGlobalVars["itemQuality"][0] and itemRarity == 0) or
+			(FLogGlobalVars["itemQuality"][1] and itemRarity == 1) or
+			(FLogGlobalVars["itemQuality"][2] and itemRarity == 2) or
+			(FLogGlobalVars["itemQuality"][3] and itemRarity == 3) or
+			(FLogGlobalVars["itemQuality"][4] and itemRarity == 4) or
+			(FLogGlobalVars["itemQuality"][5] and itemRarity == 5) or
+			(FLogGlobalVars["itemQuality"][6] and itemRarity == 6) or 
 			mobName == L["Herbalism"] or 
 			mobName == L["Mining"] or 
 			mobName == L["Fishing"] 
 		)) 
 	then	
-		local ahValue = FLogSVAHValue[itemLink]
+		local ahValue = FLogGlobalVars["ahPrice"][itemLink]
 		if ahValue and ahValue > 0 then 
 			IncreaseSessionVar("ah", ahValue)
 		else
@@ -837,96 +856,40 @@ end
 
 local function OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
-	if FLogSVItemRarity == nil then
-		FLogSVItemRarity = {};
-		FLogSVItemRarity[0]=true; --poor (grey)
-		FLogSVItemRarity[1]=true; --common (white)
-		FLogSVItemRarity[2]=true; --uncommon (green)
-		FLogSVItemRarity[3]=true; --rare (blue)
-		FLogSVItemRarity[4]=true; --epic (purple)
-		FLogSVItemRarity[5]=true; --legendary (orange)
-		FLogSVItemRarity[6]=false; --artifact
-		--FLogSVItemRarity[7]=false; --heirloom
-	end
-	if FLogSVOptionReportTo == nil then
-		FLogSVOptionReportTo = {};
-		FLogSVOptionReportTo["ChatFrame1"]=true;
-		FLogSVOptionReportTo["Say"]=false;
-		FLogSVOptionReportTo["Yell"]=false;
-		FLogSVOptionReportTo["Party"]=false;
-		FLogSVOptionReportTo["Raid"]=false;
-		FLogSVOptionReportTo["Guild"]=false;
-		FLogSVOptionReportTo["Whisper"]=false;
-	end
-	if FLogSVOptionGroupType == nil then 
-		FLogSVOptionGroupType = {};
-		FLogSVOptionGroupType["Solo"]=true;
-		FLogSVOptionGroupType["Party"]=true;
-		FLogSVOptionGroupType["Raid"]=true;
-	end
-	if FLogSVLockFrames == nil then
-		FLogSVLockFrames = false;
-	end
-	if FLogSVLockMinimapButton == nil then
-		FLogSVLockMinimapButton = false;
-	end
-	if FLogSVFrame == nil then
-		FLogSVFrame = {};
-		FLogSVFrame["width"] = 250;
-		FLogSVFrame["height"] = 200;
-		FLogSVFrame["point"] = "CENTER";
-		FLogSVFrame["x"] = 0;
-		FLogSVFrame["y"] = 0;
-	end
-	if FLogSVMinimapButtonPosition == nil then
-		FLogSVMinimapButtonPosition = {};
-		FLogSVMinimapButtonPosition["point"] = "TOP";
-		FLogSVMinimapButtonPosition["x"] = 0;
-		FLogSVMinimapButtonPosition["y"] = 0;
-	end
-	if FLogSVEnableMinimapButton == nil then
-		FLogSVEnableMinimapButton = true;
-	end
-	if FLog_LockShowLootFrame == nil then
-		FLog_LockShowLootFrame = false;
-	end	
-	if FLogSVTooltip == nil then
-		FLogSVTooltip = true;
-	end
 
 	-- init UI
-	FLogOptionsCheckButtonLog0:SetChecked(FLogSVItemRarity[0]);
-	FLogOptionsCheckButtonLog1:SetChecked(FLogSVItemRarity[1]);
-	FLogOptionsCheckButtonLog2:SetChecked(FLogSVItemRarity[2]);
-	FLogOptionsCheckButtonLog3:SetChecked(FLogSVItemRarity[3]);
-	FLogOptionsCheckButtonLog4:SetChecked(FLogSVItemRarity[4]);
-	FLogOptionsCheckButtonLog5:SetChecked(FLogSVItemRarity[5]);
-	FLogOptionsCheckButtonLog6:SetChecked(FLogSVItemRarity[6]);
+	FLogOptionsCheckButtonLog0:SetChecked(FLogGlobalVars["itemQuality"][0]);
+	FLogOptionsCheckButtonLog1:SetChecked(FLogGlobalVars["itemQuality"][1]);
+	FLogOptionsCheckButtonLog2:SetChecked(FLogGlobalVars["itemQuality"][2]);
+	FLogOptionsCheckButtonLog3:SetChecked(FLogGlobalVars["itemQuality"][3]);
+	FLogOptionsCheckButtonLog4:SetChecked(FLogGlobalVars["itemQuality"][4]);
+	FLogOptionsCheckButtonLog5:SetChecked(FLogGlobalVars["itemQuality"][5]);
+	FLogOptionsCheckButtonLog6:SetChecked(FLogGlobalVars["itemQuality"][6]);
 	
-	FLogOptionsCheckButtonLogSolo:SetChecked(FLogSVOptionGroupType["Solo"]);
-	FLogOptionsCheckButtonLogParty:SetChecked(FLogSVOptionGroupType["Party"]);
-	FLogOptionsCheckButtonLogRaid:SetChecked(FLogSVOptionGroupType["Raid"]);
+	-- FLogOptionsCheckButtonLogSolo:SetChecked(FLogSVOptionGroupType["Solo"]);
+	-- FLogOptionsCheckButtonLogParty:SetChecked(FLogSVOptionGroupType["Party"]);
+	-- FLogOptionsCheckButtonLogRaid:SetChecked(FLogSVOptionGroupType["Raid"]);
 	
-	FLogReportFrameCheckButtonChatFrame:SetChecked(FLogSVOptionReportTo["ChatFrame1"]);
-	FLogReportFrameCheckButtonSay:SetChecked(FLogSVOptionReportTo["Say"]);
-	FLogReportFrameCheckButtonYell:SetChecked(FLogSVOptionReportTo["Yell"]);
-	FLogReportFrameCheckButtonParty:SetChecked(FLogSVOptionReportTo["Party"]);
-	FLogReportFrameCheckButtonRaid:SetChecked(FLogSVOptionReportTo["Raid"]);
-	FLogReportFrameCheckButtonGuild:SetChecked(FLogSVOptionReportTo["Guild"]);
-	FLogReportFrameCheckButtonWhisper:SetChecked(FLogSVOptionReportTo["Whisper"]);
+	FLogReportFrameCheckButtonChatFrame:SetChecked(FLogGlobalVars["reportTo"]["ChatFrame1"]);
+	FLogReportFrameCheckButtonSay:SetChecked(FLogGlobalVars["reportTo"]["Say"]);
+	FLogReportFrameCheckButtonYell:SetChecked(FLogGlobalVars["reportTo"]["Yell"]);
+	FLogReportFrameCheckButtonParty:SetChecked(FLogGlobalVars["reportTo"]["Party"]);
+	FLogReportFrameCheckButtonRaid:SetChecked(FLogGlobalVars["reportTo"]["Raid"]);
+	FLogReportFrameCheckButtonGuild:SetChecked(FLogGlobalVars["reportTo"]["Guild"]);
+	FLogReportFrameCheckButtonWhisper:SetChecked(FLogGlobalVars["reportTo"]["Whisper"]);
 	
-	FLogOptionsCheckButtonLockFrames:SetChecked(FLogSVLockFrames);
-	FLogOptionsCheckButtonEnableMinimapButton:SetChecked(FLogSVEnableMinimapButton);
-	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogSVLockMinimapButton);
-	FLogOptionsCheckButtonTooltip:SetChecked(FLogSVTooltip);	
+	FLogOptionsCheckButtonLockFrames:SetChecked(FLogVars["lockFrames"]);
+	FLogOptionsCheckButtonEnableMinimapButton:SetChecked(FLogVars["enableMinimapButton"]);
+	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogVars["lockMinimapButton"]);
+	FLogOptionsCheckButtonTooltip:SetChecked(FLogVars["itemTooltip"]);	
 	
-	FLogFrame:SetWidth(FLogSVFrame["width"]);
-	FLogFrame:SetHeight(FLogSVFrame["height"]);
-	FLogFrame:SetPoint(FLogSVFrame["point"], FLogSVFrame["x"], FLogSVFrame["y"]);
+	FLogFrame:SetWidth(FLogVars["frameRect"]["width"]);
+	FLogFrame:SetHeight(FLogVars["frameRect"]["height"]);
+	FLogFrame:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 	
 	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
 		-- migrate 1 session into multi session DB
-		FLogSVSessions[FLogSVCurrentSession] = {
+		FLogVars["sessions"][FLogVar["currentSession"]] = {
 			["drops"] = FLogSVDrops,
 			["kills"] = FLogSVKills,
 			["skill"] = FLogSVSkill,
@@ -940,11 +903,11 @@ local function OnAddonLoaded()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
-	elseif not FLogSVSessions[FLogSVCurrentSession] then 
+	elseif not FLogVars["sessions"][FLogVar["currentSession"]] then 
 		ResetSessionVars()
 	end 
 
-	if FLogSVEnabled then 
+	if FLogVars["enabled"] then 
 		ResumeSession(true)
 		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 	else 
@@ -954,17 +917,17 @@ local function OnAddonLoaded()
 	end 
 	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
 
-	if not FLogSVLockFrames then		
+	if not FLogVars["lockFrames"] then		
 		FLogTopFrame:RegisterForDrag("LeftButton");			
 	end
 			
-	FLogMinimapButton:SetPoint(FLogSVMinimapButtonPosition["point"], Minimap, FLogSVMinimapButtonPosition["x"], FLogSVMinimapButtonPosition["y"]);
-	if FLogSVEnableMinimapButton then
+	FLogMinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+	if FLogVars["enableMinimapButton"] then
 		FLogMinimapButton:Show();
 	else
 		FLogMinimapButton:Hide();
 	end	
-	if not FLogSVLockMinimapButton then		
+	if not FLogVars["lockMinimapButton"] then		
 		FLogMinimapButton:RegisterForDrag("LeftButton");			
 	end
 	FLogRefreshSChildFrame();
@@ -976,15 +939,12 @@ local function OnEnteringWorld()
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
-	if not FLogSVInInstance and inInstance and FLogSVLastInstanceName ~= instanceName then
-		FLogSVInInstance = true;
-		FLogSVLastInstanceName = instanceName;
-		if (IsInRaid() and FLogSVOptionGroupType["Raid"]) or (UnitInParty("Player") and not IsInRaid() and FLogSVOptionGroupType["Party"]) or (FLogSVOptionGroupType["Solo"] and not IsInRaid() and not UnitInParty("Player")) then
-			-- FLogResetFrame:Show();
-			StartSession(instanceName)
-		end
-	elseif (FLogSVInInstance and inInstance == false) then
-		FLogSVInInstance = false;			
+	if not FLogVars["inInstance"] and inInstance and FLogVar["instanceName"] ~= instanceName then
+		FLogVars["inInstance"] = true;
+		FLogVar["instanceName"] = instanceName;
+		StartSession(instanceName)
+	elseif (FLogVars["inInstance"] and inInstance == false) then
+		FLogVars["inInstance"] = false;			
 	end
 	FLogRefreshSChildFrame();
 end 
@@ -1003,7 +963,7 @@ end
 -- OnEvent
 
 local function OnEvent(event, ...)
-	if FLogSVEnabled then 
+	if FLogVars["enabled"] then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
 			OnLootOpened(...)			
@@ -1045,7 +1005,7 @@ local function OnEvent(event, ...)
 end
 
 local function OnUpdate() 
-	if gphNeedsUpdate or FLogSVEnabled then 
+	if gphNeedsUpdate or FLogVars["enabled"] then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
@@ -1106,9 +1066,9 @@ FLogMinimapButton:SetScript("OnDragStart", function() FLogMinimapButton:StartMov
 FLogMinimapButton:SetScript("OnDragStop", function()
 													FLogMinimapButton:StopMovingOrSizing();
 													local point, relativeTo, relativePoint, x, y = FLogMinimapButton:GetPoint();
-													FLogSVMinimapButtonPosition["point"] = point;													
-													FLogSVMinimapButtonPosition["x"] = x;
-													FLogSVMinimapButtonPosition["y"] = y;
+													FLogVars["minimapButtonPosision"]["point"] = point;													
+													FLogVars["minimapButtonPosision"]["x"] = x;
+													FLogVars["minimapButtonPosision"]["y"] = y;
 												 end);
 FLogMinimapButton:SetScript("OnClick", function(self, button)											
 											if button == "RightButton" then
@@ -1241,11 +1201,11 @@ FLogTopFrame:SetScript("OnDragStart", function()
 FLogTopFrame:SetScript("OnDragStop", function()
 											FLogFrame:StopMovingOrSizing();
 											local point, relativeTo, relativePoint, x, y = FLogFrame:GetPoint();
-											FLogSVFrame["point"] = point;													
-											FLogSVFrame["x"] = x;
-											FLogSVFrame["y"] = y;
-											FLogSVFrame["width"] = FLogFrame:GetWidth();
-											FLogSVFrame["height"] = FLogFrame:GetHeight();
+											FLogVars["frameRect"]["point"] = point;													
+											FLogVars["frameRect"]["x"] = x;
+											FLogVars["frameRect"]["y"] = y;
+											FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
+											FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
 											if (not MouseIsOver(FLogTopFrame)) then
 												FLogTopFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
 											end
@@ -1372,11 +1332,11 @@ FLogFrameResize:SetScript("OnMouseUp", function()
 												FLogSFrame:SetWidth(FLogFrameSChild:GetWidth() - 18);
 												FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
 												local point, _, _, x, y = FLogFrame:GetPoint();
-												FLogSVFrame["point"] = point;													
-												FLogSVFrame["x"] = x;
-												FLogSVFrame["y"] = y;
-												FLogSVFrame["width"] = FLogFrame:GetWidth();
-												FLogSVFrame["height"] = FLogFrame:GetHeight();
+												FLogVars["frameRect"]["point"] = point;													
+												FLogVars["frameRect"]["x"] = x;
+												FLogVars["frameRect"]["y"] = y;
+												FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
+												FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
 											end);
 
 local FLogFrameResize2 = CreateFrame("BUTTON", "FLogFrameResize2", FLogFrame);
@@ -1394,11 +1354,11 @@ FLogFrameResize2:SetScript("OnMouseUp", function()
 												FLogSFrame:SetWidth(FLogFrameSChild:GetWidth() - 18);
 												FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
 												local point, _, _, x, y = FLogFrame:GetPoint();
-												FLogSVFrame["point"] = point;													
-												FLogSVFrame["x"] = x;
-												FLogSVFrame["y"] = y;
-												FLogSVFrame["width"] = FLogFrame:GetWidth();
-												FLogSVFrame["height"] = FLogFrame:GetHeight();
+												FLogVars["frameRect"]["point"] = point;													
+												FLogVars["frameRect"]["x"] = x;
+												FLogVars["frameRect"]["y"] = y;
+												FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
+												FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
 											end);											
 
 local FLogOptionsFrame = CreateFrame("FRAME", "FLogOptionsFrame", UIParent);
@@ -1434,7 +1394,7 @@ FLogOptionsCheckButtonLog0:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog0:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog0:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog0:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog0:SetScript("OnClick", function() FLogSVItemRarity[0] = tobool(FLogOptionsCheckButtonLog0:GetChecked()); end);
+FLogOptionsCheckButtonLog0:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][0] = tobool(FLogOptionsCheckButtonLog0:GetChecked()); end);
 FLogOptionsCheckButtonLog0:Show();
 
 local FLogOptionsLog1 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1454,7 +1414,7 @@ FLogOptionsCheckButtonLog1:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog1:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog1:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog1:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog1:SetScript("OnClick", function() FLogSVItemRarity[1] = tobool(FLogOptionsCheckButtonLog1:GetChecked()); end);
+FLogOptionsCheckButtonLog1:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][1] = tobool(FLogOptionsCheckButtonLog1:GetChecked()); end);
 FLogOptionsCheckButtonLog1:Show();
 
 local FLogOptionsLog2 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1474,7 +1434,7 @@ FLogOptionsCheckButtonLog2:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog2:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog2:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog2:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog2:SetScript("OnClick", function() FLogSVItemRarity[2] = tobool(FLogOptionsCheckButtonLog2:GetChecked()); end);
+FLogOptionsCheckButtonLog2:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][2] = tobool(FLogOptionsCheckButtonLog2:GetChecked()); end);
 FLogOptionsCheckButtonLog2:Show();
 
 local FLogOptionsLog3 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1494,7 +1454,7 @@ FLogOptionsCheckButtonLog3:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog3:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog3:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog3:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog3:SetScript("OnClick", function() FLogSVItemRarity[3] = tobool(FLogOptionsCheckButtonLog3:GetChecked()); end);
+FLogOptionsCheckButtonLog3:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][3] = tobool(FLogOptionsCheckButtonLog3:GetChecked()); end);
 FLogOptionsCheckButtonLog3:Show();
 
 local FLogOptionsLog4 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1514,7 +1474,7 @@ FLogOptionsCheckButtonLog4:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog4:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog4:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog4:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog4:SetScript("OnClick", function() FLogSVItemRarity[4] = tobool(FLogOptionsCheckButtonLog4:GetChecked()); end);
+FLogOptionsCheckButtonLog4:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][4] = tobool(FLogOptionsCheckButtonLog4:GetChecked()); end);
 FLogOptionsCheckButtonLog4:Show();
 
 local FLogOptionsLog5 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1534,7 +1494,7 @@ FLogOptionsCheckButtonLog5:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog5:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog5:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog5:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog5:SetScript("OnClick", function() FLogSVItemRarity[5] = tobool(FLogOptionsCheckButtonLog5:GetChecked()); end);
+FLogOptionsCheckButtonLog5:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][5] = tobool(FLogOptionsCheckButtonLog5:GetChecked()); end);
 FLogOptionsCheckButtonLog5:Show();
 
 local FLogOptionsLog6 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1554,65 +1514,65 @@ FLogOptionsCheckButtonLog6:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up"
 FLogOptionsCheckButtonLog6:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogOptionsCheckButtonLog6:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLog6:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLog6:SetScript("OnClick", function() FLogSVItemRarity[6] = tobool(FLogOptionsCheckButtonLog6:GetChecked()); end);
+FLogOptionsCheckButtonLog6:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][6] = tobool(FLogOptionsCheckButtonLog6:GetChecked()); end);
 FLogOptionsCheckButtonLog6:Show();
 
-local FLogOptionsLogSolo = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogOptionsLogSolo:SetTextColor(1, 1, 1, 0.8);
-FLogOptionsLogSolo:SetWidth(175);
-FLogOptionsLogSolo:SetHeight(15);
-FLogOptionsLogSolo:SetJustifyH("LEFT");
-FLogOptionsLogSolo:SetText(L["solo"]);
-FLogOptionsLogSolo:SetPoint("TOP", FLogOptionsLog6, "BOTTOM", 0, -10);
+-- local FLogOptionsLogSolo = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
+-- FLogOptionsLogSolo:SetTextColor(1, 1, 1, 0.8);
+-- FLogOptionsLogSolo:SetWidth(175);
+-- FLogOptionsLogSolo:SetHeight(15);
+-- FLogOptionsLogSolo:SetJustifyH("LEFT");
+-- FLogOptionsLogSolo:SetText(L["solo"]);
+-- FLogOptionsLogSolo:SetPoint("TOP", FLogOptionsLog6, "BOTTOM", 0, -10);
 
-local FLogOptionsCheckButtonLogSolo = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogSolo", FLogOptionsFrame);
-FLogOptionsCheckButtonLogSolo:SetWidth(15);
-FLogOptionsCheckButtonLogSolo:SetHeight(15);
-FLogOptionsCheckButtonLogSolo:SetPoint("RIGHT", FLogOptionsLogSolo, "LEFT", -5, 0);
-FLogOptionsCheckButtonLogSolo:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogOptionsCheckButtonLogSolo:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogOptionsCheckButtonLogSolo:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogOptionsCheckButtonLogSolo:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLogSolo:SetScript("OnClick", function() FLogSVOptionGroupType["Solo"] = tobool(FLogOptionsCheckButtonLogSolo:GetChecked()); end);
-FLogOptionsCheckButtonLogSolo:Show();
+-- local FLogOptionsCheckButtonLogSolo = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogSolo", FLogOptionsFrame);
+-- FLogOptionsCheckButtonLogSolo:SetWidth(15);
+-- FLogOptionsCheckButtonLogSolo:SetHeight(15);
+-- FLogOptionsCheckButtonLogSolo:SetPoint("RIGHT", FLogOptionsLogSolo, "LEFT", -5, 0);
+-- FLogOptionsCheckButtonLogSolo:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
+-- FLogOptionsCheckButtonLogSolo:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
+-- FLogOptionsCheckButtonLogSolo:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
+-- FLogOptionsCheckButtonLogSolo:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
+-- FLogOptionsCheckButtonLogSolo:SetScript("OnClick", function() FLogSVOptionGroupType["Solo"] = tobool(FLogOptionsCheckButtonLogSolo:GetChecked()); end);
+-- FLogOptionsCheckButtonLogSolo:Show();
 
-local FLogOptionsLogParty = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogOptionsLogParty:SetTextColor(1, 1, 1, 0.8);
-FLogOptionsLogParty:SetWidth(175);
-FLogOptionsLogParty:SetHeight(15);
-FLogOptionsLogParty:SetJustifyH("LEFT");
-FLogOptionsLogParty:SetText(L["party"]);
-FLogOptionsLogParty:SetPoint("TOP", FLogOptionsLogSolo, "BOTTOM", 0, 0);
+-- local FLogOptionsLogParty = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
+-- FLogOptionsLogParty:SetTextColor(1, 1, 1, 0.8);
+-- FLogOptionsLogParty:SetWidth(175);
+-- FLogOptionsLogParty:SetHeight(15);
+-- FLogOptionsLogParty:SetJustifyH("LEFT");
+-- FLogOptionsLogParty:SetText(L["party"]);
+-- FLogOptionsLogParty:SetPoint("TOP", FLogOptionsLogSolo, "BOTTOM", 0, 0);
 
-local FLogOptionsCheckButtonLogParty = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogParty", FLogOptionsFrame);
-FLogOptionsCheckButtonLogParty:SetWidth(15);
-FLogOptionsCheckButtonLogParty:SetHeight(15);
-FLogOptionsCheckButtonLogParty:SetPoint("RIGHT", FLogOptionsLogParty, "LEFT", -5, 0);
-FLogOptionsCheckButtonLogParty:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogOptionsCheckButtonLogParty:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogOptionsCheckButtonLogParty:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogOptionsCheckButtonLogParty:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLogParty:SetScript("OnClick", function() FLogSVOptionGroupType["Party"] = tobool(FLogOptionsCheckButtonLogParty:GetChecked()); end);
-FLogOptionsCheckButtonLogParty:Show();
+-- local FLogOptionsCheckButtonLogParty = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogParty", FLogOptionsFrame);
+-- FLogOptionsCheckButtonLogParty:SetWidth(15);
+-- FLogOptionsCheckButtonLogParty:SetHeight(15);
+-- FLogOptionsCheckButtonLogParty:SetPoint("RIGHT", FLogOptionsLogParty, "LEFT", -5, 0);
+-- FLogOptionsCheckButtonLogParty:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
+-- FLogOptionsCheckButtonLogParty:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
+-- FLogOptionsCheckButtonLogParty:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
+-- FLogOptionsCheckButtonLogParty:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
+-- FLogOptionsCheckButtonLogParty:SetScript("OnClick", function() FLogSVOptionGroupType["Party"] = tobool(FLogOptionsCheckButtonLogParty:GetChecked()); end);
+-- FLogOptionsCheckButtonLogParty:Show();
 
-local FLogOptionsLogRaid = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogOptionsLogRaid:SetTextColor(1, 1, 1, 0.8);
-FLogOptionsLogRaid:SetWidth(175);
-FLogOptionsLogRaid:SetHeight(15);
-FLogOptionsLogRaid:SetJustifyH("LEFT");
-FLogOptionsLogRaid:SetText(L["raid"]);
-FLogOptionsLogRaid:SetPoint("TOP", FLogOptionsLogParty, "BOTTOM", 0, 0);
+-- local FLogOptionsLogRaid = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
+-- FLogOptionsLogRaid:SetTextColor(1, 1, 1, 0.8);
+-- FLogOptionsLogRaid:SetWidth(175);
+-- FLogOptionsLogRaid:SetHeight(15);
+-- FLogOptionsLogRaid:SetJustifyH("LEFT");
+-- FLogOptionsLogRaid:SetText(L["raid"]);
+-- FLogOptionsLogRaid:SetPoint("TOP", FLogOptionsLogParty, "BOTTOM", 0, 0);
 
-local FLogOptionsCheckButtonLogRaid = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogRaid", FLogOptionsFrame);
-FLogOptionsCheckButtonLogRaid:SetWidth(15);
-FLogOptionsCheckButtonLogRaid:SetHeight(15);
-FLogOptionsCheckButtonLogRaid:SetPoint("RIGHT", FLogOptionsLogRaid, "LEFT", -5, 0);
-FLogOptionsCheckButtonLogRaid:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
-FLogOptionsCheckButtonLogRaid:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
-FLogOptionsCheckButtonLogRaid:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
-FLogOptionsCheckButtonLogRaid:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogOptionsCheckButtonLogRaid:SetScript("OnClick", function() FLogSVOptionGroupType["Raid"] = tobool(FLogOptionsCheckButtonLogRaid:GetChecked()); end);
-FLogOptionsCheckButtonLogRaid:Show();
+-- local FLogOptionsCheckButtonLogRaid = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogRaid", FLogOptionsFrame);
+-- FLogOptionsCheckButtonLogRaid:SetWidth(15);
+-- FLogOptionsCheckButtonLogRaid:SetHeight(15);
+-- FLogOptionsCheckButtonLogRaid:SetPoint("RIGHT", FLogOptionsLogRaid, "LEFT", -5, 0);
+-- FLogOptionsCheckButtonLogRaid:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
+-- FLogOptionsCheckButtonLogRaid:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
+-- FLogOptionsCheckButtonLogRaid:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
+-- FLogOptionsCheckButtonLogRaid:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
+-- FLogOptionsCheckButtonLogRaid:SetScript("OnClick", function() FLogSVOptionGroupType["Raid"] = tobool(FLogOptionsCheckButtonLogRaid:GetChecked()); end);
+-- FLogOptionsCheckButtonLogRaid:Show();
 
 local FLogOptionsText3 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogOptionsText3:SetTextColor(1.0, 0.8, 0, 0.8);
@@ -1638,13 +1598,13 @@ FLogOptionsCheckButtonLockFrames:SetPushedTexture("Interface\\Buttons\\UI-CheckB
 FLogOptionsCheckButtonLockFrames:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLockFrames:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
 FLogOptionsCheckButtonLockFrames:SetScript("OnClick", function() 
-																FLogSVLockFrames = tobool(FLogOptionsCheckButtonLockFrames:GetChecked());
-																if FLogOptionsCheckButtonLockFrames:GetChecked() then
-																	FLogFrame:RegisterForDrag("");
-																elseif not FLogOptionsCheckButtonLockFrames:GetChecked() then
-																	FLogFrame:RegisterForDrag("LeftButton");
-																end
-															 end);
+	FLogVars["lockFrames"] = tobool(FLogOptionsCheckButtonLockFrames:GetChecked());
+	if FLogOptionsCheckButtonLockFrames:GetChecked() then
+		FLogFrame:RegisterForDrag("");
+	elseif not FLogOptionsCheckButtonLockFrames:GetChecked() then
+		FLogFrame:RegisterForDrag("LeftButton");
+	end
+end);
 FLogOptionsCheckButtonLockFrames:Show();
 
 local FLogOptionsEnableMinimapButton = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1664,13 +1624,13 @@ FLogOptionsCheckButtonEnableMinimapButton:SetPushedTexture("Interface\\Buttons\\
 FLogOptionsCheckButtonEnableMinimapButton:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonEnableMinimapButton:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
 FLogOptionsCheckButtonEnableMinimapButton:SetScript("OnClick", function() 
-																		FLogSVEnableMinimapButton = tobool(FLogOptionsCheckButtonEnableMinimapButton:GetChecked());
-																		if FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-																			FLogMinimapButton:Show();
-																		elseif not FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-																			FLogMinimapButton:Hide();
-																		end
-																	  end);
+	FLogVars["enableMinimapButton"] = tobool(FLogOptionsCheckButtonEnableMinimapButton:GetChecked());
+	if FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
+		FLogMinimapButton:Show();
+	elseif not FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
+		FLogMinimapButton:Hide();
+	end
+end);
 FLogOptionsCheckButtonEnableMinimapButton:Show();
 
 local FLogOptionsLockMinimapButton = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1690,13 +1650,13 @@ FLogOptionsCheckButtonLockMinimapButton:SetPushedTexture("Interface\\Buttons\\UI
 FLogOptionsCheckButtonLockMinimapButton:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonLockMinimapButton:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
 FLogOptionsCheckButtonLockMinimapButton:SetScript("OnClick", function()
-																		FLogSVLockMinimapButton = tobool(FLogOptionsCheckButtonLockMinimapButton:GetChecked());
-																		if FLogOptionsCheckButtonLockMinimapButton:GetChecked() then
-																			FLogMinimapButton:RegisterForDrag(""); 
-																		elseif not FLogOptionsCheckButtonLockMinimapButton:GetChecked() then																			
-																			FLogMinimapButton:RegisterForDrag("LeftButton");
-																		end
-																	end);
+	FLogVars["lockMinimapButton"] = tobool(FLogOptionsCheckButtonLockMinimapButton:GetChecked());
+	if FLogOptionsCheckButtonLockMinimapButton:GetChecked() then
+		FLogMinimapButton:RegisterForDrag(""); 
+	elseif not FLogOptionsCheckButtonLockMinimapButton:GetChecked() then																			
+		FLogMinimapButton:RegisterForDrag("LeftButton");
+	end
+end);
 FLogOptionsCheckButtonLockMinimapButton:Show();
 
 local FLogOptionsTooltip = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1716,8 +1676,8 @@ FLogOptionsCheckButtonTooltip:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-
 FLogOptionsCheckButtonTooltip:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogOptionsCheckButtonTooltip:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
 FLogOptionsCheckButtonTooltip:SetScript("OnClick", function()
-															FLogSVTooltip = tobool(FLogOptionsCheckButtonTooltip:GetChecked());
-														end);
+	FLogVars["itemTooltip"] = tobool(FLogOptionsCheckButtonTooltip:GetChecked());
+end);
 FLogOptionsCheckButtonTooltip:Show();
 
 local FLogReportFrame = CreateFrame("FRAME", "FLogReportFrame", UIParent);
@@ -1783,7 +1743,7 @@ FLogReportFrameCheckButtonChatFrame:SetNormalTexture("Interface\\Buttons\\UI-Che
 FLogReportFrameCheckButtonChatFrame:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonChatFrame:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonChatFrame:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonChatFrame:SetScript("OnClick", function() FLogSVOptionReportTo["ChatFrame1"] = tobool(FLogReportFrameCheckButtonChatFrame:GetChecked()); end);
+FLogReportFrameCheckButtonChatFrame:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["ChatFrame1"] = tobool(FLogReportFrameCheckButtonChatFrame:GetChecked()); end);
 FLogReportFrameCheckButtonChatFrame:Show();
 
 local FLogReportFrameSay = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1802,7 +1762,7 @@ FLogReportFrameCheckButtonSay:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-
 FLogReportFrameCheckButtonSay:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonSay:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonSay:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonSay:SetScript("OnClick", function() FLogSVOptionReportTo["Say"] = tobool(FLogReportFrameCheckButtonSay:GetChecked()); end);
+FLogReportFrameCheckButtonSay:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Say"] = tobool(FLogReportFrameCheckButtonSay:GetChecked()); end);
 FLogReportFrameCheckButtonSay:Show();
 
 local FLogReportFrameYell = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1821,7 +1781,7 @@ FLogReportFrameCheckButtonYell:SetNormalTexture("Interface\\Buttons\\UI-CheckBox
 FLogReportFrameCheckButtonYell:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonYell:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonYell:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonYell:SetScript("OnClick", function() FLogSVOptionReportTo["Yell"] = tobool(FLogReportFrameCheckButtonYell:GetChecked()); end);
+FLogReportFrameCheckButtonYell:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Yell"] = tobool(FLogReportFrameCheckButtonYell:GetChecked()); end);
 FLogReportFrameCheckButtonYell:Show();
 
 local FLogReportFrameParty = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1840,7 +1800,7 @@ FLogReportFrameCheckButtonParty:SetNormalTexture("Interface\\Buttons\\UI-CheckBo
 FLogReportFrameCheckButtonParty:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonParty:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonParty:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonParty:SetScript("OnClick", function() FLogSVOptionReportTo["Party"] = tobool(FLogReportFrameCheckButtonParty:GetChecked()); end);
+FLogReportFrameCheckButtonParty:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Party"] = tobool(FLogReportFrameCheckButtonParty:GetChecked()); end);
 FLogReportFrameCheckButtonParty:Show();
 
 local FLogReportFrameRaid = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1859,7 +1819,7 @@ FLogReportFrameCheckButtonRaid:SetNormalTexture("Interface\\Buttons\\UI-CheckBox
 FLogReportFrameCheckButtonRaid:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonRaid:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonRaid:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");	
-FLogReportFrameCheckButtonRaid:SetScript("OnClick", function() FLogSVOptionReportTo["Raid"] = tobool(FLogReportFrameCheckButtonRaid:GetChecked()); end);
+FLogReportFrameCheckButtonRaid:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Raid"] = tobool(FLogReportFrameCheckButtonRaid:GetChecked()); end);
 FLogReportFrameCheckButtonRaid:Show();
 
 local FLogReportFrameGuild = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1878,7 +1838,7 @@ FLogReportFrameCheckButtonGuild:SetNormalTexture("Interface\\Buttons\\UI-CheckBo
 FLogReportFrameCheckButtonGuild:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonGuild:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonGuild:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonGuild:SetScript("OnClick", function() FLogSVOptionReportTo["Guild"] = tobool(FLogReportFrameCheckButtonGuild:GetChecked()); end);
+FLogReportFrameCheckButtonGuild:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Guild"] = tobool(FLogReportFrameCheckButtonGuild:GetChecked()); end);
 FLogReportFrameCheckButtonGuild:Show();
 
 local FLogReportFrameWhisper = FLogReportFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
@@ -1897,7 +1857,7 @@ FLogReportFrameCheckButtonWhisper:SetNormalTexture("Interface\\Buttons\\UI-Check
 FLogReportFrameCheckButtonWhisper:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
 FLogReportFrameCheckButtonWhisper:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
 FLogReportFrameCheckButtonWhisper:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-FLogReportFrameCheckButtonWhisper:SetScript("OnClick", function() FLogSVOptionReportTo["Whisper"] = tobool(FLogReportFrameCheckButtonWhisper:GetChecked()); end);
+FLogReportFrameCheckButtonWhisper:SetScript("OnClick", function() FLogGlobalVars["reportTo"]["Whisper"] = tobool(FLogReportFrameCheckButtonWhisper:GetChecked()); end);
 FLogReportFrameCheckButtonWhisper:Show();
 
 local FLogReportFrameWhisperBox = CreateFrame("EDITBOX", "FLogReportFrameWhisperBox", FLogReportFrame, "InputBoxTemplate")
@@ -2064,7 +2024,7 @@ local function RecalcLootProfit()
 			for j = 1, #metalist do
 				local meta = metalist[j]
 				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				local value = FLogSVAHValue[itemLink]
+				local value = FLogGlobalVars["ahPrice"][itemLink]
 				local quantity = meta[1]
 				if value and value > 0 then 
 					sessionAH = sessionAH + value * quantity
@@ -2091,8 +2051,8 @@ SlashCmdList["LH"] = function(msg)
 		if  "SHOW" == cmd or "S" == cmd then
 			ToggleWindow()
 		elseif "DEBUG" == cmd then 
-			FLogSVDebugMode = not FLogSVDebugMode
-			if FLogSVDebugMode then 
+			FLogGlobalVars["debug"] = not FLogGlobalVars["debug"]
+			if FLogGlobalVars["debug"] then 
 				out("Debug mode enabled")
 			else 
 				out("Debug mode disabled")
@@ -2118,7 +2078,7 @@ SlashCmdList["LH"] = function(msg)
 				if ((endIndex + 2 ) <= (#arg1)) then
 					value = tonumber(string.sub(arg1, endIndex + 2, #arg1)) * 10000
 				end				
-				FLogSVAHValue[itemLink] = value 
+				FLogGlobalVars["ahPrice"][itemLink] = value 
 				if value and value > 0 then 
 					out("Setting AH value of "..itemLink.." to "..GetShortCoinTextureString(value))
 				else 
@@ -2130,7 +2090,7 @@ SlashCmdList["LH"] = function(msg)
 			end 
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")
-			for sessionName, _ in pairs(FLogSVSessions) do 
+			for sessionName, _ in pairs(FLogVars["sessions"]) do 
 				out(" - |cff99ff00"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
@@ -2140,14 +2100,14 @@ SlashCmdList["LH"] = function(msg)
 			StartSession(arg1)
 			FLogRefreshSChildFrame() 
 		elseif  "REN" == cmd then
-			out("Renaming session from |cff99ff00"..FLogSVCurrentSession.."|r to |cff99ff00"..arg1)
-			FLogSVSessions[arg1] = FLogSVSessions[FLogSVCurrentSession]
-			FLogSVSessions[FLogSVCurrentSession] = nil 
-			FLogSVCurrentSession = arg1 
+			out("Renaming session from |cff99ff00"..FLogVar["currentSession"].."|r to |cff99ff00"..arg1)
+			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVar["currentSession"]]
+			FLogVars["sessions"][FLogVar["currentSession"]] = nil 
+			FLogVar["currentSession"] = arg1 
 			FLogRefreshSChildFrame() 
 		elseif "ASI" == cmd then 
-			FLogSVAutoSwitchOnInstances = not FLogSVAutoSwitchOnInstances 
-			if not FLogSVAutoSwitchOnInstances then 
+			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
+			if not FLogGlobalVars["autoSwitchInstances"] then 
 				out("Auto switching in instances |cffff4444"..L["disabled"])
 			else 
 				out("Auto switching in instances |cff44ff44"..L["enabled"])
