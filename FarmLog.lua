@@ -1807,11 +1807,11 @@ SlashCmdList["LH"] = function(msg)
 		elseif "HELP" == cmd or "H" == cmd then 
 			out("Use FarmLog to track your grinding session yield. Options:")
 			out(" |cff00ff00/fl|r toggle logging on/off")
-			out(" |cff00ff00/fl |cff00ff88s|cff00ff00how|r shows log window")
-			out(" |cff00ff00/fl s|cff00ff88w|cff00ff00itch <session_name>|r switch to a different session")
-			out(" |cff00ff00/fl |cff00ff88l|cff00ff00ist|r list sessions")
+			out(" |cff00ff00/fl s|r shows log window")
+			out(" |cff00ff00/fl w|r <session_name>|r switch to a different session")
+			out(" |cff00ff00/fl l|r lists all sessions")
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
-			out(" |cff00ff00/fl |cff00ff88r|cff00ff00eset|r reset current session")
+			out(" |cff00ff00/fl r|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
@@ -1849,9 +1849,13 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "DELETE" == cmd then
 			DeleteSession(arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
-			out("Switching session to |cff99ff00"..arg1)
-			StartSession(arg1)
-			FLogRefreshSChildFrame() 
+			if arg1 and #arg1 > 0 then 
+				out("Switching session to |cff99ff00"..arg1)
+				StartSession(arg1)
+				FLogRefreshSChildFrame() 
+			else 
+				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
+			end 
 		elseif  "REN" == cmd then
 			out("Renaming session from |cff99ff00"..FLogVars["currentSession"].."|r to |cff99ff00"..arg1)
 			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]

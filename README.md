@@ -1,5 +1,5 @@
 # FarmLog
-Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
+World of Warcraft Classic addon that logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 
 ### What it is for
 You can track your farming session and know how much gold/hour you make. Good for general grinding, instance item farming, rep farm, tradeskill work, honor farm, know how many you killed in a rare BoE farm, etc etc.
@@ -28,10 +28,10 @@ You can track your farming session and know how much gold/hour you make. Good fo
 * Copy `FarmLog` folder to your `WoW\Interface\AddOns` folder
 
 ### How to use
-* /fl - toggle logging on/off
-* /fl r - reset log
-* /fl s - shows log
-* /fl set <ITEMLINK> <GOLDVALUE> - sets AH value of an item, in gold
+* `/fl` - toggle logging on/off
+* `/fl r` - reset log
+* `/fl s` - shows log
+* `/fl set <ITEMLINK> <GOLDVALUE>` - sets AH value of an item, in gold
 
 ### Sessions 
 Many times you pause your farming to do something else in game, like doing an instance and afterwards continue to farm herbs. So you want to know how much herb farming yields and how much the instance run has yielded, but these are two different sessions! That's why you can name sessions and switch between them according to what you're doing. 
