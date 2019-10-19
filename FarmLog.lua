@@ -171,7 +171,7 @@ end
 local function ResumeSession() 
 	sessionStartTime = time()
 	FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
-	FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 end 
 
 local function PauseSession()
@@ -183,7 +183,7 @@ local function PauseSession()
 
 	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
 	FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-	FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 end 
 
 local function ResetSessionVars()
@@ -902,10 +902,10 @@ local function OnAddonLoaded()
 	
 	if FLogVars["enabled"] then 
 		ResumeSession(true)
-		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 		FLogFrameShowButton:SetText(L["Pause"])
 	else 
-		FLogMinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 		FLogFrameShowButton:SetText(L["Resume"])
 		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
 		gphNeedsUpdate = true 
@@ -916,14 +916,14 @@ local function OnAddonLoaded()
 		FLogTopFrame:RegisterForDrag("LeftButton");			
 	end
 			
-	FLogMinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
 	if FLogVars["enableMinimapButton"] then
-		FLogMinimapButton:Show();
+		FarmLog_MinimapButton:Show();
 	else
-		FLogMinimapButton:Hide();
+		FarmLog_MinimapButton:Hide();
 	end	
 	if not FLogVars["lockMinimapButton"] then		
-		FLogMinimapButton:RegisterForDrag("LeftButton");			
+		FarmLog_MinimapButton:RegisterForDrag("LeftButton");			
 	end
 	FLogRefreshSChildFrame();
 end 
@@ -1031,39 +1031,23 @@ function FarmLog_MainFrame:OnUpdate()
 	end 
 end 
 
--- begin UI
-local FLogMinimapButton = CreateFrame("BUTTON", "FLogMinimapButton", Minimap);
-FLogMinimapButton:SetWidth(31);
-FLogMinimapButton:SetHeight(31);
-FLogMinimapButton:SetFrameStrata("LOW");
-FLogMinimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight");
-FLogMinimapButton:SetPoint("RIGHT", Minimap, "LEFT");
-FLogMinimapButtonIcon = FLogMinimapButton:CreateTexture(nil, "BACKGROUND");
-FLogMinimapButtonIcon:SetPoint("TOPLEFT", 6, -6);
-FLogMinimapButtonIcon:SetPoint("BOTTOMRIGHT", -6, 6);
-FLogMinimapButtonOverlay = FLogMinimapButton:CreateTexture(nil, "OVERLAY");
-FLogMinimapButtonOverlay:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder");
-FLogMinimapButtonOverlay:SetWidth(53);
-FLogMinimapButtonOverlay:SetHeight(53);
-FLogMinimapButtonOverlay:SetPoint("TOPLEFT");
-FLogMinimapButton:SetMovable(true);
-FLogMinimapButton:EnableMouse(true);
-FLogMinimapButton:SetScript("OnDragStart", function() FLogMinimapButton:StartMoving() end);
-FLogMinimapButton:SetScript("OnDragStop", function()
-													FLogMinimapButton:StopMovingOrSizing();
-													local point, relativeTo, relativePoint, x, y = FLogMinimapButton:GetPoint();
-													FLogVars["minimapButtonPosision"]["point"] = point;													
-													FLogVars["minimapButtonPosision"]["x"] = x;
-													FLogVars["minimapButtonPosision"]["y"] = y;
-												 end);
-FLogMinimapButton:SetScript("OnClick", function(self, button)											
-											if button == "RightButton" then
-												FarmLogToggle();
-											else
-												ToggleWindow();
-											end
-										end);
-FLogMinimapButton:Hide();
+-- UI
+function FarmLog_MinimapButton:DragStopped() 
+	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
+	FLogVars["minimapButtonPosision"]["point"] = point;													
+	FLogVars["minimapButtonPosision"]["x"] = x;
+	FLogVars["minimapButtonPosision"]["y"] = y;
+end 
+
+function FarmLog_MinimapButton:Clicked(button) 
+	if button == "RightButton" then
+		ToggleLogging()
+	else
+		ToggleWindow();
+	end
+end 
+
+-- begin UI ------------------------------------------------------------------------------------------------
 
 local FLogResetFrame = CreateFrame("FRAME", "FLogResetFrame", UIParent);
 FLogResetFrame:SetWidth(160);
@@ -1481,63 +1465,6 @@ FLogOptionsCheckButtonLog6:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Ch
 FLogOptionsCheckButtonLog6:SetScript("OnClick", function() FLogGlobalVars["itemQuality"][6] = tobool(FLogOptionsCheckButtonLog6:GetChecked()); end);
 FLogOptionsCheckButtonLog6:Show();
 
--- local FLogOptionsLogSolo = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
--- FLogOptionsLogSolo:SetTextColor(1, 1, 1, 0.8);
--- FLogOptionsLogSolo:SetWidth(175);
--- FLogOptionsLogSolo:SetHeight(15);
--- FLogOptionsLogSolo:SetJustifyH("LEFT");
--- FLogOptionsLogSolo:SetText(L["solo"]);
--- FLogOptionsLogSolo:SetPoint("TOP", FLogOptionsLog6, "BOTTOM", 0, -10);
-
--- local FLogOptionsCheckButtonLogSolo = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogSolo", FLogOptionsFrame);
--- FLogOptionsCheckButtonLogSolo:SetWidth(15);
--- FLogOptionsCheckButtonLogSolo:SetHeight(15);
--- FLogOptionsCheckButtonLogSolo:SetPoint("RIGHT", FLogOptionsLogSolo, "LEFT", -5, 0);
--- FLogOptionsCheckButtonLogSolo:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
--- FLogOptionsCheckButtonLogSolo:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
--- FLogOptionsCheckButtonLogSolo:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
--- FLogOptionsCheckButtonLogSolo:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
--- FLogOptionsCheckButtonLogSolo:SetScript("OnClick", function() FLogSVOptionGroupType["Solo"] = tobool(FLogOptionsCheckButtonLogSolo:GetChecked()); end);
--- FLogOptionsCheckButtonLogSolo:Show();
-
--- local FLogOptionsLogParty = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
--- FLogOptionsLogParty:SetTextColor(1, 1, 1, 0.8);
--- FLogOptionsLogParty:SetWidth(175);
--- FLogOptionsLogParty:SetHeight(15);
--- FLogOptionsLogParty:SetJustifyH("LEFT");
--- FLogOptionsLogParty:SetText(L["party"]);
--- FLogOptionsLogParty:SetPoint("TOP", FLogOptionsLogSolo, "BOTTOM", 0, 0);
-
--- local FLogOptionsCheckButtonLogParty = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogParty", FLogOptionsFrame);
--- FLogOptionsCheckButtonLogParty:SetWidth(15);
--- FLogOptionsCheckButtonLogParty:SetHeight(15);
--- FLogOptionsCheckButtonLogParty:SetPoint("RIGHT", FLogOptionsLogParty, "LEFT", -5, 0);
--- FLogOptionsCheckButtonLogParty:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
--- FLogOptionsCheckButtonLogParty:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
--- FLogOptionsCheckButtonLogParty:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
--- FLogOptionsCheckButtonLogParty:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
--- FLogOptionsCheckButtonLogParty:SetScript("OnClick", function() FLogSVOptionGroupType["Party"] = tobool(FLogOptionsCheckButtonLogParty:GetChecked()); end);
--- FLogOptionsCheckButtonLogParty:Show();
-
--- local FLogOptionsLogRaid = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
--- FLogOptionsLogRaid:SetTextColor(1, 1, 1, 0.8);
--- FLogOptionsLogRaid:SetWidth(175);
--- FLogOptionsLogRaid:SetHeight(15);
--- FLogOptionsLogRaid:SetJustifyH("LEFT");
--- FLogOptionsLogRaid:SetText(L["raid"]);
--- FLogOptionsLogRaid:SetPoint("TOP", FLogOptionsLogParty, "BOTTOM", 0, 0);
-
--- local FLogOptionsCheckButtonLogRaid = CreateFrame("CHECKBUTTON", "FLogOptionsCheckButtonLogRaid", FLogOptionsFrame);
--- FLogOptionsCheckButtonLogRaid:SetWidth(15);
--- FLogOptionsCheckButtonLogRaid:SetHeight(15);
--- FLogOptionsCheckButtonLogRaid:SetPoint("RIGHT", FLogOptionsLogRaid, "LEFT", -5, 0);
--- FLogOptionsCheckButtonLogRaid:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up");
--- FLogOptionsCheckButtonLogRaid:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down");
--- FLogOptionsCheckButtonLogRaid:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD");
--- FLogOptionsCheckButtonLogRaid:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
--- FLogOptionsCheckButtonLogRaid:SetScript("OnClick", function() FLogSVOptionGroupType["Raid"] = tobool(FLogOptionsCheckButtonLogRaid:GetChecked()); end);
--- FLogOptionsCheckButtonLogRaid:Show();
-
 local FLogOptionsText3 = FLogOptionsFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
 FLogOptionsText3:SetTextColor(1.0, 0.8, 0, 0.8);
 FLogOptionsText3:SetWidth(150);
@@ -1590,9 +1517,9 @@ FLogOptionsCheckButtonEnableMinimapButton:SetCheckedTexture("Interface\\Buttons\
 FLogOptionsCheckButtonEnableMinimapButton:SetScript("OnClick", function() 
 	FLogVars["enableMinimapButton"] = tobool(FLogOptionsCheckButtonEnableMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FLogMinimapButton:Show();
+		FarmLog_MinimapButton:Show();
 	elseif not FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FLogMinimapButton:Hide();
+		FarmLog_MinimapButton:Hide();
 	end
 end);
 FLogOptionsCheckButtonEnableMinimapButton:Show();
@@ -1616,9 +1543,9 @@ FLogOptionsCheckButtonLockMinimapButton:SetCheckedTexture("Interface\\Buttons\\U
 FLogOptionsCheckButtonLockMinimapButton:SetScript("OnClick", function()
 	FLogVars["lockMinimapButton"] = tobool(FLogOptionsCheckButtonLockMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonLockMinimapButton:GetChecked() then
-		FLogMinimapButton:RegisterForDrag(""); 
+		FarmLog_MinimapButton:RegisterForDrag(""); 
 	elseif not FLogOptionsCheckButtonLockMinimapButton:GetChecked() then																			
-		FLogMinimapButton:RegisterForDrag("LeftButton");
+		FarmLog_MinimapButton:RegisterForDrag("LeftButton");
 	end
 end);
 FLogOptionsCheckButtonLockMinimapButton:Show();

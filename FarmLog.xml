@@ -1,7 +1,5 @@
-<Ui 
-  xmlns="http://www.blizzard.com/wow/ui/" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+<Ui xmlns="http://www.blizzard.com/wow/ui/" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
   <Frame name="FarmLog_MainFrame">
     <Scripts>
@@ -30,6 +28,62 @@
       </OnUpdate>
     </Scripts>
   </Frame>
+
+  <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
+    <Size>
+      <AbsDimension x="31" y="31"/>
+    </Size>
+    <HighlightTexture file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" alphaMode="ADD" />
+    <Anchors>
+      <Anchor point="RIGHT" relativeTo="Minimap" relativePoint="LEFT" />
+    </Anchors>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture name="FarmLog_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
+          <Anchors>
+            <Anchor point="TOPLEFT">
+              <Offset>
+                <AbsDimension x="6" y="-6"/>
+              </Offset>
+            </Anchor>
+            <Anchor point="BOTTOMRIGHT">
+              <Offset>
+                <AbsDimension x="-6" y="6"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY">
+        <Texture name="FarmLog_MinimapButtonOverlay" file="Interface\Minimap\MiniMap-TrackingBorder">
+          <Size>
+            <AbsDimension x="53" y="53"/>
+          </Size>
+          <Anchors>
+            <Anchor point="TOPLEFT" />
+          </Anchors>
+        </Texture>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <OnLoad>
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+				self:RegisterForDrag("LeftButton")
+      </OnLoad>
+      <OnDragStart>
+        self:StartMoving()
+      </OnDragStart>
+      <OnDragStop>
+        self:StopMovingOrSizing()
+        self:DragStopped()  
+      </OnDragStop>
+      <OnClick>
+        self:Clicked(button)
+      </OnClick>
+    </Scripts>
+    <Frames>
+    </Frames>
+  </Button>
 
   <Script file="Deformat.lua"/>
   <Script file="Localization.lua"/>
