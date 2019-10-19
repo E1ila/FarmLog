@@ -937,9 +937,14 @@ local function OnEnteringWorld()
 	if not FLogVars["inInstance"] and inInstance and FLogVars["instanceName"] ~= instanceName then
 		FLogVars["inInstance"] = true;
 		FLogVars["instanceName"] = instanceName;
-		StartSession(instanceName)
-	elseif (FLogVars["inInstance"] and inInstance == false) then
-		FLogVars["inInstance"] = false;			
+		if FLogGlobalVars["autoSwitchInstances"] then 
+			StartSession(instanceName)
+		end 
+	elseif FLogVars["inInstance"] and inInstance == false then
+		FLogVars["inInstance"] = false;
+		if FLogGlobalVars["autoSwitchInstances"] then 
+			PauseSession(instanceName)
+		end 
 	end
 	FLogRefreshSChildFrame();
 end 
