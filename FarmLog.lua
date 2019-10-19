@@ -962,7 +962,7 @@ end
 
 -- OnEvent
 
-local function OnEvent(event, ...)
+function FarmLog_MainFrame:OnEvent(event, ...)
 	if FLogVars["enabled"] then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
@@ -1004,7 +1004,9 @@ local function OnEvent(event, ...)
 	end
 end
 
-local function OnUpdate() 
+-- OnUpdate
+
+function FarmLog_MainFrame:OnUpdate() 
 	if gphNeedsUpdate or FLogVars["enabled"] then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
@@ -1028,23 +1030,6 @@ local function OnUpdate()
 		end 
 	end 
 end 
-
---LDB
-local ldb = LibStub:GetLibrary("LibDataBroker-1.1");
-local dataobj = ldb:GetDataObjectByName("FarmLog") or ldb:NewDataObject("FarmLog", {
-	type = "data source", icon = [[Interface\AddOns\FarmLog\FarmLogLDBIconFarmLogIconON]], text = "FarmLog",
-	OnClick = function(self, button)
-				if button == "RightButton" then
-					ToggleLogging()
-				else
-					ToggleWindow()
-				end
-	end,
-	OnTooltipShow = function(tip)
-		tip:AddLine(L["LDBClick"]);
-	end,
-})
---end LDB
 
 -- begin UI
 local FLogMinimapButton = CreateFrame("BUTTON", "FLogMinimapButton", Minimap);
@@ -1149,24 +1134,7 @@ FLogResetFrameYesButton:Show();
 
 local FLogFrame = CreateFrame("FRAME", "FLogFrame", UIParent);
 FLogFrame:SetFrameStrata("HIGH"); 
-FLogFrame:RegisterEvent("ADDON_LOADED");
-FLogFrame:RegisterEvent("CHAT_MSG_LOOT");
-FLogFrame:RegisterEvent("LOOT_OPENED")
-FLogFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
-FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
-FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
-FLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-FLogFrame:RegisterEvent("CHAT_MSG_CURRENCY")
-FLogFrame:RegisterEvent("CHAT_MSG_MONEY")
-FLogFrame:RegisterEvent("CHAT_MSG_SKILL")
-FLogFrame:RegisterEvent("UNIT_SPELLCAST_SENT")
-FLogFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
-FLogFrame:RegisterEvent("CHAT_MSG_OPENING")
-FLogFrame:RegisterEvent("PLAYER_LOGOUT")
-FLogFrame:RegisterEvent("UPDATE_INSTANCE_INFO")
 --FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
-FLogFrame:SetScript("OnEvent", function(self, event, ...) OnEvent(event, ...) end);
-FLogFrame:SetScript("OnUpdate", function(self, ...) OnUpdate(...) end);
 FLogFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
 FLogFrame:EnableMouse(true);

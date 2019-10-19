@@ -5,7 +5,4 @@
 ## Version: v1.0
 ## SavedVariables: FLogGlobalVars, FLogSVDebugMode, FLogSVItemRarity, FLogSVOptionReportTo, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
 ## SavedVariablesPerCharacter: FLogVars, FLogSVEnabled, FLogSVSessions, FLogSVCurrentSession, FLogSVLastInstance, FLogSVInInstance, FLogSVAutoSwitchOnInstances
-libs\LibStub.lua
-libs\CallbackHandler-1.0.lua
-libs\LibDataBroker-1.1.lua
 FarmLog.xml

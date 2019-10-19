@@ -1,11 +1,3 @@
--- LibDeformat-3.0 replacement
--- This is Jerry's GetPattern function from LibItemBonus-2.0.
-
--- This is very much a ripoff of Deformat, simplified in that it does not
--- handle merged patterns
-
--- Taken from https://github.com/nebularg/Parrot2/blob/ecb2f61a5304b071b50f2333e680f1bfa2c9476b/Code/Parrot.lua
-
 local next, ipairs, assert, loadstring = next, ipairs, assert, loadstring
 local tconcat = table.concat
 local function donothing() end

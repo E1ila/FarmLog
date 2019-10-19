@@ -1,8 +1,38 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+<Ui 
+  xmlns="http://www.blizzard.com/wow/ui/" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+
+  <Frame name="FarmLog_MainFrame">
+    <Scripts>
+      <OnLoad>
+        self:RegisterEvent("ADDON_LOADED");
+        self:RegisterEvent("CHAT_MSG_LOOT");
+        self:RegisterEvent("LOOT_OPENED")
+        self:RegisterEvent("PLAYER_ENTERING_WORLD");
+        self:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
+        self:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
+        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+        self:RegisterEvent("CHAT_MSG_CURRENCY")
+        self:RegisterEvent("CHAT_MSG_MONEY")
+        self:RegisterEvent("CHAT_MSG_SKILL")
+        self:RegisterEvent("UNIT_SPELLCAST_SENT")
+        self:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
+        self:RegisterEvent("CHAT_MSG_OPENING")
+        self:RegisterEvent("PLAYER_LOGOUT")
+        self:RegisterEvent("UPDATE_INSTANCE_INFO")
+      </OnLoad>
+      <OnEvent>
+        self:OnEvent(event, ...)
+      </OnEvent>
+      <OnUpdate>
+        self:OnUpdate()
+      </OnUpdate>
+    </Scripts>
+  </Frame>
+
   <Script file="Deformat.lua"/>
   <Script file="Localization.lua"/>
   <Script file="FarmLog.lua"/>
 
-  <Frame name="MyAddon_Frame">
-  </Frame>
 </Ui>

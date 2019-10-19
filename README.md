@@ -71,6 +71,3 @@ Another thing is that the more time & data you have per session, the more accura
 * Stop instance session when leaving it (if auto started)
 * Don't auto start session when switching?
 * Tooltips
-
-This addon was based on the LootHistory addon which tracks who received which loot -
-https://www.curseforge.com/wow/addons/loothistory
