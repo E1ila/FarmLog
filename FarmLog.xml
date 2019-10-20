@@ -1,6 +1,8 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
+  <!-- Main Frame -->
+
   <Frame name="FarmLog_MainFrame">
     <Scripts>
       <OnLoad>
@@ -28,6 +30,8 @@
       </OnUpdate>
     </Scripts>
   </Frame>
+
+  <!-- Minimap Button -->
 
   <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
     <Size>
@@ -84,6 +88,158 @@
     <Frames>
     </Frames>
   </Button>
+
+  <!-- Question Dialog -->
+
+  <Frame name="FarmLog_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
+    <Size>
+      <AbsDimension x="160" y="100"/>
+    </Size>
+    <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+      <EdgeSize>
+        <AbsValue val="16"></AbsValue>
+      </EdgeSize>
+      <TileSize>
+        <AbsValue val="16" />
+      </TileSize>
+      <BackgroundInsets>
+        <AbsInset left="4" right="4" top="4" bottom="4" />
+      </BackgroundInsets>
+    </Backdrop>
+    <Anchors>
+      <Anchor point="CENTER">
+        <Offset>
+          <AbsDimension x="0" y="100"/>
+        </Offset>
+      </Anchor>
+    </Anchors>
+    <Scripts>
+      <OnLoad>
+        self:SetBackdropColor(0, 0, 0, 0.9);
+        self:RegisterForDrag("LeftButton")
+        self:SetUserPlaced(true)
+        self:Show()
+        tinsert(UISpecialFrames, self:GetName())
+      </OnLoad>
+      <OnDragStart>
+        self:StartMoving()
+      </OnDragStart>
+      <OnDragStop>
+        self:StopMovingOrSizing()
+      </OnDragStop>
+    </Scripts>
+    <Frames>
+      <Frame name="FarmLog_QuestionDialog_Title" parent="FarmLog_QuestionDialog">
+        <Size>
+          <AbsDimension x="120" y="25"/>
+        </Size>
+        <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+          <EdgeSize>
+            <AbsValue val="16"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+          <BackgroundInsets>
+            <AbsInset left="4" right="4" top="4" bottom="4" />
+          </BackgroundInsets>
+        </Backdrop>
+        <Anchors>
+          <Anchor point="TOP">
+            <Offset>
+              <AbsDimension x="0" y="10"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnLoad>
+            self:SetBackdropColor(0, 0, 0, 0.9);
+            self:Show()
+          </OnLoad>
+        </Scripts>
+        <Layers>
+          <Layer level="BACKGROUND">
+            <FontString name="FarmLog_QuestionDialog_TitleText" inherits="ChatFontNormal" text="Reset">
+              <Color r="1" g="0" b="0"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+      </Frame>
+      <Button name="FarmLog_QuestionDialog_Close" inherits="UIPanelButtonTemplate" text="X">
+        <Size>
+          <AbsDimension x="15" y="15"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="-5" y="-5"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            FarmLog_QuestionDialog:Hide()
+          </OnClick>
+          <OnLoad>
+            self:Show()
+          </OnLoad>
+        </Scripts>
+      </Button>
+      <Button name="FarmLog_QuestionDialog_No" inherits="UIPanelButtonTemplate" text="No">
+        <Size>
+          <AbsDimension x="70" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMRIGHT">
+            <Offset>
+              <AbsDimension x="-7" y="5"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            FarmLog_QuestionDialog:Hide()
+          </OnClick>
+          <OnLoad>
+            self:Show()
+          </OnLoad>
+        </Scripts>
+      </Button>
+      <Button name="FarmLog_QuestionDialog_Yes" inherits="UIPanelButtonTemplate" text="Yes">
+        <Size>
+          <AbsDimension x="70" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="7" y="5"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            FarmLog_QuestionDialog:Hide()
+          </OnClick>
+          <OnLoad>
+            self:Show()
+          </OnLoad>
+        </Scripts>
+      </Button>
+    </Frames>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <FontString name="FarmLog_QuestionDialog_Question" inherits="ChatFontNormal" text="Reset?">
+          <Color r="1" g="1" b="1"/>
+          <Anchors>
+            <Anchor point="CENTER" />
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+  </Frame>
 
   <Script file="Deformat.lua"/>
   <Script file="Localization.lua"/>

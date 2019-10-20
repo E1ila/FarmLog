@@ -170,20 +170,27 @@ end
 
 local function ResumeSession() 
 	sessionStartTime = time()
+
+	FLogVars["enabled"] = true  
 	FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	FLogFrameShowButton:SetText(L["Pause"])
 end 
 
-local function PauseSession()
+local function PauseSession(temporary)
 	if sessionStartTime then 
 		local delta = time() - sessionStartTime
 		IncreaseSessionVar("seconds", delta)
 		sessionStartTime = nil
 	end 
 
-	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
-	FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+	if not temporary then 
+		FLogVars["enabled"] = false 
+		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
+		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
+		FLogFrameShowButton:SetText(L["Resume"])
+	end 
 end 
 
 local function ResetSessionVars()
@@ -205,16 +212,15 @@ local function StartSession(sessionName, dontPause)
 	if FLogVars["enabled"] then 
 		gphNeedsUpdate = true 
 		if not dontPause then 
-			PauseSession() 
+			PauseSession(true) 
 		end 
 	end 
 
 	FLogVars["currentSession"] = sessionName
-	if not FLogVars["sessions"][sessionName] then 
+	if not FLogVars["sessions"][FLogVars["currentSession"]] then 
 		ResetSessionVars()
 	end 
 	ResumeSession()
-	FLogVars["enabled"] = true 
 end 
 
 local function DeleteSession(name) 
@@ -232,9 +238,11 @@ end
 -- Reporting ------------------------------------------------------------
 
 local function ResetSession()
-	PauseSession()
+	PauseSession(true)
 	ResetSessionVars()
+	ResumeSession()
 	out("Reset session |cff99ff00"..FLogVars["currentSession"])
+	gphNeedsUpdate = true 
 	FLogRefreshSChildFrame()
 end
 
@@ -562,7 +570,6 @@ end
 
 local function ToggleLogging() 
 	if FLogVars["enabled"] then 
-		FLogVars["enabled"] = false 
 		PauseSession()
 		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
 		FLogFrameShowButton:SetText(L["Resume"]);
@@ -901,16 +908,11 @@ local function OnAddonLoaded()
 	FLogFrame:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 	
 	if FLogVars["enabled"] then 
-		ResumeSession(true)
-		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
-		FLogFrameShowButton:SetText(L["Pause"])
+		ResumeSession()
 	else 
-		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		FLogFrameShowButton:SetText(L["Resume"])
-		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-		gphNeedsUpdate = true 
+		PauseSession()
 	end 
-	FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
+	gphNeedsUpdate = true
 
 	if not FLogVars["lockFrames"] then		
 		FLogTopFrame:RegisterForDrag("LeftButton");			
@@ -943,7 +945,7 @@ local function OnEnteringWorld()
 	elseif FLogVars["inInstance"] and inInstance == false then
 		FLogVars["inInstance"] = false;
 		if FLogGlobalVars["autoSwitchInstances"] then 
-			PauseSession(instanceName)
+			PauseSession()
 		end 
 	end
 	FLogRefreshSChildFrame();
@@ -998,7 +1000,7 @@ function FarmLog_MainFrame:OnEvent(event, ...)
 	elseif event == "ADDON_LOADED" and ... == APPNAME then		
 		OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
-		PauseSession(...)
+		PauseSession(true)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
 		OnInstanceInfoEvent(...)
 	end
@@ -1048,73 +1050,6 @@ function FarmLog_MinimapButton:Clicked(button)
 end 
 
 -- begin UI ------------------------------------------------------------------------------------------------
-
-local FLogResetFrame = CreateFrame("FRAME", "FLogResetFrame", UIParent);
-FLogResetFrame:SetWidth(160);
-FLogResetFrame:SetHeight(70);
-FLogResetFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogResetFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogResetFrame:EnableMouse(true);
-FLogResetFrame:RegisterForDrag("LeftButton");
-FLogResetFrame:SetMovable(true);
-FLogResetFrame:SetUserPlaced(true);
-FLogResetFrame:SetScript("OnDragStart", function(this) this:StartMoving(); end);
-FLogResetFrame:SetScript("OnDragStop", function(this) this:StopMovingOrSizing(); end);
-FLogResetFrame:SetPoint("Center", 0, 100);
-FLogResetFrame:Hide();
-tinsert(UISpecialFrames, FLogResetFrame:GetName());
-
-local FLogResetTopFrame = CreateFrame("FRAME", nil, FLogResetFrame);
-FLogResetTopFrame:SetWidth(120);
-FLogResetTopFrame:SetHeight(25);
-FLogResetTopFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogResetTopFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogResetTopFrame:SetPoint("TOP", 0, 10);
-FLogResetTopFrame:Show();
-
-local FLogResetFrameText = FLogResetTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogResetFrameText:SetTextColor(1, 0, 0, 1.0);
-FLogResetFrameText:SetText(L["reset-title"]);
-FLogResetFrameText:SetPoint("CENTER");
-
-local FLogResetFrameText2 = FLogResetFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogResetFrameText2:SetTextColor(1, 1, 1, 1.0);
-FLogResetFrameText2:SetText(L["reset"]);
-FLogResetFrameText2:SetPoint("CENTER", 0, 5);
-
-local FLogResetFrameClose = CreateFrame("BUTTON", nil, FLogResetFrame, "UIPanelButtonTemplate");
-FLogResetFrameClose:SetWidth(15);
-FLogResetFrameClose:SetHeight(15);
-FLogResetFrameClose:SetText("X");
-FLogResetFrameClose:SetPoint("TOPRIGHT", -5, -5);
-FLogResetFrameClose:SetScript("OnClick", function()
-											FLogResetFrame:Hide();											
-										   end);
-FLogResetFrameClose:SetAlpha(1);
-FLogResetFrameClose:Show();
-
-local FLogResetFrameNoButton = CreateFrame("BUTTON", nil, FLogResetFrame, "UIPanelButtonTemplate");
-FLogResetFrameNoButton:SetWidth(70);
-FLogResetFrameNoButton:SetHeight(20);
-FLogResetFrameNoButton:SetText(L["no"]);
-FLogResetFrameNoButton:SetPoint("BOTTOMRIGHT", -7, 5);
-FLogResetFrameNoButton:SetScript("OnClick", function()
-											FLogResetFrame:Hide();
-										   end);
-FLogResetFrameNoButton:SetAlpha(1);
-FLogResetFrameNoButton:Show();
-
-local FLogResetFrameYesButton = CreateFrame("BUTTON", nil, FLogResetFrame, "UIPanelButtonTemplate");
-FLogResetFrameYesButton:SetWidth(70);
-FLogResetFrameYesButton:SetHeight(20);
-FLogResetFrameYesButton:SetText(L["yes"]);
-FLogResetFrameYesButton:SetPoint("BOTTOMLEFT", 7, 5);
-FLogResetFrameYesButton:SetScript("OnClick", function()
-	ResetSession()
-		FLogResetFrame:Hide();
-end);
-FLogResetFrameYesButton:SetAlpha(1);
-FLogResetFrameYesButton:Show();
 
 local FLogFrame = CreateFrame("FRAME", "FLogFrame", UIParent);
 FLogFrame:SetFrameStrata("HIGH"); 
@@ -1252,7 +1187,13 @@ FLogFrameClearButton:SetWidth(105);
 FLogFrameClearButton:SetHeight(20);
 FLogFrameClearButton:SetText(L["clear"]);
 FLogFrameClearButton:SetPoint("BOTTOM", -55, 10);
-FLogFrameClearButton:SetScript("OnClick", function() FLogResetFrame:Show(); end);
+FLogFrameClearButton:SetScript("OnClick", function() 
+	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+		ResetSession()
+		FarmLog_QuestionDialog:Hide()
+	end)
+	FarmLog_QuestionDialog:Show()
+end);
 FLogFrameClearButton:SetAlpha(1);
 FLogFrameClearButton:Show();
 
