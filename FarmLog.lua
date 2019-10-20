@@ -91,7 +91,7 @@ local function secondsToClock(seconds)
 end
 
 local function GetShortCoinTextureString(money)
-	if not money or tostring(money) == "nan"  then return "--" end 
+	if not money or tostring(money) == "nan" or tostring(money) == "inf"  then return "--" end 
 	-- out("money = "..tostring(money))
 	if money > 100000 then 
 		money = math.floor(money / 10000) * 10000
