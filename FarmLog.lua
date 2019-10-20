@@ -1,4 +1,4 @@
-﻿local VERSION = 1.5
+﻿local VERSION = 1.6
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -164,7 +164,15 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 end 
 
 local function GetSessionWindowTitle(customTime)
-	return (FLogVars["currentSession"] or "").."  --  "..secondsToClock(customTime or GetSessionVar("seconds") or 0)
+	local text = FLogVars["currentSession"] or ""
+	local time = customTime or GetSessionVar("seconds") or 0
+	if time > 0 then 
+		text = text .. "  --  " .. secondsToClock(time) 
+	end 
+	-- if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" tostring(goldPerHour) ~= "inf" then 
+	-- 	text = text .. " / " .. GetShortCoinTextureString(goldPerHour) .. " g/h"
+	-- end 
+	return text
 end 
 
 local function UpdateMainWindowTitle()
@@ -253,7 +261,7 @@ local function ResetSession()
 	ResumeSession()
 	out("Reset session |cff99ff00"..FLogVars["currentSession"])
 	gphNeedsUpdate = true 
-	FLogRefreshSChildFrame()
+	FarmLog_RefreshMainWindowContent()
 end
 
 local function InsertLoot(mobName, itemLink, quantity)
@@ -271,39 +279,8 @@ local function InsertLoot(mobName, itemLink, quantity)
 	end
 end
 
-local function SendReport(message)
-	if FLogGlobalVars["reportTo"]["ChatFrame1"] then
-		out(message);
-	end
-	if FLogGlobalVars["reportTo"]["Say"] then
-		SendChatMessage(message, "SAY");
-	end
-	if FLogGlobalVars["reportTo"]["Yell"] then
-		SendChatMessage(message, "YELL");
-	end
-	if FLogGlobalVars["reportTo"]["Party"] then
-		if GetNumGroupMembers() > 0 then
-			SendChatMessage(message, "PARTY");
-		end
-	end
-	if ((FLogGlobalVars["reportTo"]["Raid"]) and (GetNumGroupMembers() > 0)) then
-		SendChatMessage(message, "RAID");
-	end
-	if FLogGlobalVars["reportTo"]["Guild"] then
-		local guild = GetGuildInfo("player");		
-		if (not(guild == nil)) then
-			SendChatMessage(message, "GUILD");
-		end
-	end
-	if FLogGlobalVars["reportTo"]["Whisper"] then
-		local h = FLogReportFrameWhisperBox:GetText();
-		if (not (h == nil)) then
-			SendChatMessage(message, "WHISPER", nil, h);
-		end
-	end
-end
 
--- UI ------------------------------------------------------------
+-- Main Window UI ------------------------------------------------------------
 
 local function AddToChatFrameEditBox(itemLink)
 	-- Copy itemLink into ChatFrame
@@ -322,24 +299,9 @@ end
 local function GetOnLogItemClick(itemLink) 
 	return function(self, button)
 		if IsShiftKeyDown() then
-		--copy into chatframe
-			AddToChatFrameEditBox(itemLink);
+			AddToChatFrameEditBox(itemLink) -- paste in chat box
 		elseif IsControlKeyDown() then
-		--preview item
-			DressUpItemLink(itemLink);
-		elseif IsAltKeyDown() then
-		--edit
-			editName = mobName;
-			editItem = itemLink;
-			editIdx = j;
-			if quantity > 1 then
-				FLogEditFrameItem:SetText(itemLink.."x"..quantity);
-			else
-				FLogEditFrameItem:SetText(itemLink);
-			end																									
-			FLogEditFrameOwnerBox:SetText(mobName);
-			FLogEditFrame:Show();
-			FLogEditFrameOwnerBox:SetFocus(true);												
+			DressUpItemLink(itemLink) -- preview
 		end
 	end 
 end
@@ -348,98 +310,87 @@ local function GetOnLogSessionItemClick(sessionName)
 	return function(self, button)
 		if button == "RightButton" then 
 			DeleteSession(sessionName)
-			FLogRefreshSChildFrame()
+			FarmLog_RefreshMainWindowContent()
 		else 
 			if IsAltKeyDown() then
-			--edit
-				editName = sessionName;
-				editItem = sessionName;
-				editIdx = j;
-				if quantity > 1 then
-					FLogEditFrameItem:SetText(itemLink.."x"..quantity);
-				else
-					FLogEditFrameItem:SetText(itemLink);
-				end																									
-				FLogEditFrameOwnerBox:SetText(mobName);
-				FLogEditFrame:Show();
-				FLogEditFrameOwnerBox:SetFocus(true);												
+				-- edit?
 			else 
 				sessionListMode = false 
 				out("Farm session |cff99ff00"..sessionName.."|r resumed")
 				StartSession(sessionName)
-				FLogRefreshSChildFrame()
+				FarmLog_RefreshMainWindowContent()
 			end
 		end 
 	end 
 end
 
-local function CreateSChild(j)
+local function CreateItemRow(j)
 	local x = #ItemRowFrameList;
 	if x == 0 then
-		local ItemRowFrame = {};
+		local ItemRowFrames = {};
 				
-		ItemRowFrame[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
-		ItemRowFrame[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
-		ItemRowFrame[0]:SetHeight(15);
-		ItemRowFrame[0]:SetScript("OnEnter", function(self)
+		ItemRowFrames[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
+		ItemRowFrames[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+		ItemRowFrames[0]:SetHeight(15);
+		ItemRowFrames[0]:SetScript("OnEnter", function(self)
 												self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 												self:SetBackdropColor(0.8,0.8,0.8,0.9);
 												end);
-		ItemRowFrame[0]:SetScript("OnLeave", function(self)
+		ItemRowFrames[0]:SetScript("OnLeave", function(self)
 												self:SetBackdrop(nil);
 												end);
-		ItemRowFrame[0]:SetPoint("TOPLEFT");
-		ItemRowFrame[0]:Show();
+		ItemRowFrames[0]:SetPoint("TOPLEFT");
+		ItemRowFrames[0]:Show();
 		
-		ItemRowFrame[1] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		ItemRowFrame[1]:SetTextColor(1, 1, 1, 0.8);	
-		ItemRowFrame[1]:SetPoint("TOPLEFT");
+		ItemRowFrames[1] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+		ItemRowFrames[1]:SetTextColor(1, 1, 1, 0.8);	
+		ItemRowFrames[1]:SetPoint("TOPLEFT");
 		
-		ItemRowFrame[2] = ItemRowFrame[0]:CreateTexture(nil, "OVERLAY");
-		ItemRowFrame[2]:SetTexture(nil);
-		ItemRowFrame[2]:SetWidth(15);
-		ItemRowFrame[2]:SetHeight(15);
-		ItemRowFrame[2]:SetPoint("TOPLEFT", ItemRowFrame[1], "TOPRIGHT", 5, 0);
+		ItemRowFrames[2] = ItemRowFrames[0]:CreateTexture(nil, "OVERLAY");
+		ItemRowFrames[2]:SetTexture(nil);
+		ItemRowFrames[2]:SetWidth(15);
+		ItemRowFrames[2]:SetHeight(15);
+		ItemRowFrames[2]:SetPoint("TOPLEFT", ItemRowFrames[1], "TOPRIGHT", 5, 0);
 		
-		ItemRowFrame[3] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		ItemRowFrame[3]:SetTextColor(1, 1, 1, 0.8);	
-		ItemRowFrame[3]:SetPoint("TOPLEFT", ItemRowFrame[2], "TOPRIGHT");
+		ItemRowFrames[3] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+		ItemRowFrames[3]:SetTextColor(1, 1, 1, 0.8);	
+		ItemRowFrames[3]:SetPoint("TOPLEFT", ItemRowFrames[2], "TOPRIGHT");
 
-		ItemRowFrame[0]:Hide();
+		ItemRowFrames[0]:Hide();
 		
-		tinsert(ItemRowFrameList, ItemRowFrame);
+		tinsert(ItemRowFrameList, ItemRowFrames);
 	else
 		for i = x + 1, j + x do
-			local ItemRowFrame = {};
+			local ItemRowFrames = {};
 			
-			ItemRowFrame[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
-			ItemRowFrame[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
-			ItemRowFrame[0]:SetHeight(15);
-			ItemRowFrame[0]:SetPoint("TOPLEFT", ItemRowFrameList[i-1][0], "BOTTOMLEFT");
-			ItemRowFrame[0]:Show();
+			ItemRowFrames[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
+			ItemRowFrames[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+			ItemRowFrames[0]:SetHeight(15);
+			ItemRowFrames[0]:SetPoint("TOPLEFT", ItemRowFrameList[i-1][0], "BOTTOMLEFT");
+			ItemRowFrames[0]:Show();
 			
-			ItemRowFrame[1] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			ItemRowFrame[1]:SetTextColor(1, 1, 1, 0.8);	
-			ItemRowFrame[1]:SetPoint("TOPLEFT");
+			ItemRowFrames[1] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+			ItemRowFrames[1]:SetTextColor(1, 1, 1, 0.8);	
+			ItemRowFrames[1]:SetPoint("TOPLEFT");
 			
-			ItemRowFrame[2] = ItemRowFrame[0]:CreateTexture(nil, "OVERLAY");
-			ItemRowFrame[2]:SetTexture(nil);
-			ItemRowFrame[2]:SetWidth(15);
-			ItemRowFrame[2]:SetHeight(15);
-			ItemRowFrame[2]:SetPoint("TOPLEFT", ItemRowFrame[1], "TOPRIGHT", 5, 0);
+			ItemRowFrames[2] = ItemRowFrames[0]:CreateTexture(nil, "OVERLAY");
+			ItemRowFrames[2]:SetTexture(nil);
+			ItemRowFrames[2]:SetWidth(15);
+			ItemRowFrames[2]:SetHeight(15);
+			ItemRowFrames[2]:SetPoint("TOPLEFT", ItemRowFrames[1], "TOPRIGHT", 5, 0);
 			
-			ItemRowFrame[3] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			ItemRowFrame[3]:SetTextColor(1, 1, 1, 0.8);	
-			ItemRowFrame[3]:SetPoint("TOPLEFT", ItemRowFrame[2], "TOPRIGHT");
+			ItemRowFrames[3] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+			ItemRowFrames[3]:SetTextColor(1, 1, 1, 0.8);	
+			ItemRowFrames[3]:SetPoint("TOPLEFT", ItemRowFrames[2], "TOPRIGHT");
 
-			ItemRowFrame[0]:Hide();
+			ItemRowFrames[0]:Hide();
 			
-			tinsert(ItemRowFrameList, ItemRowFrame);
+			tinsert(ItemRowFrameList, ItemRowFrames);
 		end
 	end
 end
 
-local function HideSChildFrame(j)
+local function RemoveItemRowsBeyond(j)
 --Hides all SChildFrames, beginning at Position j
 	local n = #ItemRowFrameList;
 	for i = j, n do
@@ -447,13 +398,13 @@ local function HideSChildFrame(j)
 	end
 end
 
-function FLogRefreshSChildFrame()
+function FarmLog_RefreshMainWindowContent()
 --Refresh the SChildFrame
 	local n = #ItemRowFrameList;
 	local i = 1;
 
 	local function AddItem(text, dontIncrease) 
-		if i > n then CreateSChild(1) end
+		if i > n then CreateItemRow(1) end
 		ItemRowFrameList[i][1]:SetText(text);
 		ItemRowFrameList[i][2]:SetTexture(nil);
 		ItemRowFrameList[i][3]:SetText("");
@@ -496,8 +447,7 @@ function FLogRefreshSChildFrame()
 	end 
 
 	local function AddSessionYieldItems() 
-		AddItem(" --- "..L["Session"]..": "..FLogVars["currentSession"].." ---")
-		if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
+		if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
 		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
 		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
 		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
@@ -524,7 +474,7 @@ function FLogRefreshSChildFrame()
 			for _, itemLink in ipairs(sortedItemLinks) do			
 				for j = 1, #sessionDrops[mobName][itemLink] do
 					if i > n then
-						CreateSChild(1);
+						CreateItemRow(1);
 					end
 					local quantity = sessionDrops[mobName][itemLink][j][1];
 					local itemText = "    "..itemLink
@@ -555,18 +505,17 @@ function FLogRefreshSChildFrame()
 
 	if sessionListMode then 
 		AddSessionListItems()
+		FarmLogFrame_MainWindow_ResetButton:Disable()
 	else 
 		AddSessionYieldItems()
+		if #ItemRowFrameList > 0 then
+			FarmLogFrame_MainWindow_ResetButton:Enable()
+		else
+			FarmLogFrame_MainWindow_ResetButton:Disable()
+		end	
 	end 
-
-	HideSChildFrame(i);	
-	if (ItemRowFrameList[1] and ItemRowFrameList[1][0] and ItemRowFrameList[1][0]:IsShown()) then		
-		FarmLogFrame_MainWindow_SessionsButton:Enable();		
-		FarmLogFrame_MainWindow_ResetButton:Enable();
-	else
-		FarmLogFrame_MainWindow_SessionsButton:Disable();
-		FarmLogFrame_MainWindow_ResetButton:Disable();
-	end
+	RemoveItemRowsBeyond(i);	
+	FarmLogFrame_MainWindow_SessionsButton:Enable()
 end
 
 local function ToggleWindow()
@@ -640,7 +589,7 @@ local function OnSkillsEvent(text)
 	local skillName, level = ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		FLogRefreshSChildFrame()
+		FarmLog_RefreshMainWindowContent()
 	end 
 end 
 
@@ -681,7 +630,7 @@ local function OnCombatXPEvent(text)
 	local xp = ParseXPEvent(text)
 	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	FLogRefreshSChildFrame()
+	FarmLog_RefreshMainWindowContent()
 end 
 
 -- Faction change 
@@ -705,7 +654,7 @@ local function OnCombatFactionChange(text)
 	local faction, rep = ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionVar("rep", rep)
-		FLogRefreshSChildFrame()
+		FarmLog_RefreshMainWindowContent()
 	end 
 end 
 
@@ -719,7 +668,7 @@ local function OnCombatLogEvent()
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		FLogRefreshSChildFrame()
+		FarmLog_RefreshMainWindowContent()
 	end 
 end 
 
@@ -781,7 +730,7 @@ end
 local function OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	FLogRefreshSChildFrame()
+	FarmLog_RefreshMainWindowContent()
 end 
 
 -- Loot receive event
@@ -840,7 +789,7 @@ local function OnLootEvent(text)
 		end 
 
 		InsertLoot(mobName, itemLink, (quantity or 1));
-		FLogRefreshSChildFrame();
+		FarmLog_RefreshMainWindowContent();
 	end
 end
 
@@ -935,7 +884,7 @@ local function OnAddonLoaded()
 	if not FLogVars["lockMinimapButton"] then		
 		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");			
 	end
-	FLogRefreshSChildFrame();
+	FarmLog_RefreshMainWindowContent();
 end 
 
 -- Entering World
@@ -956,7 +905,7 @@ local function OnEnteringWorld()
 			PauseSession()
 		end 
 	end
-	FLogRefreshSChildFrame();
+	FarmLog_RefreshMainWindowContent();
 end 
 
 -- Instance info
@@ -1028,7 +977,7 @@ function FarmLogFrame_Main:OnUpdate()
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGPHUpdate = now 
 				gphNeedsUpdate = false 
-				FLogRefreshSChildFrame()
+				FarmLog_RefreshMainWindowContent()
 			end 
 		end 
 	end 
@@ -1070,7 +1019,7 @@ function FarmLogFrame_MainWindow_SessionsButton:Clicked()
 	sessionListMode = not sessionListMode 
 	gphNeedsUpdate = true
 	UpdateMainWindowTitle()
-	FLogRefreshSChildFrame()
+	FarmLog_RefreshMainWindowContent()
 end 
 
 function FarmLogFrame_MainWindow_ResetButton:Clicked()
@@ -1435,7 +1384,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
-														FLogRefreshSChildFrame();
+														FarmLog_RefreshMainWindowContent();
 													end
 													FLogEditFrame:Hide();													
 												end);
@@ -1496,7 +1445,7 @@ local function RecalcLootProfit()
 	SetSessionVar("vendor", sessionVendor)
 	SetSessionVar("ah", sessionAH)
 	gphNeedsUpdate = true 
-	FLogRefreshSChildFrame()
+	FarmLog_RefreshMainWindowContent()
 end 
 
 -- slash
@@ -1565,7 +1514,7 @@ SlashCmdList["LH"] = function(msg)
 			if arg1 and #arg1 > 0 then 
 				out("Switching session to |cff99ff00"..arg1)
 				StartSession(arg1)
-				FLogRefreshSChildFrame() 
+				FarmLog_RefreshMainWindowContent() 
 			else 
 				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
 			end 
@@ -1574,7 +1523,7 @@ SlashCmdList["LH"] = function(msg)
 			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]
 			FLogVars["sessions"][FLogVars["currentSession"]] = nil 
 			FLogVars["currentSession"] = arg1 
-			FLogRefreshSChildFrame() 
+			FarmLog_RefreshMainWindowContent() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
 			if not FLogGlobalVars["autoSwitchInstances"] then 
