@@ -157,7 +157,7 @@
         </Scripts>
         <Layers>
           <Layer level="BACKGROUND">
-            <FontString name="$parent_TitleText" inherits="ChatFontNormal" text="Reset">
+            <FontString name="$parent_TitleText" inherits="ChatFontNormal" text="Dialog Title">
               <Color r="1" g="0" b="0"/>
               <Anchors>
                 <Anchor point="CENTER" />
@@ -220,7 +220,7 @@
     </Frames>
     <Layers>
       <Layer level="BACKGROUND">
-        <FontString name="$parent_Question" inherits="ChatFontNormal" text="Reset?">
+        <FontString name="$parent_Question" inherits="ChatFontNormal" text="Question?">
           <Color r="1" g="1" b="1"/>
           <Anchors>
             <Anchor point="CENTER" />
@@ -231,35 +231,31 @@
   </Frame>  <!--FarmLogFrame_QuestionDialog-->
 
 
-  <Frame name="FarmLogFrame_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLogFrame_MainWindow" parent="UIParent" frameStrata="DIALOG" enableMouse="true" movable="true" resizable="true">
     <Size>
       <AbsDimension x="160" y="100"/>
     </Size>
     <ResizeBounds>
-      <minResize x="300" y="200" />
+      <minResize x="200" y="200" />
     </ResizeBounds>
-    <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
       <EdgeSize>
-        <AbsValue val="16"></AbsValue>
+        <AbsValue val="1"></AbsValue>
       </EdgeSize>
       <TileSize>
         <AbsValue val="16" />
       </TileSize>
-      <BackgroundInsets>
-        <AbsInset left="4" right="4" top="4" bottom="4" />
-      </BackgroundInsets>
     </Backdrop>
     <Scripts>
       <OnLoad>
-        self:SetMaxResize(GetScreenWidth() - 50, GetScreenHeight() - 50);
-        self:SetBackdropColor(0, 0, 0, 0.9);
+        self:SetMaxResize(600, GetScreenHeight() - 100);
+   			self:SetBackdropColor (0, 0, 0, 0.6)
+    		self:SetBackdropBorderColor(0, 0, 0, 1)
+
         self:SetUserPlaced(true)
         tinsert(UISpecialFrames, self:GetName())
       </OnLoad>
       <OnSizeChanged>
-        FarmLogFrame_MainWindow_ScrollContainer_Content:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30);
-        FarmLogFrame_MainWindow_ScrollContainer:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 18);
-        FarmLogFrame_MainWindow_ScrollContainer:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65);
         <!-- FLogOptionsFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
         <!-- FLogHelpFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
         <!-- for i = 1 , #FLogFrameSChildContentTable do
@@ -269,46 +265,72 @@
     </Scripts>
 
     <Frames>
-      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+
+      <Button name="$parent_CloseButton" inherits="UIPanelCloseButton">
         <Size>
-          <AbsDimension x="120" y="25"/>
+          <AbsDimension x="26" y="26"/>
         </Size>
         <Anchors>
-          <Anchor point="TOP">
+          <Anchor point="TOPRIGHT">
             <Offset>
-              <AbsDimension x="0" y="10"/>
+              <AbsDimension x="1" y="1"/>
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+        <Scripts>
+          <OnClick>
+            FarmLogFrame_MainWindow:Hide()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_CloseButton-->
+
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+        <Size>
+          <AbsDimension x="120" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+            <Offset>
+              <AbsDimension x="2" y="-2"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
           <EdgeSize>
-            <AbsValue val="16"></AbsValue>
+            <AbsValue val="1"></AbsValue>
           </EdgeSize>
           <TileSize>
             <AbsValue val="16" />
           </TileSize>
-          <BackgroundInsets>
-            <AbsInset left="4" right="4" top="4" bottom="4" />
-          </BackgroundInsets>
         </Backdrop>
         <Scripts>
           <OnLoad>
-            self:SetBackdropColor(0, 0, 0, 0.9);
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
+        		self:SetBackdropBorderColor(0, 0, 0, 1)
             self:RegisterForDrag("LeftButton")
           </OnLoad>
           <OnDragStart>
             FarmLogFrame_MainWindow:StartMoving()
-            self:SetBackdropColor(1, 1, 1, 0.9)
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
           </OnDragStart>
           <OnDragStop>
-            self:DragStopped()
+          	FarmLogFrame_MainWindow:StopMovingOrSizing();
+            if not MouseIsOver(FarmLogFrame_MainWindow_Title) then
+         			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
+            end
+            self:DragStopped()            
           </OnDragStop>
           <OnEnter>
-            self:SetBackdropColor(1 ,1 ,1 ,0.9)
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
           </OnEnter>
           <OnLeave>
             if not IsMouseButtonDown("LeftButton") then
-              self:SetBackdropColor(0, 0, 0, 0.9);
+         			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
             end
           </OnLeave>
         </Scripts>
@@ -324,63 +346,46 @@
         </Layers>
       </Frame>      <!--$parent_Title-->
 
-      <Button name="$parent_CloseButton" inherits="UIPanelButtonTemplate" text="X">
-        <Size>
-          <AbsDimension x="20" y="20"/>
-        </Size>
-        <Anchors>
-          <Anchor point="TOPRIGHT">
-            <Offset>
-              <AbsDimension x="-5" y="-5"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnClick>
-            FarmLogFrame_MainWindow:Hide()
-          </OnClick>
-        </Scripts>
-      </Button>      <!--$parent_CloseButton-->
-
       <ScrollFrame name="$parent_ScrollContainer" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
             <Offset>
-              <AbsDimension x="10" y="-25"/>
+              <AbsDimension x="5" y="-25"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
+            <Offset>
+              <AbsDimension x="-25" y="30"/>
             </Offset>
           </Anchor>
         </Anchors>
         <Scripts>
           <OnLoad>
-            self:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 48)
-            self:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65)
             self:SetHorizontalScroll(0)
             self:SetVerticalScroll(20)
           </OnLoad>
         </Scripts>
         <ScrollChild>
           <Frame name="$parent_Content">
+            <Size>
+              <AbsDimension x="600" y="10"/>
+            </Size>
             <Anchors>
               <Anchor point="TOPLEFT" />
+              <Anchor point="BOTTOMRIGHT" />
             </Anchors>
-            <Scripts>
-              <OnLoad>
-                self:SetHeight(50)
-                self:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30)
-              </OnLoad>
-            </Scripts>
           </Frame>
         </ScrollChild>
       </ScrollFrame>      <!--$parent_ScrollContainer-->
 
-      <Button name="$parent_ResetButton" inherits="UIPanelButtonTemplate" text="Reset">
+      <Button name="$parent_ResetButton" inherits="UIPanelButtonTemplate" text="Clear">
         <Size>
-          <AbsDimension x="105" y="20"/>
+          <AbsDimension x="80" y="20"/>
         </Size>
         <Anchors>
           <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="-55" y="10"/>
+              <AbsDimension x="-42" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -391,14 +396,14 @@
         </Scripts>
       </Button>      <!--$parent_ResetButton-->
 
-      <Button name="$parent_SessionsButton" inherits="UIPanelButtonTemplate" text="Sessions">
+      <Button name="$parent_SessionsButton" inherits="UIPanelButtonTemplate" text="List">
         <Size>
-          <AbsDimension x="105" y="20"/>
+          <AbsDimension x="80" y="20"/>
         </Size>
         <Anchors>
           <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="55" y="10"/>
+              <AbsDimension x="42" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -416,7 +421,7 @@
         <Anchors>
           <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
             <Offset>
-              <AbsDimension x="-2" y="-2"/>
+              <AbsDimension x="2" y="-2"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -428,9 +433,6 @@
           </OnMouseDown>
           <OnMouseUp>
             FarmLogFrame_MainWindow:StopMovingOrSizing()
-            FarmLogFrame_MainWindow_ScrollContainer_Content:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30)
-            FarmLogFrame_MainWindow_ScrollContainer:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 18)
-            FarmLogFrame_MainWindow_ScrollContainer:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65)
             self:MouseUp()
           </OnMouseUp>
         </Scripts>

@@ -38,10 +38,7 @@ FLogVars = {
 local editName = "";
 local editItem = "";
 local editIdx = -1;
-local maxWindowWidth = (GetScreenWidth() - 50);
-local maxWindowHeight = (GetScreenHeight() - 50);
 local FLogMinWidth = (300);
-local minWindowHeight = (200);
 local ItemRowFrameList = {};
 local L = FarmLog_BuildLocalization()
 
@@ -166,6 +163,10 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = (FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] or 0) + incValue 
 end 
 
+local function GetSessionWindowTitle(customTime)
+	return (FLogVars["currentSession"] or "").."     "..secondsToClock(customTime or GetSessionVar("seconds") or 0)
+end 
+
 local function ResumeSession() 
 	sessionStartTime = time()
 
@@ -185,7 +186,7 @@ local function PauseSession(temporary)
 		FLogVars["enabled"] = false 
 		FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 0, 0, 1.0);
 		FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		FarmLogFrame_MainWindow_Title_Text:SetText(secondsToClock(GetSessionVar("seconds")));
+		FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle());
 	end 
 end 
 
@@ -1007,7 +1008,7 @@ function FarmLogFrame_Main:OnUpdate()
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
-			FarmLogFrame_MainWindow_Title_Text:SetText(secondsToClock(sessionTime));
+			FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle(sessionTime));
 			lastUpdate = now 
 			if gphNeedsUpdate or (now - lastGPHUpdate >= 60 and sessionTime > 0) then 
 				-- debug("Calculating GPH")
@@ -1044,16 +1045,12 @@ function FarmLogFrame_MinimapButton:Clicked(button)
 end 
 
 function FarmLogFrame_MainWindow_Title:DragStopped() 
-	FarmLogFrame_MainWindow:StopMovingOrSizing();
 	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MainWindow:GetPoint();
 	FLogVars["frameRect"]["point"] = point;													
 	FLogVars["frameRect"]["x"] = x;
 	FLogVars["frameRect"]["y"] = y;
 	FLogVars["frameRect"]["width"] = FarmLogFrame_MainWindow:GetWidth();
 	FLogVars["frameRect"]["height"] = FarmLogFrame_MainWindow:GetHeight();
-	if not MouseIsOver(FarmLogFrame_MainWindow_Title) then
-		FarmLogFrame_MainWindow_Title:SetBackdropColor(0.0,0.0,0.0,0.9);
-	end
 end 
 
 function FarmLogFrame_MainWindow_SessionsButton:Clicked() 
