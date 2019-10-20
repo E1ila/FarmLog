@@ -3,7 +3,7 @@
 
   <!-- Main Frame -->
 
-  <Frame name="FarmLog_MainFrame">
+  <Frame name="FarmLogFrame_Main">
     <Scripts>
       <OnLoad>
         self:RegisterEvent("ADDON_LOADED");
@@ -33,7 +33,7 @@
 
   <!-- Minimap Button -->
 
-  <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
+  <Button name="FarmLogFrame_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
     <Size>
       <AbsDimension x="31" y="31"/>
     </Size>
@@ -43,7 +43,7 @@
     </Anchors>
     <Layers>
       <Layer level="BACKGROUND">
-        <Texture name="FarmLog_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
+        <Texture name="FarmLogFrame_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
           <Anchors>
             <Anchor point="TOPLEFT">
               <Offset>
@@ -59,7 +59,7 @@
         </Texture>
       </Layer>
       <Layer level="OVERLAY">
-        <Texture name="FarmLog_MinimapButtonOverlay" file="Interface\Minimap\MiniMap-TrackingBorder">
+        <Texture name="FarmLogFrame_MinimapButtonOverlay" file="Interface\Minimap\MiniMap-TrackingBorder">
           <Size>
             <AbsDimension x="53" y="53"/>
           </Size>
@@ -91,7 +91,7 @@
 
   <!-- Question Dialog -->
 
-  <Frame name="FarmLog_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
+  <Frame name="FarmLogFrame_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
     <Size>
       <AbsDimension x="160" y="100"/>
     </Size>
@@ -118,7 +118,6 @@
         self:SetBackdropColor(0, 0, 0, 0.9);
         self:RegisterForDrag("LeftButton")
         self:SetUserPlaced(true)
-        self:Show()
         tinsert(UISpecialFrames, self:GetName())
       </OnLoad>
       <OnDragStart>
@@ -129,7 +128,7 @@
       </OnDragStop>
     </Scripts>
     <Frames>
-      <Frame name="FarmLog_QuestionDialog_Title" parent="FarmLog_QuestionDialog">
+      <Frame name="$parent_Title">
         <Size>
           <AbsDimension x="120" y="25"/>
         </Size>
@@ -154,12 +153,11 @@
         <Scripts>
           <OnLoad>
             self:SetBackdropColor(0, 0, 0, 0.9);
-            self:Show()
           </OnLoad>
         </Scripts>
         <Layers>
           <Layer level="BACKGROUND">
-            <FontString name="FarmLog_QuestionDialog_TitleText" inherits="ChatFontNormal" text="Reset">
+            <FontString name="$parent_TitleText" inherits="ChatFontNormal" text="Reset">
               <Color r="1" g="0" b="0"/>
               <Anchors>
                 <Anchor point="CENTER" />
@@ -167,8 +165,8 @@
             </FontString>
           </Layer>
         </Layers>
-      </Frame>
-      <Button name="FarmLog_QuestionDialog_Close" inherits="UIPanelButtonTemplate" text="X">
+      </Frame>      <!--$parent_Title-->
+      <Button name="$parent_Close" inherits="UIPanelButtonTemplate" text="X">
         <Size>
           <AbsDimension x="15" y="15"/>
         </Size>
@@ -181,14 +179,11 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLog_QuestionDialog:Hide()
+            FarmLogFrame_QuestionDialog:Hide()
           </OnClick>
-          <OnLoad>
-            self:Show()
-          </OnLoad>
         </Scripts>
-      </Button>
-      <Button name="FarmLog_QuestionDialog_No" inherits="UIPanelButtonTemplate" text="No">
+      </Button>      <!--$parent_Close-->
+      <Button name="$parent_No" inherits="UIPanelButtonTemplate" text="No">
         <Size>
           <AbsDimension x="70" y="20"/>
         </Size>
@@ -201,14 +196,11 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLog_QuestionDialog:Hide()
+            FarmLogFrame_QuestionDialog:Hide()
           </OnClick>
-          <OnLoad>
-            self:Show()
-          </OnLoad>
         </Scripts>
-      </Button>
-      <Button name="FarmLog_QuestionDialog_Yes" inherits="UIPanelButtonTemplate" text="Yes">
+      </Button>      <!--$parent_No-->
+      <Button name="$parent_Yes" inherits="UIPanelButtonTemplate" text="Yes">
         <Size>
           <AbsDimension x="70" y="20"/>
         </Size>
@@ -221,17 +213,14 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLog_QuestionDialog:Hide()
+            FarmLogFrame_QuestionDialog:Hide()
           </OnClick>
-          <OnLoad>
-            self:Show()
-          </OnLoad>
         </Scripts>
-      </Button>
+      </Button>      <!--$parent_Yes-->
     </Frames>
     <Layers>
       <Layer level="BACKGROUND">
-        <FontString name="FarmLog_QuestionDialog_Question" inherits="ChatFontNormal" text="Reset?">
+        <FontString name="$parent_Question" inherits="ChatFontNormal" text="Reset?">
           <Color r="1" g="1" b="1"/>
           <Anchors>
             <Anchor point="CENTER" />
@@ -239,7 +228,219 @@
         </FontString>
       </Layer>
     </Layers>
-  </Frame>
+  </Frame>  <!--FarmLogFrame_QuestionDialog-->
+
+
+  <Frame name="FarmLogFrame_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
+    <Size>
+      <AbsDimension x="160" y="100"/>
+    </Size>
+    <ResizeBounds>
+      <minResize x="300" y="200" />
+    </ResizeBounds>
+    <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+      <EdgeSize>
+        <AbsValue val="16"></AbsValue>
+      </EdgeSize>
+      <TileSize>
+        <AbsValue val="16" />
+      </TileSize>
+      <BackgroundInsets>
+        <AbsInset left="4" right="4" top="4" bottom="4" />
+      </BackgroundInsets>
+    </Backdrop>
+    <Scripts>
+      <OnLoad>
+        self:SetMaxResize(GetScreenWidth() - 50, GetScreenHeight() - 50);
+        self:SetBackdropColor(0, 0, 0, 0.9);
+        self:SetUserPlaced(true)
+        tinsert(UISpecialFrames, self:GetName())
+      </OnLoad>
+      <OnSizeChanged>
+        FarmLogFrame_MainWindow_ScrollContainer_Content:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30);
+        FarmLogFrame_MainWindow_ScrollContainer:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 18);
+        FarmLogFrame_MainWindow_ScrollContainer:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65);
+        <!-- FLogOptionsFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
+        <!-- FLogHelpFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
+        <!-- for i = 1 , #FLogFrameSChildContentTable do
+          FLogFrameSChildContentTable[i][0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+        end -->
+      </OnSizeChanged>
+    </Scripts>
+
+    <Frames>
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+        <Size>
+          <AbsDimension x="120" y="25"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOP">
+            <Offset>
+              <AbsDimension x="0" y="10"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+          <EdgeSize>
+            <AbsValue val="16"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+          <BackgroundInsets>
+            <AbsInset left="4" right="4" top="4" bottom="4" />
+          </BackgroundInsets>
+        </Backdrop>
+        <Scripts>
+          <OnLoad>
+            self:SetBackdropColor(0, 0, 0, 0.9);
+            self:RegisterForDrag("LeftButton")
+          </OnLoad>
+          <OnDragStart>
+            FarmLogFrame_MainWindow:StartMoving()
+            self:SetBackdropColor(1, 1, 1, 0.9)
+          </OnDragStart>
+          <OnDragStop>
+            self:DragStopped()
+          </OnDragStop>
+          <OnEnter>
+            self:SetBackdropColor(1 ,1 ,1 ,0.9)
+          </OnEnter>
+          <OnLeave>
+            if not IsMouseButtonDown("LeftButton") then
+              self:SetBackdropColor(0, 0, 0, 0.9);
+            end
+          </OnLeave>
+        </Scripts>
+        <Layers>
+          <Layer level="BACKGROUND">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" text="FarmLog">
+              <Color r="1" g="0" b="0"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+      </Frame>      <!--$parent_Title-->
+
+      <Button name="$parent_CloseButton" inherits="UIPanelButtonTemplate" text="X">
+        <Size>
+          <AbsDimension x="20" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="-5" y="-5"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            FarmLogFrame_MainWindow:Hide()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_CloseButton-->
+
+      <ScrollFrame name="$parent_ScrollContainer" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+            <Offset>
+              <AbsDimension x="10" y="-25"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnLoad>
+            self:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 48)
+            self:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65)
+            self:SetHorizontalScroll(0)
+            self:SetVerticalScroll(20)
+          </OnLoad>
+        </Scripts>
+        <ScrollChild>
+          <Frame name="$parent_Content">
+            <Anchors>
+              <Anchor point="TOPLEFT" />
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                self:SetHeight(50)
+                self:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30)
+              </OnLoad>
+            </Scripts>
+          </Frame>
+        </ScrollChild>
+      </ScrollFrame>      <!--$parent_ScrollContainer-->
+
+      <Button name="$parent_ResetButton" inherits="UIPanelButtonTemplate" text="Reset">
+        <Size>
+          <AbsDimension x="105" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOM">
+            <Offset>
+              <AbsDimension x="-55" y="10"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_ResetButton-->
+
+      <Button name="$parent_SessionsButton" inherits="UIPanelButtonTemplate" text="Sessions">
+        <Size>
+          <AbsDimension x="105" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOM">
+            <Offset>
+              <AbsDimension x="55" y="10"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>
+
+      <Button name="$parent_Resize">
+        <Size>
+          <AbsDimension x="16" y="16"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <Scripts>
+          <OnMouseDown>
+            FarmLogFrame_MainWindow:StartSizing("BOTTOMRIGHT")
+          </OnMouseDown>
+          <OnMouseUp>
+            FarmLogFrame_MainWindow:StopMovingOrSizing()
+            FarmLogFrame_MainWindow_ScrollContainer_Content:SetWidth(FarmLogFrame_MainWindow:GetWidth() - 30)
+            FarmLogFrame_MainWindow_ScrollContainer:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 18)
+            FarmLogFrame_MainWindow_ScrollContainer:SetHeight(FarmLogFrame_MainWindow:GetHeight() - 65)
+            self:MouseUp()
+          </OnMouseUp>
+        </Scripts>
+      </Button>
+
+    </Frames>
+  </Frame>  <!--FarmLogFrame_MainWindow-->
+
+  <Frame name="FarmLogFrame_Options">
+  </Frame>  <!---->
 
   <Script file="Deformat.lua"/>
   <Script file="Localization.lua"/>

@@ -5,8 +5,7 @@ function FarmLog_BuildLocalization(context)
     L["enabled"] = "enabled"
     L["yes"] = "Yes";
     L["no"] = "No";
-    L["reset"] = "Reset Data?";	
-    L["clear"] = "Reset";
+    L["reset-question"] = "Reset Data?";	
     L["report"] = "Report";
     L["Log-Options:"] = "Log-Options:";
     L["poor"] = "Poor Items";

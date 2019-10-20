@@ -42,9 +42,7 @@ local maxWindowWidth = (GetScreenWidth() - 50);
 local maxWindowHeight = (GetScreenHeight() - 50);
 local FLogMinWidth = (300);
 local minWindowHeight = (200);
-local FLogFrameSChildContentTable = {};
-local FLogFrameTitleText
-local FLogFrameShowButton
+local ItemRowFrameList = {};
 local L = FarmLog_BuildLocalization()
 
 local listMode = false
@@ -172,9 +170,8 @@ local function ResumeSession()
 	sessionStartTime = time()
 
 	FLogVars["enabled"] = true  
-	FLogFrameTitleText:SetTextColor(0, 1, 0, 1.0);
-	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
-	FLogFrameShowButton:SetText(L["Pause"])
+	FarmLogFrame_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
+	FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 end 
 
 local function PauseSession(temporary)
@@ -186,10 +183,9 @@ local function PauseSession(temporary)
 
 	if not temporary then 
 		FLogVars["enabled"] = false 
-		FLogFrameTitleText:SetTextColor(1, 0, 0, 1.0);
-		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		FLogFrameTitleText:SetText(secondsToClock(GetSessionVar("seconds")));
-		FLogFrameShowButton:SetText(L["Resume"])
+		FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 0, 0, 1.0);
+		FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FarmLogFrame_MainWindow_Title_Text:SetText(secondsToClock(GetSessionVar("seconds")));
 	end 
 end 
 
@@ -364,100 +360,100 @@ local function GetOnLogSessionItemClick(sessionName)
 end
 
 local function CreateSChild(j)
-	local x = #FLogFrameSChildContentTable;
+	local x = #ItemRowFrameList;
 	if x == 0 then
-		local FLogFrameSChildContent = {};
+		local ItemRowFrame = {};
 				
-		FLogFrameSChildContent[0] = CreateFrame("FRAME", nil, FLogFrameSChild);		
-		FLogFrameSChildContent[0]:SetWidth(FLogFrameSChild:GetWidth() - 20);
-		FLogFrameSChildContent[0]:SetHeight(15);
-		FLogFrameSChildContent[0]:SetScript("OnEnter", function(self)
+		ItemRowFrame[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
+		ItemRowFrame[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+		ItemRowFrame[0]:SetHeight(15);
+		ItemRowFrame[0]:SetScript("OnEnter", function(self)
 												self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 												self:SetBackdropColor(0.8,0.8,0.8,0.9);
 												end);
-		FLogFrameSChildContent[0]:SetScript("OnLeave", function(self)
+		ItemRowFrame[0]:SetScript("OnLeave", function(self)
 												self:SetBackdrop(nil);
 												end);
-		FLogFrameSChildContent[0]:SetPoint("TOPLEFT");
-		FLogFrameSChildContent[0]:Show();
+		ItemRowFrame[0]:SetPoint("TOPLEFT");
+		ItemRowFrame[0]:Show();
 		
-		FLogFrameSChildContent[1] = FLogFrameSChildContent[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		FLogFrameSChildContent[1]:SetTextColor(1, 1, 1, 0.8);	
-		FLogFrameSChildContent[1]:SetPoint("TOPLEFT");
+		ItemRowFrame[1] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+		ItemRowFrame[1]:SetTextColor(1, 1, 1, 0.8);	
+		ItemRowFrame[1]:SetPoint("TOPLEFT");
 		
-		FLogFrameSChildContent[2] = FLogFrameSChildContent[0]:CreateTexture(nil, "OVERLAY");
-		FLogFrameSChildContent[2]:SetTexture(nil);
-		FLogFrameSChildContent[2]:SetWidth(15);
-		FLogFrameSChildContent[2]:SetHeight(15);
-		FLogFrameSChildContent[2]:SetPoint("TOPLEFT", FLogFrameSChildContent[1], "TOPRIGHT", 5, 0);
+		ItemRowFrame[2] = ItemRowFrame[0]:CreateTexture(nil, "OVERLAY");
+		ItemRowFrame[2]:SetTexture(nil);
+		ItemRowFrame[2]:SetWidth(15);
+		ItemRowFrame[2]:SetHeight(15);
+		ItemRowFrame[2]:SetPoint("TOPLEFT", ItemRowFrame[1], "TOPRIGHT", 5, 0);
 		
-		FLogFrameSChildContent[3] = FLogFrameSChildContent[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		FLogFrameSChildContent[3]:SetTextColor(1, 1, 1, 0.8);	
-		FLogFrameSChildContent[3]:SetPoint("TOPLEFT", FLogFrameSChildContent[2], "TOPRIGHT");
+		ItemRowFrame[3] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+		ItemRowFrame[3]:SetTextColor(1, 1, 1, 0.8);	
+		ItemRowFrame[3]:SetPoint("TOPLEFT", ItemRowFrame[2], "TOPRIGHT");
 
-		FLogFrameSChildContent[0]:Hide();
+		ItemRowFrame[0]:Hide();
 		
-		tinsert(FLogFrameSChildContentTable, FLogFrameSChildContent);
+		tinsert(ItemRowFrameList, ItemRowFrame);
 	else
 		for i = x + 1, j + x do
-			local FLogFrameSChildContent = {};
+			local ItemRowFrame = {};
 			
-			FLogFrameSChildContent[0] = CreateFrame("FRAME", nil, FLogFrameSChild);		
-			FLogFrameSChildContent[0]:SetWidth(FLogFrameSChild:GetWidth() - 20);
-			FLogFrameSChildContent[0]:SetHeight(15);
-			FLogFrameSChildContent[0]:SetPoint("TOPLEFT", FLogFrameSChildContentTable[i-1][0], "BOTTOMLEFT");
-			FLogFrameSChildContent[0]:Show();
+			ItemRowFrame[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
+			ItemRowFrame[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+			ItemRowFrame[0]:SetHeight(15);
+			ItemRowFrame[0]:SetPoint("TOPLEFT", ItemRowFrameList[i-1][0], "BOTTOMLEFT");
+			ItemRowFrame[0]:Show();
 			
-			FLogFrameSChildContent[1] = FLogFrameSChildContent[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			FLogFrameSChildContent[1]:SetTextColor(1, 1, 1, 0.8);	
-			FLogFrameSChildContent[1]:SetPoint("TOPLEFT");
+			ItemRowFrame[1] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+			ItemRowFrame[1]:SetTextColor(1, 1, 1, 0.8);	
+			ItemRowFrame[1]:SetPoint("TOPLEFT");
 			
-			FLogFrameSChildContent[2] = FLogFrameSChildContent[0]:CreateTexture(nil, "OVERLAY");
-			FLogFrameSChildContent[2]:SetTexture(nil);
-			FLogFrameSChildContent[2]:SetWidth(15);
-			FLogFrameSChildContent[2]:SetHeight(15);
-			FLogFrameSChildContent[2]:SetPoint("TOPLEFT", FLogFrameSChildContent[1], "TOPRIGHT", 5, 0);
+			ItemRowFrame[2] = ItemRowFrame[0]:CreateTexture(nil, "OVERLAY");
+			ItemRowFrame[2]:SetTexture(nil);
+			ItemRowFrame[2]:SetWidth(15);
+			ItemRowFrame[2]:SetHeight(15);
+			ItemRowFrame[2]:SetPoint("TOPLEFT", ItemRowFrame[1], "TOPRIGHT", 5, 0);
 			
-			FLogFrameSChildContent[3] = FLogFrameSChildContent[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			FLogFrameSChildContent[3]:SetTextColor(1, 1, 1, 0.8);	
-			FLogFrameSChildContent[3]:SetPoint("TOPLEFT", FLogFrameSChildContent[2], "TOPRIGHT");
+			ItemRowFrame[3] = ItemRowFrame[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
+			ItemRowFrame[3]:SetTextColor(1, 1, 1, 0.8);	
+			ItemRowFrame[3]:SetPoint("TOPLEFT", ItemRowFrame[2], "TOPRIGHT");
 
-			FLogFrameSChildContent[0]:Hide();
+			ItemRowFrame[0]:Hide();
 			
-			tinsert(FLogFrameSChildContentTable, FLogFrameSChildContent);
+			tinsert(ItemRowFrameList, ItemRowFrame);
 		end
 	end
 end
 
 local function HideSChildFrame(j)
 --Hides all SChildFrames, beginning at Position j
-	local n = #FLogFrameSChildContentTable;
+	local n = #ItemRowFrameList;
 	for i = j, n do
-		FLogFrameSChildContentTable[i][0]:Hide();
+		ItemRowFrameList[i][0]:Hide();
 	end
 end
 
 function FLogRefreshSChildFrame()
 --Refresh the SChildFrame
-	local n = #FLogFrameSChildContentTable;
+	local n = #ItemRowFrameList;
 	local i = 1;
 
 	local function AddItem(text, dontIncrease) 
 		if i > n then CreateSChild(1) end
-		FLogFrameSChildContentTable[i][1]:SetText(text);
-		FLogFrameSChildContentTable[i][2]:SetTexture(nil);
-		FLogFrameSChildContentTable[i][3]:SetText("");
-		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", nil);
-		FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", nil);
-		FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", nil);
-		FLogFrameSChildContentTable[i][0]:Show();
+		ItemRowFrameList[i][1]:SetText(text);
+		ItemRowFrameList[i][2]:SetTexture(nil);
+		ItemRowFrameList[i][3]:SetText("");
+		ItemRowFrameList[i][0]:SetScript("OnEnter", nil);
+		ItemRowFrameList[i][0]:SetScript("OnLeave", nil);
+		ItemRowFrameList[i][0]:SetScript("OnMouseUp", nil);
+		ItemRowFrameList[i][0]:Show();
 		if not dontIncrease then 
 			i = i + 1
 		end 
 	end 
 
 	local function SetItemTooltip(itemLink, text)
-		FLogFrameSChildContentTable[i][0]:SetScript("OnEnter", function(self)
+		ItemRowFrameList[i][0]:SetScript("OnEnter", function(self)
 			self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 			self:SetBackdropColor(0.8,0.8,0.8,0.6);
 			if FLogVars["itemTooltip"] then
@@ -470,7 +466,7 @@ function FLogRefreshSChildFrame()
 				GameTooltip:Show();
 			end
 		end);
-		FLogFrameSChildContentTable[i][0]:SetScript("OnLeave", function(self)
+		ItemRowFrameList[i][0]:SetScript("OnLeave", function(self)
 			if FLogVars["itemTooltip"] then
 				GameTooltip_Hide();
 			end
@@ -479,7 +475,7 @@ function FLogRefreshSChildFrame()
 	end 
 
 	local function SetItemActions(callback) 
-		FLogFrameSChildContentTable[i][0]:SetScript("OnMouseUp", function(self, ...)
+		ItemRowFrameList[i][0]:SetScript("OnMouseUp", function(self, ...)
 			self:SetBackdrop(nil);
 			callback(self, ...)
 		end);
@@ -522,7 +518,7 @@ function FLogRefreshSChildFrame()
 					AddItem(itemText, true)
 					SetItemTooltip(itemLink)
 					SetItemActions(GetOnLogItemClick(itemLink))
-					FLogFrameSChildContentTable[i][0]:Show();
+					ItemRowFrameList[i][0]:Show();
 					i = i + 1
 				end
 			end		
@@ -550,21 +546,21 @@ function FLogRefreshSChildFrame()
 	end 
 
 	HideSChildFrame(i);	
-	if (FLogFrameSChildContentTable[1] and FLogFrameSChildContentTable[1][0] and FLogFrameSChildContentTable[1][0]:IsShown()) then		
-		FLogFrameShowButton:Enable();		
-		FLogFrameClearButton:Enable();
+	if (ItemRowFrameList[1] and ItemRowFrameList[1][0] and ItemRowFrameList[1][0]:IsShown()) then		
+		FarmLogFrame_MainWindow_SessionsButton:Enable();		
+		FarmLogFrame_MainWindow_ResetButton:Enable();
 	else
-		FLogFrameShowButton:Disable();
-		FLogFrameClearButton:Disable();
+		FarmLogFrame_MainWindow_SessionsButton:Disable();
+		FarmLogFrame_MainWindow_ResetButton:Disable();
 	end
 end
 
 local function ToggleWindow()
-	if FLogFrame:IsShown() then
-		FLogFrame:Hide()
+	if FarmLogFrame_MainWindow:IsShown() then
+		FarmLogFrame_MainWindow:Hide()
 		FLogOptionsFrame:Hide()
-	elseif not FLogFrame:IsShown() then
-		FLogFrame:Show()
+	else
+		FarmLogFrame_MainWindow:Show()
 	end
 end
 
@@ -572,7 +568,6 @@ local function ToggleLogging()
 	if FLogVars["enabled"] then 
 		PauseSession()
 		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
-		FLogFrameShowButton:SetText(L["Resume"]);
 	else 
 		StartSession(FLogVars["currentSession"] or "default")
 		if GetSessionVar("seconds") == 0 then 
@@ -580,7 +575,6 @@ local function ToggleLogging()
 		else 
 			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
 		end 	
-		FLogFrameShowButton:SetText(L["Pause"]);
 	end 
 end 
 
@@ -903,10 +897,10 @@ local function OnAddonLoaded()
 	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogVars["lockMinimapButton"]);
 	FLogOptionsCheckButtonTooltip:SetChecked(FLogVars["itemTooltip"]);	
 	
-	FLogFrame:SetWidth(FLogVars["frameRect"]["width"]);
-	FLogFrame:SetHeight(FLogVars["frameRect"]["height"]);
-	FLogFrame:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
-	
+	FarmLogFrame_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
+	FarmLogFrame_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
+	FarmLogFrame_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
+
 	if FLogVars["enabled"] then 
 		ResumeSession()
 	else 
@@ -915,17 +909,17 @@ local function OnAddonLoaded()
 	gphNeedsUpdate = true
 
 	if not FLogVars["lockFrames"] then		
-		FLogTopFrame:RegisterForDrag("LeftButton");			
+		FarmLogFrame_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
 			
-	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+	FarmLogFrame_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
 	if FLogVars["enableMinimapButton"] then
-		FarmLog_MinimapButton:Show();
+		FarmLogFrame_MinimapButton:Show();
 	else
-		FarmLog_MinimapButton:Hide();
+		FarmLogFrame_MinimapButton:Hide();
 	end	
 	if not FLogVars["lockMinimapButton"] then		
-		FarmLog_MinimapButton:RegisterForDrag("LeftButton");			
+		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");			
 	end
 	FLogRefreshSChildFrame();
 end 
@@ -964,7 +958,7 @@ end
 
 -- OnEvent
 
-function FarmLog_MainFrame:OnEvent(event, ...)
+function FarmLogFrame_Main:OnEvent(event, ...)
 	if FLogVars["enabled"] then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
@@ -1008,12 +1002,12 @@ end
 
 -- OnUpdate
 
-function FarmLog_MainFrame:OnUpdate() 
+function FarmLogFrame_Main:OnUpdate() 
 	if gphNeedsUpdate or FLogVars["enabled"] then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
-			FLogFrameTitleText:SetText(secondsToClock(sessionTime));
+			FarmLogFrame_MainWindow_Title_Text:SetText(secondsToClock(sessionTime));
 			lastUpdate = now 
 			if gphNeedsUpdate or (now - lastGPHUpdate >= 60 and sessionTime > 0) then 
 				-- debug("Calculating GPH")
@@ -1034,14 +1028,14 @@ function FarmLog_MainFrame:OnUpdate()
 end 
 
 -- UI
-function FarmLog_MinimapButton:DragStopped() 
-	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
+function FarmLogFrame_MinimapButton:DragStopped() 
+	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MinimapButton:GetPoint();
 	FLogVars["minimapButtonPosision"]["point"] = point;													
 	FLogVars["minimapButtonPosision"]["x"] = x;
 	FLogVars["minimapButtonPosision"]["y"] = y;
 end 
 
-function FarmLog_MinimapButton:Clicked(button) 
+function FarmLogFrame_MinimapButton:Clicked(button) 
 	if button == "RightButton" then
 		ToggleLogging()
 	else
@@ -1049,213 +1043,52 @@ function FarmLog_MinimapButton:Clicked(button)
 	end
 end 
 
--- begin UI ------------------------------------------------------------------------------------------------
+function FarmLogFrame_MainWindow_Title:DragStopped() 
+	FarmLogFrame_MainWindow:StopMovingOrSizing();
+	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MainWindow:GetPoint();
+	FLogVars["frameRect"]["point"] = point;													
+	FLogVars["frameRect"]["x"] = x;
+	FLogVars["frameRect"]["y"] = y;
+	FLogVars["frameRect"]["width"] = FarmLogFrame_MainWindow:GetWidth();
+	FLogVars["frameRect"]["height"] = FarmLogFrame_MainWindow:GetHeight();
+	if not MouseIsOver(FarmLogFrame_MainWindow_Title) then
+		FarmLogFrame_MainWindow_Title:SetBackdropColor(0.0,0.0,0.0,0.9);
+	end
+end 
 
-local FLogFrame = CreateFrame("FRAME", "FLogFrame", UIParent);
-FLogFrame:SetFrameStrata("HIGH"); 
---FLogFrame:RegisterEvent("LOOT_ROLLS_COMPLETE");
-FLogFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogFrame:EnableMouse(true);
-FLogFrame:SetMovable(true);
-FLogFrame:SetUserPlaced(true);
-FLogFrame:SetScript("OnSizeChanged", function()
-												FLogFrameSChild:SetWidth(FLogFrame:GetWidth() - 30);
-												FLogSFrame:SetWidth(FLogFrameSChild:GetWidth() - 18);
-												FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
-												FLogOptionsFrame:SetWidth(FLogFrame:GetWidth());
-												FLogHelpFrame:SetWidth(FLogFrame:GetWidth());
-												for i = 1 , #FLogFrameSChildContentTable do
-													FLogFrameSChildContentTable[i][0]:SetWidth(FLogFrameSChild:GetWidth() - 20);
-												end
-											end);
-FLogFrame:SetResizable(true);
-FLogFrame:SetMaxResize(maxWindowWidth, maxWindowHeight);
-FLogFrame:SetMinResize(FLogMinWidth, minWindowHeight);										  
-FLogFrame:Hide();
-tinsert(UISpecialFrames, FLogFrame:GetName());
-
-local FLogTopFrame = CreateFrame("FRAME", "FLogTopFrame", FLogFrame);
-FLogTopFrame:SetWidth(120);
-FLogTopFrame:SetHeight(25);
-FLogTopFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-FLogTopFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogTopFrame:SetPoint("TOP", 0, 10);
-FLogTopFrame:EnableMouse(true);
-FLogTopFrame:SetScript("OnDragStart", function()
-												FLogFrame:StartMoving(); 
-												FLogTopFrame:SetBackdropColor(1.0,1.0,1.0,0.9);
-											end);
-FLogTopFrame:SetScript("OnDragStop", function()
-											FLogFrame:StopMovingOrSizing();
-											local point, relativeTo, relativePoint, x, y = FLogFrame:GetPoint();
-											FLogVars["frameRect"]["point"] = point;													
-											FLogVars["frameRect"]["x"] = x;
-											FLogVars["frameRect"]["y"] = y;
-											FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
-											FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
-											if (not MouseIsOver(FLogTopFrame)) then
-												FLogTopFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-											end
-										  end);
-FLogTopFrame:SetScript("OnEnter", function()
-													FLogTopFrame:SetBackdropColor(1.0,1.0,1.0,0.9);
-												end);
-FLogTopFrame:SetScript("OnLeave", function()
-													if (not IsMouseButtonDown("LeftButton")) then
-														FLogTopFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-													end
-												end);										  
-FLogTopFrame:Show();
-
-FLogFrameTitleText = FLogTopFrame:CreateFontString(nil, "Artwork", "ChatFontNormal");
-FLogFrameTitleText:SetText(L["window-title"]);
-FLogFrameTitleText:SetPoint("CENTER");
-
-local FLogFrameOptions = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
-FLogFrameOptions:SetWidth(20);
-FLogFrameOptions:SetHeight(20);
-FLogFrameOptions:SetText("O");
-FLogFrameOptions:SetPoint("TOPLEFT", 5, -5);
-FLogFrameOptions:SetScript("OnClick", function()
-	if FLogOptionsFrame:IsShown() then
-		FLogOptionsFrame:Hide();													
-	elseif not FLogOptionsFrame:IsShown() then
-		FLogOptionsFrame:Show();
-	end											
-end);
-FLogFrameOptions:SetAlpha(1);
-FLogFrameOptions:Show();
-
-local FLogFrameList = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
-FLogFrameList:SetWidth(20);
-FLogFrameList:SetHeight(20);
-FLogFrameList:SetText("L");
-FLogFrameList:SetPoint("TOPLEFT", 25, -5);
-FLogFrameList:SetScript("OnClick", function()
-	listMode = not listMode
+function FarmLogFrame_MainWindow_SessionsButton:Clicked() 
+	listMode = not listMode 
 	FLogRefreshSChildFrame()
-end);
-FLogFrameList:SetAlpha(1);
-FLogFrameList:Show();
+end 
 
-local FLogFrameClose = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
-FLogFrameClose:SetWidth(15);
-FLogFrameClose:SetHeight(15);
-FLogFrameClose:SetText("X");
-FLogFrameClose:SetPoint("TOPRIGHT", -5, -5);
-FLogFrameClose:SetScript("OnClick", function()
-											FLogFrame:Hide();
-											FLogOptionsFrame:Hide();
-											FLogHelpFrame:Hide();
-										   end);
-FLogFrameClose:SetAlpha(1);
-FLogFrameClose:Show();
-
-local FLogFrameHelp = CreateFrame("BUTTON", nil, FLogFrame, "UIPanelButtonTemplate");
-FLogFrameHelp:SetWidth(15);
-FLogFrameHelp:SetHeight(15);
-FLogFrameHelp:SetText("?");
-FLogFrameHelp:SetPoint("RIGHT", FLogFrameClose, "LEFT", -5, 0);
-FLogFrameHelp:SetScript("OnClick", function()
-											if FLogHelpFrame:IsShown() then
-												FLogHelpFrame:Hide();
-											else
-												FLogHelpFrame:Show();
-											end
-										   end);
-FLogFrameHelp:SetAlpha(1);
-FLogFrameHelp:Show();
-
-local FLogSFrame = CreateFrame("SCROLLFRAME", "FLogSFrame", FLogFrame, "UIPanelScrollFrameTemplate");
-local FLogFrameSChild = CreateFrame("FRAME", "FLogFrameSChild", FLogSFrame);
-FLogSFrame:SetScrollChild(FLogFrameSChild);
-FLogSFrame:SetPoint("TOPLEFT", FLogFrame, "TOPLEFT", 10, -25);
-FLogSFrame:SetWidth(FLogFrame:GetWidth() - 48);
-FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
-FLogSFrame:SetHorizontalScroll(0);
-FLogSFrame:SetVerticalScroll(20);
-FLogSFrame:EnableMouse(true);
-FLogSFrame:Show();
-FLogFrameSChild:SetPoint("TOPLEFT");
-FLogFrameSChild:SetWidth(FLogFrame:GetWidth() - 30);
-FLogFrameSChild:SetHeight(50);
-FLogFrameSChild:Show();
-
-local FLogFrameClearButton = CreateFrame("BUTTON", "FLogFrameClearButton", FLogFrame, "UIPanelButtonTemplate");
-FLogFrameClearButton:SetWidth(105);
-FLogFrameClearButton:SetHeight(20);
-FLogFrameClearButton:SetText(L["clear"]);
-FLogFrameClearButton:SetPoint("BOTTOM", -55, 10);
-FLogFrameClearButton:SetScript("OnClick", function() 
-	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+function FarmLogFrame_MainWindow_ResetButton:Clicked()
+	FarmLogFrame_QuestionDialog_Yes:SetScript("OnClick", function() 
 		ResetSession()
-		FarmLog_QuestionDialog:Hide()
+		FarmLogFrame_QuestionDialog:Hide()
 	end)
-	FarmLog_QuestionDialog:Show()
-end);
-FLogFrameClearButton:SetAlpha(1);
-FLogFrameClearButton:Show();
+	FarmLogFrame_QuestionDialog_TitleText:SetText(L["reset-title"])
+	FarmLogFrame_QuestionDialog_Question:SetText(L["reset-question"])
+	FarmLogFrame_QuestionDialog:Show()
+end 
 
-FLogFrameShowButton = CreateFrame("BUTTON", "FLogFrameShowButton", FLogFrame, "UIPanelButtonTemplate");
-FLogFrameShowButton:SetWidth(105);
-FLogFrameShowButton:SetHeight(20);
-FLogFrameShowButton:SetText(L["Resume"])
-FLogFrameShowButton:SetPoint("BOTTOM", 55, 10);
-FLogFrameShowButton:SetScript("OnClick", function() ToggleLogging() end)
-FLogFrameShowButton:SetAlpha(1);
-FLogFrameShowButton:Show();
+function FarmLogFrame_MainWindow_Resize:MouseUp() 
+	local point, _, _, x, y = FarmLogFrame_MainWindow:GetPoint()
+	FLogVars["frameRect"]["point"] = point									
+	FLogVars["frameRect"]["x"] = x
+	FLogVars["frameRect"]["y"] = y
+	FLogVars["frameRect"]["width"] = FarmLogFrame_MainWindow:GetWidth()
+	FLogVars["frameRect"]["height"] = FarmLogFrame_MainWindow:GetHeight()
+end 
 
-local FLogFrameResize = CreateFrame("BUTTON", "FLogFrameResize", FLogFrame);
-FLogFrameResize:SetWidth(16);
-FLogFrameResize:SetHeight(16);
-FLogFrameResize:SetPoint("BOTTOMRIGHT", FLogFrame, "BOTTOMRIGHT", -2, 2);
-FLogFrameResize:SetNormalTexture("Interface\\AddOns\\FarmLog\\FarmLogResizeButton");
-FLogFrameResize:SetHighlightTexture("Interface\\AddOns\\FarmLog\\FarmLogResizeButton");
-FLogFrameResize:SetScript("OnMouseDown", function()
-													FLogFrame:StartSizing("BOTTOMRIGHT");
-												end);
-FLogFrameResize:SetScript("OnMouseUp", function()
-												FLogFrame:StopMovingOrSizing();
-												FLogFrameSChild:SetWidth(FLogFrame:GetWidth() - 30);
-												FLogSFrame:SetWidth(FLogFrameSChild:GetWidth() - 18);
-												FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
-												local point, _, _, x, y = FLogFrame:GetPoint();
-												FLogVars["frameRect"]["point"] = point;													
-												FLogVars["frameRect"]["x"] = x;
-												FLogVars["frameRect"]["y"] = y;
-												FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
-												FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
-											end);
-
-local FLogFrameResize2 = CreateFrame("BUTTON", "FLogFrameResize2", FLogFrame);
-FLogFrameResize2:SetWidth(16);
-FLogFrameResize2:SetHeight(16);
-FLogFrameResize2:SetPoint("BOTTOMLEFT", FLogFrame, "BOTTOMLEFT", 2, 2);
-FLogFrameResize2:SetNormalTexture("Interface\\AddOns\\FarmLog\\FarmLogResizeButton2");
-FLogFrameResize2:SetHighlightTexture("Interface\\AddOns\\FarmLog\\FarmLogResizeButton2");
-FLogFrameResize2:SetScript("OnMouseDown", function()
-													FLogFrame:StartSizing("BOTTOMLEFT");
-												end);
-FLogFrameResize2:SetScript("OnMouseUp", function()
-												FLogFrame:StopMovingOrSizing();
-												FLogFrameSChild:SetWidth(FLogFrame:GetWidth() - 30);
-												FLogSFrame:SetWidth(FLogFrameSChild:GetWidth() - 18);
-												FLogSFrame:SetHeight(FLogFrame:GetHeight() - 65);
-												local point, _, _, x, y = FLogFrame:GetPoint();
-												FLogVars["frameRect"]["point"] = point;													
-												FLogVars["frameRect"]["x"] = x;
-												FLogVars["frameRect"]["y"] = y;
-												FLogVars["frameRect"]["width"] = FLogFrame:GetWidth();
-												FLogVars["frameRect"]["height"] = FLogFrame:GetHeight();
-											end);											
+-- begin UI ------------------------------------------------------------------------------------------------
+										
 
 local FLogOptionsFrame = CreateFrame("FRAME", "FLogOptionsFrame", UIParent);
-FLogOptionsFrame:SetWidth(FLogFrame:GetWidth());
+FLogOptionsFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth());
 FLogOptionsFrame:SetHeight(280);
 FLogOptionsFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogOptionsFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogOptionsFrame:SetPoint("TOPLEFT", FLogFrame, "BOTTOMLEFT", 0, 0);
+FLogOptionsFrame:SetPoint("TOPLEFT", FarmLogFrame_MainWindow, "BOTTOMLEFT", 0, 0);
 tinsert(UISpecialFrames, FLogOptionsFrame:GetName());
 FLogOptionsFrame:Hide();
 
@@ -1432,9 +1265,9 @@ FLogOptionsCheckButtonLockFrames:SetCheckedTexture("Interface\\Buttons\\UI-Check
 FLogOptionsCheckButtonLockFrames:SetScript("OnClick", function() 
 	FLogVars["lockFrames"] = tobool(FLogOptionsCheckButtonLockFrames:GetChecked());
 	if FLogOptionsCheckButtonLockFrames:GetChecked() then
-		FLogFrame:RegisterForDrag("");
+		FarmLogFrame_MainWindow:RegisterForDrag("");
 	elseif not FLogOptionsCheckButtonLockFrames:GetChecked() then
-		FLogFrame:RegisterForDrag("LeftButton");
+		FarmLogFrame_MainWindow:RegisterForDrag("LeftButton");
 	end
 end);
 FLogOptionsCheckButtonLockFrames:Show();
@@ -1458,9 +1291,9 @@ FLogOptionsCheckButtonEnableMinimapButton:SetCheckedTexture("Interface\\Buttons\
 FLogOptionsCheckButtonEnableMinimapButton:SetScript("OnClick", function() 
 	FLogVars["enableMinimapButton"] = tobool(FLogOptionsCheckButtonEnableMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FarmLog_MinimapButton:Show();
+		FarmLogFrame_MinimapButton:Show();
 	elseif not FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FarmLog_MinimapButton:Hide();
+		FarmLogFrame_MinimapButton:Hide();
 	end
 end);
 FLogOptionsCheckButtonEnableMinimapButton:Show();
@@ -1484,9 +1317,9 @@ FLogOptionsCheckButtonLockMinimapButton:SetCheckedTexture("Interface\\Buttons\\U
 FLogOptionsCheckButtonLockMinimapButton:SetScript("OnClick", function()
 	FLogVars["lockMinimapButton"] = tobool(FLogOptionsCheckButtonLockMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonLockMinimapButton:GetChecked() then
-		FarmLog_MinimapButton:RegisterForDrag(""); 
+		FarmLogFrame_MinimapButton:RegisterForDrag(""); 
 	elseif not FLogOptionsCheckButtonLockMinimapButton:GetChecked() then																			
-		FarmLog_MinimapButton:RegisterForDrag("LeftButton");
+		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");
 	end
 end);
 FLogOptionsCheckButtonLockMinimapButton:Show();
@@ -1608,14 +1441,14 @@ FLogEditFrameCancelButton:Show();
 
 local FLogHelpFrame = CreateFrame("FRAME", "FLogHelpFrame", UIParent);
 FLogHelpFrame:SetFrameStrata("HIGH"); 
-FLogHelpFrame:SetWidth(FLogFrame:GetWidth());
+FLogHelpFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth());
 FLogHelpFrame:SetHeight(200);
 if (GetLocale() == "deDE") then
 	FLogHelpFrame:SetHeight(215);
 end
 FLogHelpFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogHelpFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogHelpFrame:SetPoint("BOTTOM", FLogFrame, "TOP", 0, 0);
+FLogHelpFrame:SetPoint("BOTTOM", FarmLogFrame_MainWindow, "TOP", 0, 0);
 FLogHelpFrame:SetScript("OnDragStart", function(this) this:StartMoving(); end);
 FLogHelpFrame:SetScript("OnDragStop", function(this) this:StopMovingOrSizing(); end);
 FLogHelpFrame:Hide();
