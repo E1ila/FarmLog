@@ -42,7 +42,7 @@ local FLogMinWidth = (300);
 local ItemRowFrameList = {};
 local L = FarmLog_BuildLocalization()
 
-local listMode = false
+local sessionListMode = false
 local gphNeedsUpdate = false 
 local sessionStartTime = nil 
 local lastMobLoot = {}
@@ -164,15 +164,29 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 end 
 
 local function GetSessionWindowTitle(customTime)
-	return (FLogVars["currentSession"] or "").."     "..secondsToClock(customTime or GetSessionVar("seconds") or 0)
+	return (FLogVars["currentSession"] or "").."  --  "..secondsToClock(customTime or GetSessionVar("seconds") or 0)
+end 
+
+local function UpdateMainWindowTitle()
+	if sessionListMode then 
+		FarmLogFrame_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
+		FarmLogFrame_MainWindow_Title_Text:SetText(L["All Sessions"])
+	else 
+		if FLogVars["enabled"] then 
+			FarmLogFrame_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
+		else 
+			FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
+			FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle())
+		end 
+	end 
 end 
 
 local function ResumeSession() 
 	sessionStartTime = time()
 
 	FLogVars["enabled"] = true  
-	FarmLogFrame_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
 	FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	UpdateMainWindowTitle()
 end 
 
 local function PauseSession(temporary)
@@ -184,9 +198,8 @@ local function PauseSession(temporary)
 
 	if not temporary then 
 		FLogVars["enabled"] = false 
-		FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 0, 0, 1.0);
 		FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle());
+		UpdateMainWindowTitle()
 	end 
 end 
 
@@ -351,7 +364,7 @@ local function GetOnLogSessionItemClick(sessionName)
 				FLogEditFrame:Show();
 				FLogEditFrameOwnerBox:SetFocus(true);												
 			else 
-				listMode = false 
+				sessionListMode = false 
 				out("Farm session |cff99ff00"..sessionName.."|r resumed")
 				StartSession(sessionName)
 				FLogRefreshSChildFrame()
@@ -540,7 +553,7 @@ function FLogRefreshSChildFrame()
 		end 
 	end 
 
-	if listMode then 
+	if sessionListMode then 
 		AddSessionListItems()
 	else 
 		AddSessionYieldItems()
@@ -1004,7 +1017,7 @@ end
 -- OnUpdate
 
 function FarmLogFrame_Main:OnUpdate() 
-	if gphNeedsUpdate or FLogVars["enabled"] then 
+	if not sessionListMode and (gphNeedsUpdate or FLogVars["enabled"]) then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
@@ -1054,7 +1067,9 @@ function FarmLogFrame_MainWindow_Title:DragStopped()
 end 
 
 function FarmLogFrame_MainWindow_SessionsButton:Clicked() 
-	listMode = not listMode 
+	sessionListMode = not sessionListMode 
+	gphNeedsUpdate = true
+	UpdateMainWindowTitle()
 	FLogRefreshSChildFrame()
 end 
 

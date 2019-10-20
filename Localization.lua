@@ -1,6 +1,7 @@
 
 function FarmLog_BuildLocalization(context)
     local L = {};
+    L["All Sessions"] = "All Sessions"
     L["disabled"] = "disabled"
     L["enabled"] = "enabled"
     L["yes"] = "Yes";

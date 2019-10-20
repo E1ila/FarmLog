@@ -1,7 +1,11 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
-  <!-- Main Frame -->
+  <Font name="FarmLogFont" font="Fonts\FRIZQT__.TTF" virtual="true">
+    <FontHeight>
+      <AbsValue val="12"/>
+    </FontHeight>
+  </Font>
 
   <Frame name="FarmLogFrame_Main">
     <Scripts>
@@ -157,7 +161,7 @@
         </Scripts>
         <Layers>
           <Layer level="BACKGROUND">
-            <FontString name="$parent_TitleText" inherits="ChatFontNormal" text="Dialog Title">
+            <FontString name="$parent_TitleText" inherits="ChatFontNormal" font="FarmLogFont" text="Dialog Title">
               <Color r="1" g="0" b="0"/>
               <Anchors>
                 <Anchor point="CENTER" />
@@ -220,7 +224,7 @@
     </Frames>
     <Layers>
       <Layer level="BACKGROUND">
-        <FontString name="$parent_Question" inherits="ChatFontNormal" text="Question?">
+        <FontString name="$parent_Question" inherits="ChatFontNormal" font="FarmLogFont" text="Question?">
           <Color r="1" g="1" b="1"/>
           <Anchors>
             <Anchor point="CENTER" />
@@ -336,7 +340,7 @@
         </Scripts>
         <Layers>
           <Layer level="BACKGROUND">
-            <FontString name="$parent_Text" inherits="ChatFontNormal" text="FarmLog">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogFont" text="FarmLog">
               <Color r="1" g="0" b="0"/>
               <Anchors>
                 <Anchor point="CENTER" />
