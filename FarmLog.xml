@@ -43,7 +43,7 @@
 
   <!-- Minimap Button -->
 
-  <Button name="FarmLogFrame_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
+  <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
     <Size>
       <AbsDimension x="31" y="31"/>
     </Size>
@@ -53,7 +53,7 @@
     </Anchors>
     <Layers>
       <Layer level="BACKGROUND">
-        <Texture name="FarmLogFrame_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
+        <Texture name="FarmLog_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
           <Anchors>
             <Anchor point="TOPLEFT">
               <Offset>
@@ -69,7 +69,7 @@
         </Texture>
       </Layer>
       <Layer level="OVERLAY">
-        <Texture name="FarmLogFrame_MinimapButtonOverlay" file="Interface\Minimap\MiniMap-TrackingBorder">
+        <Texture name="FarmLog_MinimapButtonOverlay" file="Interface\Minimap\MiniMap-TrackingBorder">
           <Size>
             <AbsDimension x="53" y="53"/>
           </Size>
@@ -101,7 +101,7 @@
 
   <!-- Question Dialog -->
 
-  <Frame name="FarmLogFrame_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
+  <Frame name="FarmLog_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
     <Size>
       <AbsDimension x="160" y="100"/>
     </Size>
@@ -189,7 +189,7 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLogFrame_QuestionDialog:Hide()
+            FarmLog_QuestionDialog:Hide()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_Close-->
@@ -206,7 +206,7 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLogFrame_QuestionDialog:Hide()
+            FarmLog_QuestionDialog:Hide()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_No-->
@@ -223,7 +223,7 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLogFrame_QuestionDialog:Hide()
+            FarmLog_QuestionDialog:Hide()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_Yes-->
@@ -238,10 +238,10 @@
         </FontString>
       </Layer>
     </Layers>
-  </Frame>  <!--FarmLogFrame_QuestionDialog-->
+  </Frame>  <!--FarmLog_QuestionDialog-->
 
 
-  <Frame name="FarmLogFrame_MainWindow" parent="UIParent" frameStrata="DIALOG" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="DIALOG" enableMouse="true" movable="true" resizable="true">
     <Size>
       <AbsDimension x="160" y="100"/>
     </Size>
@@ -266,10 +266,10 @@
         tinsert(UISpecialFrames, self:GetName())
       </OnLoad>
       <OnSizeChanged>
-        <!-- FLogOptionsFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
-        <!-- FLogHelpFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth()); -->
+        <!-- FLogOptionsFrame:SetWidth(FarmLog_MainWindow:GetWidth()); -->
+        <!-- FLogHelpFrame:SetWidth(FarmLog_MainWindow:GetWidth()); -->
         <!-- for i = 1 , #FLogFrameSChildContentTable do
-          FLogFrameSChildContentTable[i][0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+          FLogFrameSChildContentTable[i][0]:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
         end -->
       </OnSizeChanged>
     </Scripts>
@@ -289,7 +289,7 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLogFrame_MainWindow:Hide()
+            FarmLog_MainWindow:Hide()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
@@ -325,12 +325,12 @@
             self:RegisterForDrag("LeftButton")
           </OnLoad>
           <OnDragStart>
-            FarmLogFrame_MainWindow:StartMoving()
+            FarmLog_MainWindow:StartMoving()
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
           </OnDragStart>
           <OnDragStop>
-          	FarmLogFrame_MainWindow:StopMovingOrSizing();
-            if not MouseIsOver(FarmLogFrame_MainWindow_Title) then
+          	FarmLog_MainWindow:StopMovingOrSizing();
+            if not MouseIsOver(FarmLog_MainWindow_Title) then
          			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
             end
             self:DragStopped()            
@@ -356,7 +356,7 @@
         </Layers>
       </Frame>      <!--$parent_Title-->
 
-      <ScrollFrame name="$parent_ScrollContainer" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
+      <ScrollFrame name="$parent_Scroll" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
             <Offset>
@@ -386,7 +386,7 @@
             </Anchors>
           </Frame>
         </ScrollChild>
-      </ScrollFrame>      <!--$parent_ScrollContainer-->
+      </ScrollFrame>      <!--$parent_Scroll-->
 
       <Button name="$parent_ResetButton" inherits="UIPanelButtonTemplate" text="Clear">
         <Size>
@@ -439,17 +439,17 @@
         <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
-            FarmLogFrame_MainWindow:StartSizing("BOTTOMRIGHT")
+            FarmLog_MainWindow:StartSizing("BOTTOMRIGHT")
           </OnMouseDown>
           <OnMouseUp>
-            FarmLogFrame_MainWindow:StopMovingOrSizing()
+            FarmLog_MainWindow:StopMovingOrSizing()
             self:MouseUp()
           </OnMouseUp>
         </Scripts>
       </Button>
 
     </Frames>
-  </Frame>  <!--FarmLogFrame_MainWindow-->
+  </Frame>  <!--FarmLog_MainWindow-->
 
   <Frame name="FarmLogFrame_Options">
   </Frame>  <!---->

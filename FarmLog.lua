@@ -38,11 +38,10 @@ FLogVars = {
 local editName = "";
 local editItem = "";
 local editIdx = -1;
-local FLogMinWidth = (300);
-local ItemRowFrameList = {};
+local ScrollRows = {};
 local L = FarmLog_BuildLocalization()
 
-local visibleItems = 0
+local visibleRows = 0
 local sessionListMode = false
 local gphNeedsUpdate = false 
 local sessionStartTime = nil 
@@ -50,7 +49,7 @@ local lastMobLoot = {}
 local skillName = nil 
 local skillNameTime = nil 
 local lastUpdate = 0
-local lastGPHUpdate = 0
+local lastGphUpdate = 0
 local goldPerHour = 0
 
 local SPELL_HERBING = 2366
@@ -178,14 +177,14 @@ end
 
 function FarmLog:UpdateMainWindowTitle()
 	if sessionListMode then 
-		FarmLogFrame_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
-		FarmLogFrame_MainWindow_Title_Text:SetText(L["All Sessions"])
+		FarmLog_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
+		FarmLog_MainWindow_Title_Text:SetText(L["All Sessions"])
 	else 
 		if FLogVars["enabled"] then 
-			FarmLogFrame_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
+			FarmLog_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
 		else 
-			FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
-			FarmLogFrame_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle())
+			FarmLog_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
+			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle())
 		end 
 	end 
 end 
@@ -194,7 +193,7 @@ function FarmLog:ResumeSession()
 	sessionStartTime = time()
 
 	FLogVars["enabled"] = true  
-	FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 	self:UpdateMainWindowTitle()
 end 
 
@@ -207,7 +206,7 @@ function FarmLog:PauseSession(temporary)
 
 	if not temporary then 
 		FLogVars["enabled"] = false 
-		FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 		self:UpdateMainWindowTitle()
 	end 
 end 
@@ -266,7 +265,7 @@ end
 
 -- Main Window UI ------------------------------------------------------------
 
-local function AddToChatFrameEditBox(itemLink)
+function FarmLog:PlaceLinkInChatEditBox(itemLink)
 	-- Copy itemLink into ChatFrame
 	local chatFrame = SELECTED_DOCK_FRAME
 	local editbox = chatFrame.editBox
@@ -283,7 +282,7 @@ end
 function FarmLog:GetOnLogItemClick(itemLink) 
 	return function(self, button)
 		if IsShiftKeyDown() then
-			AddToChatFrameEditBox(itemLink) -- paste in chat box
+			self:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
 		elseif IsControlKeyDown() then
 			DressUpItemLink(itemLink) -- preview
 		end
@@ -308,51 +307,51 @@ function FarmLog:GetOnLogSessionItemClick(sessionName)
 	end 
 end
 
-local function CreateTextRow()
-	local ItemRowFrames = {};
-	
-	ItemRowFrames["type"] = "text"
+local function CreateRow_Text(existingRow, text)
+	local row = existingRow or {};
+	local previousType = row["type"]
+	row["type"] = "text"
 
-	ItemRowFrames["root"] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
-	ItemRowFrames["root"]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
-	ItemRowFrames["root"]:SetHeight(15);
-	if #ItemRowFrameList == 0 then 
-		ItemRowFrames["root"]:SetPoint("TOPLEFT", FarmLogFrame_MainWindow_ScrollContainer_Content, "TOPLEFT");
-	else 
-		ItemRowFrames["root"]:SetPoint("TOPLEFT", ItemRowFrameList[#ItemRowFrameList]["root"], "BOTTOMLEFT");
+	if not row["root"] then 
+		row["root"] = CreateFrame("FRAME", nil, FarmLog_MainWindow_Scroll_Content);		
+		row["root"]:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
+		row["root"]:SetHeight(15);
+		if #ScrollRows == 0 then 
+			row["root"]:SetPoint("TOPLEFT", FarmLog_MainWindow_Scroll_Content, "TOPLEFT");
+		else 
+			row["root"]:SetPoint("TOPLEFT", ScrollRows[#ScrollRows]["root"], "BOTTOMLEFT");
+		end 
 	end 
-	ItemRowFrames["root"]:Show();
-	
-	ItemRowFrames["label"] = ItemRowFrames["root"]:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
-	ItemRowFrames["label"]:SetTextColor(1, 1, 1, 0.8)
-	ItemRowFrames["label"]:SetPoint("LEFT")
-	ItemRowFrames["label"]:SetFont("FarmLogRowFont", 10)
-
-	tinsert(ItemRowFrameList, ItemRowFrames);
-	return ItemRowFrames
-end
-
-local function HideItemRowsBeyond(j)
-	local n = #ItemRowFrameList;
-	for i = j, n do
-		ItemRowFrameList[i]["root"]:Hide();
-	end
-end
-
-local function AddItem(text) 
-	local row = nil 
-	visibleItems = visibleItems + 1
-	if visibleItems > #ItemRowFrameList then 
-		row = CreateTextRow() 
-	else 
-		row = ItemRowFrameList[visibleItems]
-	end
-	row["label"]:SetText(text);
-	row["root"]:SetScript("OnEnter", nil);
-	row["root"]:SetScript("OnLeave", nil);
-	row["root"]:SetScript("OnMouseUp", nil);
+	if previousType ~= "text" then 
+		row["root"]:SetScript("OnEnter", nil);
+		row["root"]:SetScript("OnLeave", nil);
+		row["root"]:SetScript("OnMouseUp", nil);	
+	end 
 	row["root"]:Show();
-	return row 
+	
+	if not row["label"] then 
+		row["label"] = row["root"]:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
+		row["label"]:SetTextColor(1, 1, 1, 0.8)
+		row["label"]:SetPoint("LEFT")
+		row["label"]:SetFont("FarmLogRowFont", 10)
+	end 
+	row["label"]:SetText(text);
+	row["label"]:Show()
+
+	tinsert(ScrollRows, row);
+	return row
+end
+
+local function HideRowsBeyond(j)
+	local n = #ScrollRows;
+	for i = j, n do
+		ScrollRows[i]["root"]:Hide();
+	end
+end
+
+local function AddItem_Text(text) 
+	visibleRows = visibleRows + 1
+	return CreateRow_Text(ScrollRows[visibleRows], text)
 end 
 
 local function SetItemTooltip(row, itemLink, text)
@@ -385,13 +384,13 @@ local function SetItemActions(row, callback)
 end 
 
 function FarmLog:AddSessionYieldItems() 
-	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
-	if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
-	if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
-	if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
-	if GetSessionVar("xp") > 0 then AddItem(L["XP"].." "..GetSessionVar("xp")) end 
-	for faction, rep in pairs(GetSessionVar("rep")) do AddItem(rep.." "..faction.." "..L["reputation"]) end 
-	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
+	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem_Text(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
+	if GetSessionVar("ah") > 0 then AddItem_Text(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
+	if GetSessionVar("gold") > 0 then AddItem_Text(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
+	if GetSessionVar("vendor") > 0 then AddItem_Text(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
+	if GetSessionVar("xp") > 0 then AddItem_Text(L["XP"].." "..GetSessionVar("xp")) end 
+	for faction, rep in pairs(GetSessionVar("rep")) do AddItem_Text(rep.." "..faction.." "..L["reputation"]) end 
+	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem_Text("+"..levels.." "..skillName) end 
 
 	local sessionKills = GetSessionVar("kills")
 	local sortedNames = SortByStringKey(sessionKills);
@@ -408,13 +407,13 @@ function FarmLog:AddSessionYieldItems()
 		if sessionKills[mobName] then 
 			section = section .. " x" .. sessionKills[mobName]
 		end 
-		AddItem(section)	
+		AddItem_Text(section)	
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			for j = 1, #sessionDrops[mobName][itemLink] do
 				local quantity = sessionDrops[mobName][itemLink][j][1];
 				local itemText = "    "..itemLink
 				if quantity > 1 then itemText = itemText.." x"..quantity end
-				local row = AddItem(itemText)
+				local row = AddItem_Text(itemText)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row["root"]:Show();
@@ -430,36 +429,36 @@ function FarmLog:AddSessionListItems()
 		if gph and gph > 0 and tostring(gph) ~= "nan" then 
 			text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
 		end 
-		local row = AddItem(text)
+		local row = AddItem_Text(text)
 		SetItemTooltip(row)
 		SetItemActions(row, self:GetOnLogSessionItemClick(name))
 	end 
 end 
 
 function FarmLog:RefreshSession()
-	visibleItems = 0
+	visibleRows = 0
 
 	if sessionListMode then 
 		self:AddSessionListItems()
-		FarmLogFrame_MainWindow_ResetButton:Disable()
+		FarmLog_MainWindow_ResetButton:Disable()
 	else 
 		self:AddSessionYieldItems()
-		if #ItemRowFrameList > 0 then
-			FarmLogFrame_MainWindow_ResetButton:Enable()
+		if #ScrollRows > 0 then
+			FarmLog_MainWindow_ResetButton:Enable()
 		else
-			FarmLogFrame_MainWindow_ResetButton:Disable()
+			FarmLog_MainWindow_ResetButton:Disable()
 		end	
 	end 
-	HideItemRowsBeyond(visibleItems + 1);	
-	FarmLogFrame_MainWindow_SessionsButton:Enable()
+	HideRowsBeyond(visibleRows + 1);	
+	FarmLog_MainWindow_SessionsButton:Enable()
 end
 
 function FarmLog:ToggleWindow()
-	if FarmLogFrame_MainWindow:IsShown() then
-		FarmLogFrame_MainWindow:Hide()
+	if FarmLog_MainWindow:IsShown() then
+		FarmLog_MainWindow:Hide()
 		FLogOptionsFrame:Hide()
 	else
-		FarmLogFrame_MainWindow:Show()
+		FarmLog_MainWindow:Show()
 	end
 end
 
@@ -836,9 +835,9 @@ function FarmLog:OnAddonLoaded()
 	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogVars["lockMinimapButton"]);
 	FLogOptionsCheckButtonTooltip:SetChecked(FLogVars["itemTooltip"]);	
 	
-	FarmLogFrame_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
-	FarmLogFrame_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
-	FarmLogFrame_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
+	FarmLog_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
+	FarmLog_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
+	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 
 	if FLogVars["enabled"] then 
 		self:ResumeSession()
@@ -848,17 +847,17 @@ function FarmLog:OnAddonLoaded()
 	gphNeedsUpdate = true
 
 	if not FLogVars["lockFrames"] then		
-		FarmLogFrame_MainWindow_Title:RegisterForDrag("LeftButton");			
+		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
 			
-	FarmLogFrame_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
 	if FLogVars["enableMinimapButton"] then
-		FarmLogFrame_MinimapButton:Show();
+		FarmLog_MinimapButton:Show();
 	else
-		FarmLogFrame_MinimapButton:Hide();
+		FarmLog_MinimapButton:Hide();
 	end	
 	if not FLogVars["lockMinimapButton"] then		
-		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");			
+		FarmLog_MinimapButton:RegisterForDrag("LeftButton");			
 	end
 	self:RefreshSession();
 end 
@@ -946,12 +945,12 @@ function FarmLog:OnUpdate()
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
-			FarmLogFrame_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle(sessionTime));
+			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle(sessionTime));
 			lastUpdate = now 
-			if gphNeedsUpdate or (now - lastGPHUpdate >= 60 and sessionTime > 0) then 
+			if gphNeedsUpdate or (now - lastGphUpdate >= 60 and sessionTime > 0) then 
 				-- debug("Calculating GPH")
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
-				lastGPHUpdate = now 
+				lastGphUpdate = now 
 				gphNeedsUpdate = false 
 				self:RefreshSession()
 			end 
@@ -968,14 +967,14 @@ end
 
 -- UI ----------------------------------------------------------------------------------------
 
-function FarmLogFrame_MinimapButton:DragStopped() 
-	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MinimapButton:GetPoint();
+function FarmLog_MinimapButton:DragStopped() 
+	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
 	FLogVars["minimapButtonPosision"]["point"] = point;													
 	FLogVars["minimapButtonPosision"]["x"] = x;
 	FLogVars["minimapButtonPosision"]["y"] = y;
 end 
 
-function FarmLogFrame_MinimapButton:Clicked(button) 
+function FarmLog_MinimapButton:Clicked(button) 
 	if button == "RightButton" then
 		FarmLog:ToggleLogging()
 	else
@@ -983,50 +982,50 @@ function FarmLogFrame_MinimapButton:Clicked(button)
 	end
 end 
 
-function FarmLogFrame_MainWindow_Title:DragStopped() 
-	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MainWindow:GetPoint();
+function FarmLog_MainWindow_Title:DragStopped() 
+	local point, relativeTo, relativePoint, x, y = FarmLog_MainWindow:GetPoint();
 	FLogVars["frameRect"]["point"] = point;													
 	FLogVars["frameRect"]["x"] = x;
 	FLogVars["frameRect"]["y"] = y;
-	FLogVars["frameRect"]["width"] = FarmLogFrame_MainWindow:GetWidth();
-	FLogVars["frameRect"]["height"] = FarmLogFrame_MainWindow:GetHeight();
+	FLogVars["frameRect"]["width"] = FarmLog_MainWindow:GetWidth();
+	FLogVars["frameRect"]["height"] = FarmLog_MainWindow:GetHeight();
 end 
 
-function FarmLogFrame_MainWindow_SessionsButton:Clicked() 
+function FarmLog_MainWindow_SessionsButton:Clicked() 
 	sessionListMode = not sessionListMode 
 	gphNeedsUpdate = true
 	FarmLog:UpdateMainWindowTitle()
 	FarmLog:RefreshSession()
 end 
 
-function FarmLogFrame_MainWindow_ResetButton:Clicked()
-	FarmLogFrame_QuestionDialog_Yes:SetScript("OnClick", function() 
+function FarmLog_MainWindow_ResetButton:Clicked()
+	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
 		FarmLog:ResetSession()
-		FarmLogFrame_QuestionDialog:Hide()
+		FarmLog_QuestionDialog:Hide()
 	end)
-	FarmLogFrame_QuestionDialog_TitleText:SetText(L["reset-title"])
-	FarmLogFrame_QuestionDialog_Question:SetText(L["reset-question"])
-	FarmLogFrame_QuestionDialog:Show()
+	FarmLog_QuestionDialog_TitleText:SetText(L["reset-title"])
+	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
+	FarmLog_QuestionDialog:Show()
 end 
 
-function FarmLogFrame_MainWindow_Resize:MouseUp() 
-	local point, _, _, x, y = FarmLogFrame_MainWindow:GetPoint()
+function FarmLog_MainWindow_Resize:MouseUp() 
+	local point, _, _, x, y = FarmLog_MainWindow:GetPoint()
 	FLogVars["frameRect"]["point"] = point									
 	FLogVars["frameRect"]["x"] = x
 	FLogVars["frameRect"]["y"] = y
-	FLogVars["frameRect"]["width"] = FarmLogFrame_MainWindow:GetWidth()
-	FLogVars["frameRect"]["height"] = FarmLogFrame_MainWindow:GetHeight()
+	FLogVars["frameRect"]["width"] = FarmLog_MainWindow:GetWidth()
+	FLogVars["frameRect"]["height"] = FarmLog_MainWindow:GetHeight()
 end 
 
 -- begin UI ------------------------------------------------------------------------------------------------
 										
 
 local FLogOptionsFrame = CreateFrame("FRAME", "FLogOptionsFrame", UIParent);
-FLogOptionsFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth());
+FLogOptionsFrame:SetWidth(FarmLog_MainWindow:GetWidth());
 FLogOptionsFrame:SetHeight(280);
 FLogOptionsFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogOptionsFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogOptionsFrame:SetPoint("TOPLEFT", FarmLogFrame_MainWindow, "BOTTOMLEFT", 0, 0);
+FLogOptionsFrame:SetPoint("TOPLEFT", FarmLog_MainWindow, "BOTTOMLEFT", 0, 0);
 tinsert(UISpecialFrames, FLogOptionsFrame:GetName());
 FLogOptionsFrame:Hide();
 
@@ -1203,9 +1202,9 @@ FLogOptionsCheckButtonLockFrames:SetCheckedTexture("Interface\\Buttons\\UI-Check
 FLogOptionsCheckButtonLockFrames:SetScript("OnClick", function() 
 	FLogVars["lockFrames"] = tobool(FLogOptionsCheckButtonLockFrames:GetChecked());
 	if FLogOptionsCheckButtonLockFrames:GetChecked() then
-		FarmLogFrame_MainWindow:RegisterForDrag("");
+		FarmLog_MainWindow:RegisterForDrag("");
 	elseif not FLogOptionsCheckButtonLockFrames:GetChecked() then
-		FarmLogFrame_MainWindow:RegisterForDrag("LeftButton");
+		FarmLog_MainWindow:RegisterForDrag("LeftButton");
 	end
 end);
 FLogOptionsCheckButtonLockFrames:Show();
@@ -1229,9 +1228,9 @@ FLogOptionsCheckButtonEnableMinimapButton:SetCheckedTexture("Interface\\Buttons\
 FLogOptionsCheckButtonEnableMinimapButton:SetScript("OnClick", function() 
 	FLogVars["enableMinimapButton"] = tobool(FLogOptionsCheckButtonEnableMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FarmLogFrame_MinimapButton:Show();
+		FarmLog_MinimapButton:Show();
 	elseif not FLogOptionsCheckButtonEnableMinimapButton:GetChecked() then
-		FarmLogFrame_MinimapButton:Hide();
+		FarmLog_MinimapButton:Hide();
 	end
 end);
 FLogOptionsCheckButtonEnableMinimapButton:Show();
@@ -1255,9 +1254,9 @@ FLogOptionsCheckButtonLockMinimapButton:SetCheckedTexture("Interface\\Buttons\\U
 FLogOptionsCheckButtonLockMinimapButton:SetScript("OnClick", function()
 	FLogVars["lockMinimapButton"] = tobool(FLogOptionsCheckButtonLockMinimapButton:GetChecked());
 	if FLogOptionsCheckButtonLockMinimapButton:GetChecked() then
-		FarmLogFrame_MinimapButton:RegisterForDrag(""); 
+		FarmLog_MinimapButton:RegisterForDrag(""); 
 	elseif not FLogOptionsCheckButtonLockMinimapButton:GetChecked() then																			
-		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");
+		FarmLog_MinimapButton:RegisterForDrag("LeftButton");
 	end
 end);
 FLogOptionsCheckButtonLockMinimapButton:Show();
@@ -1379,14 +1378,14 @@ FLogEditFrameCancelButton:Show();
 
 local FLogHelpFrame = CreateFrame("FRAME", "FLogHelpFrame", UIParent);
 FLogHelpFrame:SetFrameStrata("HIGH"); 
-FLogHelpFrame:SetWidth(FarmLogFrame_MainWindow:GetWidth());
+FLogHelpFrame:SetWidth(FarmLog_MainWindow:GetWidth());
 FLogHelpFrame:SetHeight(200);
 if (GetLocale() == "deDE") then
 	FLogHelpFrame:SetHeight(215);
 end
 FLogHelpFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", edgeFile = "Interface/DialogFrame/UI-Dialogbox-Border", tile = true, tileSize = 16, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 }});
 FLogHelpFrame:SetBackdropColor(0.0,0.0,0.0,0.9);
-FLogHelpFrame:SetPoint("BOTTOM", FarmLogFrame_MainWindow, "TOP", 0, 0);
+FLogHelpFrame:SetPoint("BOTTOM", FarmLog_MainWindow, "TOP", 0, 0);
 FLogHelpFrame:SetScript("OnDragStart", function(this) this:StartMoving(); end);
 FLogHelpFrame:SetScript("OnDragStop", function(this) this:StopMovingOrSizing(); end);
 FLogHelpFrame:Hide();
