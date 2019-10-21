@@ -394,7 +394,7 @@ end
 function FarmLog:GetOnLogItemClick(itemLink) 
 	return function(self, button)
 		if IsShiftKeyDown() then
-			self:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
+			FarmLog:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
 		elseif IsControlKeyDown() then
 			DressUpItemLink(itemLink) -- preview
 		end
