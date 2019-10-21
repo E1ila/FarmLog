@@ -145,7 +145,59 @@ local function SortByLinkKey(db)
 	return database;
 end
 
--- Session management ------------------------------------------------------------
+-- Data migration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog:Migrate() 
+	-- migration
+	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
+		-- migrate 1 session into multi session DB
+		FLogVars["sessions"][FLogVars["currentSession"]] = {
+			["drops"] = FLogSVDrops,
+			["kills"] = FLogSVKills,
+			["skill"] = FLogSVSkill,
+			["rep"] = FLogSVRep,
+			["gold"] = FLogSVGold,
+			["vendor"] = FLogSVVendor,
+			["ah"] = FLogSVAH,
+			["xp"] = FLogSVXP,
+			["honor"] = FLogSVHonor,
+			["seconds"] = FLogSVTotalSeconds,
+		}
+		FLogSVTotalSeconds = nil 
+		out("Migrated previous session into session 'default'.")
+	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
+		self:ResetSessionVars()
+	end 
+
+	if FLogSVAHValue then 
+		FLogGlobalVars["autoSwitchInstances"] = FLogSVAutoSwitchOnInstances
+		FLogGlobalVars["debug"] = FLogSVDebugMode
+		FLogGlobalVars["ahPrice"] = FLogSVAHValue
+		FLogGlobalVars["itemQuality"] = FLogSVItemRarity
+		FLogGlobalVars["reportTo"] = FLogSVOptionReportTo
+		FLogSVAHValue = nil 
+		out("Migrated old global vars into new database format.")
+	end 
+
+	if FLogSVSessions then 
+		FLogVars["sessions"] = FLogSVSessions
+		FLogVars["enabled"] = FLogSVEnabled
+		FLogVars["currentSession"] = FLogSVCurrentSession
+		FLogVars["instanceName"] = FLogSVLastInstance
+		FLogVars["inInstance"] = FLogSVInInstance
+
+		FLogVars["lockFrames"] = FLogSVLockFrames
+		FLogVars["lockMinimapButton"] = FLogSVLockMinimapButton
+		FLogVars["frameRect"] = FLogSVFrame
+		FLogVars["minimapButtonPosision"] = FLogSVMinimapButtonPosition
+		FLogVars["enableMinimapButton"] = FLogSVEnableMinimapButton
+		FLogVars["itemTooltip"] = FLogSVTooltip
+		FLogSVSessions = nil 
+		out("Migrated old character vars into new database format.")
+	end 
+end 
+
+-- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 local function GetSessionVar(varName, sessionName)
 	return (FLogVars["sessions"][sessionName or FLogVars["currentSession"]] or {})[varName]
@@ -262,8 +314,17 @@ function FarmLog:ResetSession()
 	self:RefreshSession()
 end
 
+function FarmLog:InitSession()
+	if FLogVars["enabled"] then 
+		self:ResumeSession()
+	else 
+		self:PauseSession()
+	end 
+	gphNeedsUpdate = true
+	self:RefreshSession()
+end 
 
--- Main Window UI ------------------------------------------------------------
+-- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 function FarmLog:PlaceLinkInChatEditBox(itemLink)
 	-- Copy itemLink into ChatFrame
@@ -502,7 +563,7 @@ function FarmLog:RecalcTotals()
 end 
 
 
--- EVENTS ----------------------------------------------------------------------------------------
+-- EVENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- Spell cast 
 
@@ -773,53 +834,7 @@ end
 function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 
-	-- migration
-	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
-		-- migrate 1 session into multi session DB
-		FLogVars["sessions"][FLogVars["currentSession"]] = {
-			["drops"] = FLogSVDrops,
-			["kills"] = FLogSVKills,
-			["skill"] = FLogSVSkill,
-			["rep"] = FLogSVRep,
-			["gold"] = FLogSVGold,
-			["vendor"] = FLogSVVendor,
-			["ah"] = FLogSVAH,
-			["xp"] = FLogSVXP,
-			["honor"] = FLogSVHonor,
-			["seconds"] = FLogSVTotalSeconds,
-		}
-		FLogSVTotalSeconds = nil 
-		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
-		self:ResetSessionVars()
-	end 
-
-	if FLogSVAHValue then 
-		FLogGlobalVars["autoSwitchInstances"] = FLogSVAutoSwitchOnInstances
-		FLogGlobalVars["debug"] = FLogSVDebugMode
-		FLogGlobalVars["ahPrice"] = FLogSVAHValue
-		FLogGlobalVars["itemQuality"] = FLogSVItemRarity
-		FLogGlobalVars["reportTo"] = FLogSVOptionReportTo
-		FLogSVAHValue = nil 
-		out("Migrated old global vars into new database format.")
-	end 
-
-	if FLogSVSessions then 
-		FLogVars["sessions"] = FLogSVSessions
-		FLogVars["enabled"] = FLogSVEnabled
-		FLogVars["currentSession"] = FLogSVCurrentSession
-		FLogVars["instanceName"] = FLogSVLastInstance
-		FLogVars["inInstance"] = FLogSVInInstance
-
-		FLogVars["lockFrames"] = FLogSVLockFrames
-		FLogVars["lockMinimapButton"] = FLogSVLockMinimapButton
-		FLogVars["frameRect"] = FLogSVFrame
-		FLogVars["minimapButtonPosision"] = FLogSVMinimapButtonPosition
-		FLogVars["enableMinimapButton"] = FLogSVEnableMinimapButton
-		FLogVars["itemTooltip"] = FLogSVTooltip
-		FLogSVSessions = nil 
-		out("Migrated old character vars into new database format.")
-	end 
+	FarmLog:Migrate()
 
 	-- init UI
 	FLogOptionsCheckButtonLog0:SetChecked(FLogGlobalVars["itemQuality"][0]);
@@ -835,31 +850,9 @@ function FarmLog:OnAddonLoaded()
 	FLogOptionsCheckButtonLockMinimapButton:SetChecked(FLogVars["lockMinimapButton"]);
 	FLogOptionsCheckButtonTooltip:SetChecked(FLogVars["itemTooltip"]);	
 	
-	FarmLog_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
-	FarmLog_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
-	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
-
-	if FLogVars["enabled"] then 
-		self:ResumeSession()
-	else 
-		self:PauseSession()
-	end 
-	gphNeedsUpdate = true
-
-	if not FLogVars["lockFrames"] then		
-		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
-	end
-			
-	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
-	if FLogVars["enableMinimapButton"] then
-		FarmLog_MinimapButton:Show();
-	else
-		FarmLog_MinimapButton:Hide();
-	end	
-	if not FLogVars["lockMinimapButton"] then		
-		FarmLog_MinimapButton:RegisterForDrag("LeftButton");			
-	end
-	self:RefreshSession();
+	FarmLog_MainWindow_Title:Init()
+	FarmLog_MinimapButton:Init()
+	FarmLog:InitSession()
 end 
 
 -- Entering World
@@ -965,7 +958,31 @@ function FarmLog:OnUpdate()
 	end 
 end 
 
--- UI ----------------------------------------------------------------------------------------
+-- UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog_MainWindow:Init() 
+	FarmLog_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
+	FarmLog_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
+	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
+end
+
+function FarmLog_MinimapButton:Init() 
+	if FLogVars["minimapButtonPosision"]["x"] > GetScreenWidth() then 
+		FLogVars["minimapButtonPosision"]["x"] = GetScreenWidth() - 50
+	end 
+	if FLogVars["minimapButtonPosision"]["y"] > GetScreenWidth() then 
+		FLogVars["minimapButtonPosision"]["y"] = GetScreenHeight() - 50
+	end 
+	self:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+	if FLogVars["enableMinimapButton"] then
+		self:Show();
+	else
+		self:Hide();
+	end	
+	if not FLogVars["lockMinimapButton"] then		
+		self:RegisterForDrag("LeftButton");			
+	end
+end 
 
 function FarmLog_MinimapButton:DragStopped() 
 	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
@@ -979,6 +996,12 @@ function FarmLog_MinimapButton:Clicked(button)
 		FarmLog:ToggleLogging()
 	else
 		FarmLog:ToggleWindow();
+	end
+end 
+
+function FarmLog_MainWindow_Title:Init()
+	if not FLogVars["lockFrames"] then		
+		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
 end 
 
@@ -1017,7 +1040,7 @@ function FarmLog_MainWindow_Resize:MouseUp()
 	FLogVars["frameRect"]["height"] = FarmLog_MainWindow:GetHeight()
 end 
 
--- begin UI ------------------------------------------------------------------------------------------------
+-- begin UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 										
 
 local FLogOptionsFrame = CreateFrame("FRAME", "FLogOptionsFrame", UIParent);
@@ -1399,7 +1422,7 @@ FLogHelpFrameText:SetText(L["Help"]);
 FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
 -- end UI
 
--- SLASH INTERFACE ----------------------------------------------------------------------------------------
+-- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
