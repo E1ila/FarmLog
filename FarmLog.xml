@@ -103,18 +103,15 @@
 
   <Frame name="FarmLog_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
     <Size>
-      <AbsDimension x="160" y="100"/>
+      <AbsDimension x="200" y="100"/>
     </Size>
-    <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
+    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
       <EdgeSize>
-        <AbsValue val="16"></AbsValue>
+        <AbsValue val="1"></AbsValue>
       </EdgeSize>
       <TileSize>
         <AbsValue val="16" />
       </TileSize>
-      <BackgroundInsets>
-        <AbsInset left="4" right="4" top="4" bottom="4" />
-      </BackgroundInsets>
     </Backdrop>
     <Anchors>
       <Anchor point="CENTER">
@@ -125,7 +122,8 @@
     </Anchors>
     <Scripts>
       <OnLoad>
-        self:SetBackdropColor(0, 0, 0, 0.9);
+   			self:SetBackdropColor (0, 0, 0, 0.6)
+    		self:SetBackdropBorderColor(0, 0, 0, 1)
         self:RegisterForDrag("LeftButton")
         self:SetUserPlaced(true)
         tinsert(UISpecialFrames, self:GetName())
@@ -138,52 +136,15 @@
       </OnDragStop>
     </Scripts>
     <Frames>
-      <Frame name="$parent_Title">
+
+      <Button name="$parent_CloseButton" inherits="UIPanelCloseButton">
         <Size>
-          <AbsDimension x="120" y="25"/>
-        </Size>
-        <Backdrop bgFile="Interface/Tooltips/UI-Tooltip-Background" edgeFile="Interface/DialogFrame/UI-Dialogbox-Border" tile="true">
-          <EdgeSize>
-            <AbsValue val="16"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-          <BackgroundInsets>
-            <AbsInset left="4" right="4" top="4" bottom="4" />
-          </BackgroundInsets>
-        </Backdrop>
-        <Anchors>
-          <Anchor point="TOP">
-            <Offset>
-              <AbsDimension x="0" y="10"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnLoad>
-            self:SetBackdropColor(0, 0, 0, 0.9);
-          </OnLoad>
-        </Scripts>
-        <Layers>
-          <Layer level="BACKGROUND">
-            <FontString name="$parent_TitleText" inherits="ChatFontNormal" font="FarmLogFont" text="Dialog Title">
-              <Color r="1" g="0" b="0"/>
-              <Anchors>
-                <Anchor point="CENTER" />
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-      </Frame>      <!--$parent_Title-->
-      <Button name="$parent_Close" inherits="UIPanelButtonTemplate" text="X">
-        <Size>
-          <AbsDimension x="15" y="15"/>
+          <AbsDimension x="26" y="26"/>
         </Size>
         <Anchors>
           <Anchor point="TOPRIGHT">
             <Offset>
-              <AbsDimension x="-5" y="-5"/>
+              <AbsDimension x="1" y="1"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -192,15 +153,57 @@
             FarmLog_QuestionDialog:Hide()
           </OnClick>
         </Scripts>
-      </Button>      <!--$parent_Close-->
+      </Button>      <!--$parent_CloseButton-->
+
+      <Frame name="$parent_Title">
+        <Size>
+          <AbsDimension x="120" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+            <Offset>
+              <AbsDimension x="2" y="-2"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Scripts>
+          <OnLoad>
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
+        		self:SetBackdropBorderColor(0, 0, 0, 1)
+          </OnLoad>
+        </Scripts>
+        <Layers>
+          <Layer level="BACKGROUND">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogFont" text="Dialog Title">
+              <Color r="1" g="0" b="0"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+      </Frame>      <!--$parent_Title-->
       <Button name="$parent_No" inherits="UIPanelButtonTemplate" text="No">
         <Size>
           <AbsDimension x="70" y="20"/>
         </Size>
         <Anchors>
-          <Anchor point="BOTTOMRIGHT">
+          <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="-7" y="5"/>
+              <AbsDimension x="-37" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -215,9 +218,9 @@
           <AbsDimension x="70" y="20"/>
         </Size>
         <Anchors>
-          <Anchor point="BOTTOMLEFT">
+          <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="7" y="5"/>
+              <AbsDimension x="37" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -265,13 +268,6 @@
         self:SetUserPlaced(true)
         tinsert(UISpecialFrames, self:GetName())
       </OnLoad>
-      <OnSizeChanged>
-        <!-- FLogOptionsFrame:SetWidth(FarmLog_MainWindow:GetWidth()); -->
-        <!-- FLogHelpFrame:SetWidth(FarmLog_MainWindow:GetWidth()); -->
-        <!-- for i = 1 , #FLogFrameSChildContentTable do
-          FLogFrameSChildContentTable[i][0]:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
-        end -->
-      </OnSizeChanged>
     </Scripts>
 
     <Frames>

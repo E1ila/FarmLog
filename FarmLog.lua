@@ -53,6 +53,15 @@ local lastUpdate = 0
 local lastGphUpdate = 0
 local goldPerHour = 0
 
+local TEXT_COLOR = {
+	["xp"] = "6a78f9",
+	["skill"] = "4e62f8",
+	["rep"] = "7d87f9",
+	["mob"] = "ff000b",
+	["money"] = "fffb49",
+	["honor"] = "e1c73b",
+}
+
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
 local SPELL_FISHING = 7620
@@ -431,7 +440,7 @@ local function CreateRow_Text(existingRow, text)
 	
 	if not row.label then 
 		row.label = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
-		row.label:SetTextColor(1, 1, 1, 0.8)
+		row.label:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.label:SetPoint("LEFT")
 		row.label:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	end 
@@ -444,8 +453,12 @@ local function CreateRow_Text(existingRow, text)
 	return row
 end
 
-local function AddItem_Text(text) 
+local function AddItem_Text(text, quantity, color) 
 	visibleRows = visibleRows + 1
+	text = "|cff"..(color or "dddddd")..text.."|r"
+	if quantity and quantity > 1 then 
+		text = text.." x"..tostring(quantity)
+	end 
 	return CreateRow_Text(FarmLog_ScrollRows[visibleRows], text)
 end 
 
@@ -489,12 +502,12 @@ end
 
 function FarmLog:AddSessionYieldItems() 
 	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem_Text(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
-	if GetSessionVar("ah") > 0 then AddItem_Text(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
-	if GetSessionVar("gold") > 0 then AddItem_Text(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
-	if GetSessionVar("vendor") > 0 then AddItem_Text(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
-	if GetSessionVar("xp") > 0 then AddItem_Text(L["XP"].." "..GetSessionVar("xp")) end 
-	for faction, rep in pairs(GetSessionVar("rep")) do AddItem_Text(rep.." "..faction.." "..L["reputation"]) end 
-	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem_Text("+"..levels.." "..skillName) end 
+	if GetSessionVar("ah") > 0 then AddItem_Text(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah")), nil, TEXT_COLOR["money"]) end 
+	if GetSessionVar("gold") > 0 then AddItem_Text(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold")), nil, TEXT_COLOR["money"]) end 
+	if GetSessionVar("vendor") > 0 then AddItem_Text(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor")), nil, TEXT_COLOR["money"]) end 
+	if GetSessionVar("xp") > 0 then AddItem_Text(L["XP"].." "..GetSessionVar("xp"), nil, TEXT_COLOR["xp"]) end 
+	for faction, rep in pairs(GetSessionVar("rep")) do AddItem_Text(rep.." "..faction.." "..L["reputation"], nil, TEXT_COLOR["rep"]) end 
+	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem_Text("+"..levels.." "..skillName, nil, TEXT_COLOR["skill"]) end 
 
 	local sessionKills = GetSessionVar("kills")
 	local sortedNames = SortByStringKey(sessionKills);
@@ -508,16 +521,12 @@ function FarmLog:AddSessionYieldItems()
 	for _, mobName in ipairs(sortedNames) do	
 		local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
 		local section = mobName 
-		if sessionKills[mobName] then 
-			section = section .. " x" .. sessionKills[mobName]
-		end 
-		AddItem_Text(section)	
+		AddItem_Text(section, sessionKills[mobName], TEXT_COLOR["mob"])
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			for j = 1, #sessionDrops[mobName][itemLink] do
 				local quantity = sessionDrops[mobName][itemLink][j][1];
 				local itemText = "    "..itemLink
-				if quantity > 1 then itemText = itemText.." x"..quantity end
-				local row = AddItem_Text(itemText)
+				local row = AddItem_Text(itemText, quantity)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
@@ -1049,7 +1058,7 @@ function FarmLog_MainWindow_ResetButton:Clicked()
 		FarmLog:ResetSession()
 		FarmLog_QuestionDialog:Hide()
 	end)
-	FarmLog_QuestionDialog_TitleText:SetText(L["reset-title"])
+	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
 	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
 	FarmLog_QuestionDialog:Show()
 end 

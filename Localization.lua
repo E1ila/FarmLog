@@ -6,7 +6,7 @@ function FarmLog_BuildLocalization(context)
     L["enabled"] = "enabled"
     L["yes"] = "Yes";
     L["no"] = "No";
-    L["reset-question"] = "Reset Data?";	
+    L["reset-question"] = "Clear current session's data?";	
     L["report"] = "Report";
     L["Log-Options:"] = "Log-Options:";
     L["poor"] = "Poor Items";
@@ -43,7 +43,7 @@ function FarmLog_BuildLocalization(context)
     L["tooltip"] = "Show Item-Tolltip";
     L["loaded-welcome"] = "type |cff00ff00/fl|r or |cff00ff00/farmlog|r to start/end a farm session, |cff00ff00/fl help|r for more options";
     L["window-title"] = "Session Yield";
-    L["reset-title"] = "Reset"
+    L["reset-title"] = "Clear Session"
     L["Auction House"] = "Auction House"
     L["Session"] = "Session"
     L["reputation"] = "reputation"
