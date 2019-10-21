@@ -38,11 +38,17 @@ Many times you pause your farming to do something else in game, like doing an in
 
 Another thing is that the more time & data you have per session, the more accurate gold/hour metric you're going to see. For example, you can `/fl switch Herbing` when collecting herbs and `/fl switch Fishing` whenever you fish, do that for a week and you'll get a reasonably accurate gold/hour metric.
 
-![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
-![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
-![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
+![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 
 ### Changes 
+* 1.6
+    * REVAMPED USER INTERFACE!
+    * Added delete session warning
+    * Choosing a session from the UI won't resume it
+    * Added reset window position `/fl rmw` and reset minimap icon `/fl rmi`
+    * Fixed exception for new sessions GPH calculation
+    * Pauses session when leaving instance, if Auto Switch Instances is enabled
 * 1.4
     * New saved variables database format
 * 1.3 
