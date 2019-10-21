@@ -63,6 +63,8 @@ function FarmLog_BuildLocalization(context)
     L["you"] = "You";
     L["Resume"] = "Resume";
     L["Pause"] = "Pause";
+    L["deletesession-title"] = "Delete Session"
+    L["deletesession-question"] = "Do you want to delete this session?"
     if (GetLocale() == "enUS") then
     end
     return L

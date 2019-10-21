@@ -404,8 +404,14 @@ end
 function FarmLog:GetOnLogSessionItemClick(sessionName) 
 	return function(self, button)
 		if button == "RightButton" then 
-			FarmLog:DeleteSession(sessionName)
-			FarmLog:RefreshMainWindow()
+			FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+				FarmLog:DeleteSession(sessionName)
+				FarmLog:RefreshMainWindow()
+				FarmLog_QuestionDialog:Hide()
+			end)
+			FarmLog_QuestionDialog_Title_Text:SetText(L["deletesession-title"])
+			FarmLog_QuestionDialog_Question:SetText(L["deletesession-question"])
+			FarmLog_QuestionDialog:Show()
 		else 
 			if IsAltKeyDown() then
 				-- edit?

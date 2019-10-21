@@ -103,7 +103,7 @@
 
   <Frame name="FarmLog_QuestionDialog" parent="UIParent" enableMouse="true" movable="true">
     <Size>
-      <AbsDimension x="200" y="100"/>
+      <AbsDimension x="250" y="100"/>
     </Size>
     <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
       <EdgeSize>
@@ -203,7 +203,7 @@
         <Anchors>
           <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="-37" y="5"/>
+              <AbsDimension x="37" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -220,7 +220,7 @@
         <Anchors>
           <Anchor point="BOTTOM">
             <Offset>
-              <AbsDimension x="37" y="5"/>
+              <AbsDimension x="-37" y="5"/>
             </Offset>
           </Anchor>
         </Anchors>
