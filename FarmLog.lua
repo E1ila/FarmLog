@@ -42,6 +42,7 @@ local FLogMinWidth = (300);
 local ItemRowFrameList = {};
 local L = FarmLog_BuildLocalization()
 
+local visibleItems = 0
 local sessionListMode = false
 local gphNeedsUpdate = false 
 local sessionStartTime = nil 
@@ -324,184 +325,136 @@ local function GetOnLogSessionItemClick(sessionName)
 	end 
 end
 
-local function CreateItemRow(j)
-	local x = #ItemRowFrameList;
-	if x == 0 then
-		local ItemRowFrames = {};
-				
-		ItemRowFrames[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
-		ItemRowFrames[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
-		ItemRowFrames[0]:SetHeight(15);
-		ItemRowFrames[0]:SetScript("OnEnter", function(self)
-												self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
-												self:SetBackdropColor(0.8,0.8,0.8,0.9);
-												end);
-		ItemRowFrames[0]:SetScript("OnLeave", function(self)
-												self:SetBackdrop(nil);
-												end);
-		ItemRowFrames[0]:SetPoint("TOPLEFT");
-		ItemRowFrames[0]:Show();
-		
-		ItemRowFrames[1] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		ItemRowFrames[1]:SetTextColor(1, 1, 1, 0.8);	
-		ItemRowFrames[1]:SetPoint("TOPLEFT");
-		
-		ItemRowFrames[2] = ItemRowFrames[0]:CreateTexture(nil, "OVERLAY");
-		ItemRowFrames[2]:SetTexture(nil);
-		ItemRowFrames[2]:SetWidth(15);
-		ItemRowFrames[2]:SetHeight(15);
-		ItemRowFrames[2]:SetPoint("TOPLEFT", ItemRowFrames[1], "TOPRIGHT", 5, 0);
-		
-		ItemRowFrames[3] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-		ItemRowFrames[3]:SetTextColor(1, 1, 1, 0.8);	
-		ItemRowFrames[3]:SetPoint("TOPLEFT", ItemRowFrames[2], "TOPRIGHT");
+local function CreateTextRow()
+	local ItemRowFrames = {};
+	
+	ItemRowFrames["type"] = "text"
 
-		ItemRowFrames[0]:Hide();
-		
-		tinsert(ItemRowFrameList, ItemRowFrames);
-	else
-		for i = x + 1, j + x do
-			local ItemRowFrames = {};
-			
-			ItemRowFrames[0] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
-			ItemRowFrames[0]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
-			ItemRowFrames[0]:SetHeight(15);
-			ItemRowFrames[0]:SetPoint("TOPLEFT", ItemRowFrameList[i-1][0], "BOTTOMLEFT");
-			ItemRowFrames[0]:Show();
-			
-			ItemRowFrames[1] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			ItemRowFrames[1]:SetTextColor(1, 1, 1, 0.8);	
-			ItemRowFrames[1]:SetPoint("TOPLEFT");
-			
-			ItemRowFrames[2] = ItemRowFrames[0]:CreateTexture(nil, "OVERLAY");
-			ItemRowFrames[2]:SetTexture(nil);
-			ItemRowFrames[2]:SetWidth(15);
-			ItemRowFrames[2]:SetHeight(15);
-			ItemRowFrames[2]:SetPoint("TOPLEFT", ItemRowFrames[1], "TOPRIGHT", 5, 0);
-			
-			ItemRowFrames[3] = ItemRowFrames[0]:CreateFontString(nil, "Artwork", "ChatFontNormal");
-			ItemRowFrames[3]:SetTextColor(1, 1, 1, 0.8);	
-			ItemRowFrames[3]:SetPoint("TOPLEFT", ItemRowFrames[2], "TOPRIGHT");
+	ItemRowFrames["root"] = CreateFrame("FRAME", nil, FarmLogFrame_MainWindow_ScrollContainer_Content);		
+	ItemRowFrames["root"]:SetWidth(FarmLogFrame_MainWindow_ScrollContainer_Content:GetWidth() - 20);
+	ItemRowFrames["root"]:SetHeight(15);
+	if #ItemRowFrameList == 0 then 
+		ItemRowFrames["root"]:SetPoint("TOPLEFT", FarmLogFrame_MainWindow_ScrollContainer_Content, "TOPLEFT");
+	else 
+		ItemRowFrames["root"]:SetPoint("TOPLEFT", ItemRowFrameList[#ItemRowFrameList]["root"], "BOTTOMLEFT");
+	end 
+	ItemRowFrames["root"]:Show();
+	
+	ItemRowFrames["label"] = ItemRowFrames["root"]:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
+	ItemRowFrames["label"]:SetTextColor(1, 1, 1, 0.8)
+	ItemRowFrames["label"]:SetPoint("LEFT")
+	ItemRowFrames["label"]:SetFont("FarmLogRowFont", 10)
 
-			ItemRowFrames[0]:Hide();
-			
-			tinsert(ItemRowFrameList, ItemRowFrames);
-		end
-	end
+	tinsert(ItemRowFrameList, ItemRowFrames);
+	return ItemRowFrames
 end
 
-local function RemoveItemRowsBeyond(j)
---Hides all SChildFrames, beginning at Position j
+local function HideItemRowsBeyond(j)
 	local n = #ItemRowFrameList;
 	for i = j, n do
-		ItemRowFrameList[i][0]:Hide();
+		ItemRowFrameList[i]["root"]:Hide();
 	end
 end
 
-function FarmLog_RefreshMainWindowContent()
---Refresh the SChildFrame
-	local n = #ItemRowFrameList;
-	local i = 1;
+local function AddItem(text) 
+	local row = nil 
+	visibleItems = visibleItems + 1
+	if visibleItems > #ItemRowFrameList then 
+		row = CreateTextRow() 
+	else 
+		row = ItemRowFrameList[visibleItems]
+	end
+	row["label"]:SetText(text);
+	row["root"]:SetScript("OnEnter", nil);
+	row["root"]:SetScript("OnLeave", nil);
+	row["root"]:SetScript("OnMouseUp", nil);
+	row["root"]:Show();
+	return row 
+end 
 
-	local function AddItem(text, dontIncrease) 
-		if i > n then CreateItemRow(1) end
-		ItemRowFrameList[i][1]:SetText(text);
-		ItemRowFrameList[i][2]:SetTexture(nil);
-		ItemRowFrameList[i][3]:SetText("");
-		ItemRowFrameList[i][0]:SetScript("OnEnter", nil);
-		ItemRowFrameList[i][0]:SetScript("OnLeave", nil);
-		ItemRowFrameList[i][0]:SetScript("OnMouseUp", nil);
-		ItemRowFrameList[i][0]:Show();
-		if not dontIncrease then 
-			i = i + 1
-		end 
-	end 
-
-	local function SetItemTooltip(itemLink, text)
-		ItemRowFrameList[i][0]:SetScript("OnEnter", function(self)
-			self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
-			self:SetBackdropColor(0.8,0.8,0.8,0.6);
-			if FLogVars["itemTooltip"] then
-				GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-				if itemLink then 
-					GameTooltip:SetHyperlink(itemLink);
-				elseif text then 
-					GameTooltip:SetText(text);
-				end 					
-				GameTooltip:Show();
-			end
-		end);
-		ItemRowFrameList[i][0]:SetScript("OnLeave", function(self)
-			if FLogVars["itemTooltip"] then
-				GameTooltip_Hide();
-			end
-			self:SetBackdrop(nil);
-		end);		
-	end 
-
-	local function SetItemActions(callback) 
-		ItemRowFrameList[i][0]:SetScript("OnMouseUp", function(self, ...)
-			self:SetBackdrop(nil);
-			callback(self, ...)
-		end);
-	end 
-
-	local function AddSessionYieldItems() 
-		if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
-		if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
-		if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
-		if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
-		if GetSessionVar("xp") > 0 then AddItem(L["XP"].." "..GetSessionVar("xp")) end 
-		for faction, rep in pairs(GetSessionVar("rep")) do AddItem(rep.." "..faction.." "..L["reputation"]) end 
-		for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
-
-		local sessionKills = GetSessionVar("kills")
-		local sortedNames = SortByStringKey(sessionKills);
-		-- add missing mobNames like Herbalism / Mining / Fishing
-		local sessionDrops = GetSessionVar("drops")
-		for name, _ in pairs(sessionDrops) do 
-			if not sessionKills[name] then 
-				tinsert(sortedNames, 1, name)
-			end 
-		end 
-		for _, mobName in ipairs(sortedNames) do	
-			local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
-			local section = mobName 
-			if sessionKills[mobName] then 
-				section = section .. " x" .. sessionKills[mobName]
-			end 
-			AddItem(section)	
-			for _, itemLink in ipairs(sortedItemLinks) do			
-				for j = 1, #sessionDrops[mobName][itemLink] do
-					if i > n then
-						CreateItemRow(1);
-					end
-					local quantity = sessionDrops[mobName][itemLink][j][1];
-					local itemText = "    "..itemLink
-					if quantity > 1 then itemText = itemText.." x"..quantity end
-					AddItem(itemText, true)
-					SetItemTooltip(itemLink)
-					SetItemActions(GetOnLogItemClick(itemLink))
-					ItemRowFrameList[i][0]:Show();
-					i = i + 1
-				end
-			end		
+local function SetItemTooltip(row, itemLink, text)
+	row["root"]:SetScript("OnEnter", function(self)
+		self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
+		self:SetBackdropColor(0.8,0.8,0.8,0.6);
+		if FLogVars["itemTooltip"] then
+			GameTooltip:SetOwner(self, "ANCHOR_LEFT");
+			if itemLink then 
+				GameTooltip:SetHyperlink(itemLink);
+			elseif text then 
+				GameTooltip:SetText(text);
+			end 					
+			GameTooltip:Show();
 		end
-	end 
+	end);
+	row["root"]:SetScript("OnLeave", function(self)
+		if FLogVars["itemTooltip"] then
+			GameTooltip_Hide();
+		end
+		self:SetBackdrop(nil);
+	end);		
+end 
 
-	local function AddSessionListItems() 
-		for name, session in pairs(FLogVars["sessions"]) do 
-			local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
-			local text = name
-			if gph and gph > 0 and tostring(gph) ~= "nan" then 
-				text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
-			end 
-			AddItem(text, true)
-			SetItemTooltip()
-			SetItemActions(GetOnLogSessionItemClick(name))
-			i = i + 1
+local function SetItemActions(row, callback) 
+	row["root"]:SetScript("OnMouseUp", function(self, ...)
+		self:SetBackdrop(nil);
+		callback(self, ...)
+	end);
+end 
+
+local function AddSessionYieldItems() 
+	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
+	if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
+	if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
+	if GetSessionVar("vendor") > 0 then AddItem(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor"))) end 
+	if GetSessionVar("xp") > 0 then AddItem(L["XP"].." "..GetSessionVar("xp")) end 
+	for faction, rep in pairs(GetSessionVar("rep")) do AddItem(rep.." "..faction.." "..L["reputation"]) end 
+	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem("+"..levels.." "..skillName) end 
+
+	local sessionKills = GetSessionVar("kills")
+	local sortedNames = SortByStringKey(sessionKills);
+	-- add missing mobNames like Herbalism / Mining / Fishing
+	local sessionDrops = GetSessionVar("drops")
+	for name, _ in pairs(sessionDrops) do 
+		if not sessionKills[name] then 
+			tinsert(sortedNames, 1, name)
 		end 
 	end 
+	for _, mobName in ipairs(sortedNames) do	
+		local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
+		local section = mobName 
+		if sessionKills[mobName] then 
+			section = section .. " x" .. sessionKills[mobName]
+		end 
+		AddItem(section)	
+		for _, itemLink in ipairs(sortedItemLinks) do			
+			for j = 1, #sessionDrops[mobName][itemLink] do
+				local quantity = sessionDrops[mobName][itemLink][j][1];
+				local itemText = "    "..itemLink
+				if quantity > 1 then itemText = itemText.." x"..quantity end
+				local row = AddItem(itemText)
+				SetItemTooltip(row, itemLink)
+				SetItemActions(row, GetOnLogItemClick(itemLink))
+				row["root"]:Show();
+			end
+		end		
+	end
+end 
+
+local function AddSessionListItems() 
+	for name, session in pairs(FLogVars["sessions"]) do 
+		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
+		local text = name
+		if gph and gph > 0 and tostring(gph) ~= "nan" then 
+			text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
+		end 
+		local row = AddItem(text)
+		SetItemTooltip(row)
+		SetItemActions(row, GetOnLogSessionItemClick(name))
+	end 
+end 
+
+function FarmLog_RefreshMainWindowContent()
+	visibleItems = 0
 
 	if sessionListMode then 
 		AddSessionListItems()
@@ -514,7 +467,7 @@ function FarmLog_RefreshMainWindowContent()
 			FarmLogFrame_MainWindow_ResetButton:Disable()
 		end	
 	end 
-	RemoveItemRowsBeyond(i);	
+	HideItemRowsBeyond(visibleItems + 1);	
 	FarmLogFrame_MainWindow_SessionsButton:Enable()
 end
 

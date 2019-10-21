@@ -7,6 +7,12 @@
     </FontHeight>
   </Font>
 
+  <Font name="FarmLogRowFont" font="Fonts\FRIZQT__.TTF" virtual="true">
+    <FontHeight>
+      <AbsValue val="10"/>
+    </FontHeight>
+  </Font>
+
   <Frame name="FarmLogFrame_Main">
     <Scripts>
       <OnLoad>
