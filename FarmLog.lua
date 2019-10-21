@@ -285,7 +285,7 @@ function FarmLog:ResetSessionVars()
 	}
 end 
 
-function FarmLog:StartSession(sessionName, dontPause) 
+function FarmLog:StartSession(sessionName, dontPause, dontResume) 
 	if FLogVars["enabled"] then 
 		gphNeedsUpdate = true 
 		if not dontPause then 
@@ -293,11 +293,17 @@ function FarmLog:StartSession(sessionName, dontPause)
 		end 
 	end 
 
+	sessionListMode = false 
 	FLogVars["currentSession"] = sessionName
 	if not FLogVars["sessions"][FLogVars["currentSession"]] then 
 		self:ResetSessionVars()
 	end 
-	self:ResumeSession()
+	if not dontResume then 
+		self:ResumeSession()
+	else 
+		self:UpdateMainWindowTitle() -- done by resume, update text color
+	end 
+	self:RefreshMainWindow()
 end 
 
 function FarmLog:DeleteSession(name) 
@@ -318,7 +324,7 @@ function FarmLog:ResetSession()
 	self:ResumeSession()
 	out("Reset session |cff99ff00"..FLogVars["currentSession"])
 	gphNeedsUpdate = true 
-	self:RefreshSession()
+	self:RefreshMainWindow()
 end
 
 function FarmLog:InitSession()
@@ -328,7 +334,7 @@ function FarmLog:InitSession()
 		self:PauseSession()
 	end 
 	gphNeedsUpdate = true
-	self:RefreshSession()
+	self:RefreshMainWindow()
 end 
 
 function FarmLog:ToggleLogging() 
@@ -389,16 +395,15 @@ end
 function FarmLog:GetOnLogSessionItemClick(sessionName) 
 	return function(self, button)
 		if button == "RightButton" then 
-			self:DeleteSession(sessionName)
-			self:RefreshSession()
+			FarmLog:DeleteSession(sessionName)
+			FarmLog:RefreshMainWindow()
 		else 
 			if IsAltKeyDown() then
 				-- edit?
 			else 
 				sessionListMode = false 
 				out("Farm session |cff99ff00"..sessionName.."|r resumed")
-				self:StartSession(sessionName)
-				self:RefreshSession()
+				FarmLog:StartSession(sessionName, false, true)
 			end
 		end 
 	end 
@@ -406,34 +411,32 @@ end
 
 local function CreateRow_Text(existingRow, text)
 	local row = existingRow or {};
-	local previousType = row["type"]
-	row["type"] = "text"
+	local previousType = row.type
+	row.type = "text"
 
-	if not row["root"] then 
-		row["root"] = CreateFrame("FRAME", nil, FarmLog_MainWindow_Scroll_Content);		
-		row["root"]:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
-		row["root"]:SetHeight(15);
+	if not row.root then 
+		row.root = CreateFrame("FRAME", nil, FarmLog_MainWindow_Scroll_Content);		
+		row.root:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
+		row.root:SetHeight(15);
 		if #FarmLog_ScrollRows == 0 then 
-			row["root"]:SetPoint("TOPLEFT", FarmLog_MainWindow_Scroll_Content, "TOPLEFT");
+			row.root:SetPoint("TOPLEFT", FarmLog_MainWindow_Scroll_Content, "TOPLEFT");
 		else 
-			row["root"]:SetPoint("TOPLEFT", FarmLog_ScrollRows[#FarmLog_ScrollRows]["root"], "BOTTOMLEFT");
+			row.root:SetPoint("TOPLEFT", FarmLog_ScrollRows[#FarmLog_ScrollRows].root, "BOTTOMLEFT");
 		end 
 	end 
-	if previousType ~= "text" then 
-		row["root"]:SetScript("OnEnter", nil);
-		row["root"]:SetScript("OnLeave", nil);
-		row["root"]:SetScript("OnMouseUp", nil);	
-	end 
-	row["root"]:Show();
+	row.root:SetScript("OnEnter", nil);
+	row.root:SetScript("OnLeave", nil);
+	row.root:SetScript("OnMouseUp", nil);	
+	row.root:Show();
 	
-	if not row["label"] then 
-		row["label"] = row["root"]:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
-		row["label"]:SetTextColor(1, 1, 1, 0.8)
-		row["label"]:SetPoint("LEFT")
-		row["label"]:SetFont("FarmLogRowFont", 10)
+	if not row.label then 
+		row.label = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
+		row.label:SetTextColor(1, 1, 1, 0.8)
+		row.label:SetPoint("LEFT")
+		row.label:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	end 
-	row["label"]:SetText(text);
-	row["label"]:Show()
+	row.label:SetText(text);
+	row.label:Show()
 
 	if not existingRow then 
 		tinsert(FarmLog_ScrollRows, row);
@@ -441,22 +444,22 @@ local function CreateRow_Text(existingRow, text)
 	return row
 end
 
-local function HideRowsBeyond(j)
-	local n = #FarmLog_ScrollRows;
-	if j <= n then 
-		for i = j, n do
-			FarmLog_ScrollRows[i]["root"]:Hide()
-		end
-	end 
-end
-
 local function AddItem_Text(text) 
 	visibleRows = visibleRows + 1
 	return CreateRow_Text(FarmLog_ScrollRows[visibleRows], text)
 end 
 
+local function HideRowsBeyond(j)
+	local n = #FarmLog_ScrollRows;
+	if j <= n then 
+		for i = j, n do
+			FarmLog_ScrollRows[i].root:Hide()
+		end
+	end 
+end
+
 local function SetItemTooltip(row, itemLink, text)
-	row["root"]:SetScript("OnEnter", function(self)
+	row.root:SetScript("OnEnter", function(self)
 		self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 		self:SetBackdropColor(0.8,0.8,0.8,0.6);
 		if FLogVars["itemTooltip"] then
@@ -469,7 +472,7 @@ local function SetItemTooltip(row, itemLink, text)
 			GameTooltip:Show();
 		end
 	end);
-	row["root"]:SetScript("OnLeave", function(self)
+	row.root:SetScript("OnLeave", function(self)
 		if FLogVars["itemTooltip"] then
 			GameTooltip_Hide();
 		end
@@ -478,7 +481,7 @@ local function SetItemTooltip(row, itemLink, text)
 end 
 
 local function SetItemActions(row, callback) 
-	row["root"]:SetScript("OnMouseUp", function(self, ...)
+	row.root:SetScript("OnMouseUp", function(self, ...)
 		self:SetBackdrop(nil);
 		callback(self, ...)
 	end);
@@ -517,7 +520,7 @@ function FarmLog:AddSessionYieldItems()
 				local row = AddItem_Text(itemText)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
-				row["root"]:Show();
+				row.root:Show();
 			end
 		end		
 	end
@@ -536,7 +539,7 @@ function FarmLog:AddSessionListItems()
 	end 
 end 
 
-function FarmLog:RefreshSession()
+function FarmLog:RefreshMainWindow()
 	visibleRows = 0
 
 	if sessionListMode then 
@@ -576,7 +579,7 @@ function FarmLog:RecalcTotals()
 	SetSessionVar("vendor", sessionVendor)
 	SetSessionVar("ah", sessionAH)
 	gphNeedsUpdate = true 
-	self:RefreshSession()
+	self:RefreshMainWindow()
 end 
 
 
@@ -628,7 +631,7 @@ function FarmLog:OnSkillsEvent(text)
 	local skillName, level = self:ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		self:RefreshSession()
+		self:RefreshMainWindow()
 	end 
 end 
 
@@ -669,7 +672,7 @@ function FarmLog:OnCombatXPEvent(text)
 	local xp = self:ParseXPEvent(text)
 	-- debug("FarmLog:OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	self:RefreshSession()
+	self:RefreshMainWindow()
 end 
 
 -- Faction change 
@@ -693,7 +696,7 @@ function FarmLog:OnCombatFactionChange(text)
 	local faction, rep = self:ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionVar("rep", rep)
-		self:RefreshSession()
+		self:RefreshMainWindow()
 	end 
 end 
 
@@ -707,7 +710,7 @@ function FarmLog:OnCombatLogEvent()
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		self:RefreshSession()
+		self:RefreshMainWindow()
 	end 
 end 
 
@@ -769,7 +772,7 @@ end
 function FarmLog:OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	self:RefreshSession()
+	self:RefreshMainWindow()
 end 
 
 -- Loot receive event
@@ -842,7 +845,7 @@ function FarmLog:OnLootEvent(text)
 		end 
 
 		self:InsertLoot(mobName, itemLink, (quantity or 1));
-		self:RefreshSession();
+		self:RefreshMainWindow();
 	end
 end
 
@@ -890,7 +893,7 @@ function FarmLog:OnEnteringWorld()
 			self:PauseSession()
 		end 
 	end
-	self:RefreshSession();
+	self:RefreshMainWindow();
 end 
 
 -- Instance info
@@ -962,7 +965,7 @@ function FarmLog:OnUpdate()
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGphUpdate = now 
 				gphNeedsUpdate = false 
-				self:RefreshSession()
+				self:RefreshMainWindow()
 			end 
 		end 
 	end 
@@ -1038,7 +1041,7 @@ function FarmLog_MainWindow_SessionsButton:Clicked()
 	sessionListMode = not sessionListMode 
 	gphNeedsUpdate = true
 	FarmLog:UpdateMainWindowTitle()
-	FarmLog:RefreshSession()
+	FarmLog:RefreshMainWindow()
 end 
 
 function FarmLog_MainWindow_ResetButton:Clicked()
@@ -1403,7 +1406,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 															FarmLog:InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
-														FarmLog:RefreshSession();
+														FarmLog:RefreshMainWindow();
 													end
 													FLogEditFrame:Hide();													
 												end);
@@ -1511,7 +1514,7 @@ SlashCmdList["LH"] = function(msg)
 			if arg1 and #arg1 > 0 then 
 				out("Switching session to |cff99ff00"..arg1)
 				FarmLog:StartSession(arg1)
-				FarmLog:RefreshSession() 
+				FarmLog:RefreshMainWindow() 
 			else 
 				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
 			end 
@@ -1520,7 +1523,7 @@ SlashCmdList["LH"] = function(msg)
 			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]
 			FLogVars["sessions"][FLogVars["currentSession"]] = nil 
 			FLogVars["currentSession"] = arg1 
-			FarmLog:RefreshSession() 
+			FarmLog:RefreshMainWindow() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
 			if not FLogGlobalVars["autoSwitchInstances"] then 
