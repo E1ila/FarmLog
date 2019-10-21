@@ -507,7 +507,7 @@ end
 
 -- Spell cast 
 
-local function OnSpellCastEvent(unit, target, guid, spellId)
+function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	if spellId == SPELL_HERBING then 
 		skillName = L["Herbalism"]
 		skillNameTime = time()
@@ -527,8 +527,8 @@ end
 
 -- Honor event
 
-local function OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
-	-- debug("OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+function FarmLog:OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
+	-- debug("FarmLog:OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 end 
 
 -- Trade skills event
@@ -537,7 +537,7 @@ local SkillGainStrings = {
 	_G.ERR_SKILL_UP_SI,
 }
 
-local function ParseSkillEvent(chatmsg)
+function FarmLog:ParseSkillEvent(chatmsg)
 	for _, st in ipairs(SkillGainStrings) do
 		local skillName, level = FLogDeformat(chatmsg, st)
 		if level then
@@ -546,12 +546,12 @@ local function ParseSkillEvent(chatmsg)
 	end
 end
 
-local function OnSkillsEvent(text)
-	-- debug("OnSkillsEvent - text:"..text)
-	local skillName, level = ParseSkillEvent(text)
+function FarmLog:OnSkillsEvent(text)
+	-- debug("FarmLog:OnSkillsEvent - text:"..text)
+	local skillName, level = self:ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		FarmLog:RefreshSession()
+		self:RefreshSession()
 	end 
 end 
 
@@ -573,7 +573,7 @@ local XPGainMobKillStrings = {
 	_G.COMBATLOG_XPGAIN_FIRSTPERSON_RAID,
 }
 
-local function ParseXPEvent(chatmsg)
+function FarmLog:ParseXPEvent(chatmsg)
 	for _, st in ipairs(XPGainMobKillStrings) do
 		local mobName, amount = FLogDeformat(chatmsg, st)
 		if amount then
@@ -588,11 +588,11 @@ local function ParseXPEvent(chatmsg)
 	end
 end
 
-local function OnCombatXPEvent(text)
-	local xp = ParseXPEvent(text)
-	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+function FarmLog:OnCombatXPEvent(text)
+	local xp = self:ParseXPEvent(text)
+	-- debug("FarmLog:OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	FarmLog:RefreshSession()
+	self:RefreshSession()
 end 
 
 -- Faction change 
@@ -602,7 +602,7 @@ local FactionGainStrings = {
 	_G.FACTION_STANDING_INCREASED_BONUS,
 }
 
-local function ParseRepEvent(chatmsg)
+function FarmLog:ParseRepEvent(chatmsg)
 	for _, st in ipairs(FactionGainStrings) do
 		local faction, amount = FLogDeformat(chatmsg, st)
 		if amount then
@@ -611,18 +611,18 @@ local function ParseRepEvent(chatmsg)
 	end
 end
 
-local function OnCombatFactionChange(text) 
-	-- debug("OnCombatFactionChange - text:"..text)
-	local faction, rep = ParseRepEvent(text)
+function FarmLog:OnCombatFactionChange(text) 
+	-- debug("FarmLog:OnCombatFactionChange - text:"..text)
+	local faction, rep = self:ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionVar("rep", rep)
-		FarmLog:RefreshSession()
+		self:RefreshSession()
 	end 
 end 
 
 -- Combat log event
 
-local function OnCombatLogEvent()
+function FarmLog:OnCombatLogEvent()
 	local eventInfo = {CombatLogGetCurrentEventInfo()}
 	local eventName = eventInfo[2]
 	if eventName == "PARTY_KILL" then 
@@ -630,19 +630,19 @@ local function OnCombatLogEvent()
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		FarmLog:RefreshSession()
+		self:RefreshSession()
 	end 
 end 
 
 -- Loot window event
 
-local function OnLootOpened(autoLoot)
+function FarmLog:OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
 	local mobName = nil 
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if not mobName and skillName then mobName = skillName end 
 	if not mobName then mobName = UnitName("target") end 
-	-- debug("OnLootOpened - mobName = "..mobName)
+	-- debug("FarmLog:OnLootOpened - mobName = "..mobName)
 	lastMobLoot = {}
 	skillName = nil 
 	skillNameTime = nil 
@@ -657,8 +657,8 @@ end
 
 -- Currency event
 
-local function OnCurrencyEvent(text)
-	debug("OnCurrencyEvent - "..text)
+function FarmLog:OnCurrencyEvent(text)
+	debug("FarmLog:OnCurrencyEvent - "..text)
 end 
 
 -- Money event
@@ -689,15 +689,15 @@ local function ParseMoneyEvent(chatmsg)
 	end
 end
 
-local function OnMoneyEvent(text)
+function FarmLog:OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	FarmLog:RefreshSession()
+	self:RefreshSession()
 end 
 
 -- Loot receive event
 
-local function InsertLoot(mobName, itemLink, quantity)
+function FarmLog:InsertLoot(mobName, itemLink, quantity)
 	if (mobName and itemLink and quantity) then		
 		local sessionDrops = GetSessionVar("drops")
 		if not sessionDrops[mobName] then		
@@ -730,7 +730,7 @@ local function ParseSelfLootEvent(chatmsg)
 	end
 end
 
-local function OnLootEvent(text)
+function FarmLog:OnLootEvent(text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	if not itemLink then return end 
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
@@ -764,14 +764,14 @@ local function OnLootEvent(text)
 			IncreaseSessionVar("vendor", vendorPrice or 0) 		
 		end 
 
-		InsertLoot(mobName, itemLink, (quantity or 1));
-		FarmLog:RefreshSession();
+		self:InsertLoot(mobName, itemLink, (quantity or 1));
+		self:RefreshSession();
 	end
 end
 
 -- Addon Loaded
 
-local function OnAddonLoaded()
+function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 
 	-- migration
@@ -792,7 +792,7 @@ local function OnAddonLoaded()
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
 	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
-		FarmLog:ResetSessionVars()
+		self:ResetSessionVars()
 	end 
 
 	if FLogSVAHValue then 
@@ -841,9 +841,9 @@ local function OnAddonLoaded()
 	FarmLogFrame_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 
 	if FLogVars["enabled"] then 
-		FarmLog:ResumeSession()
+		self:ResumeSession()
 	else 
-		FarmLog:PauseSession()
+		self:PauseSession()
 	end 
 	gphNeedsUpdate = true
 
@@ -860,12 +860,12 @@ local function OnAddonLoaded()
 	if not FLogVars["lockMinimapButton"] then		
 		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");			
 	end
-	FarmLog:RefreshSession();
+	self:RefreshSession();
 end 
 
 -- Entering World
 
-local function OnEnteringWorld() 
+function FarmLog:OnEnteringWorld() 
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
@@ -873,22 +873,22 @@ local function OnEnteringWorld()
 		FLogVars["inInstance"] = true;
 		FLogVars["instanceName"] = instanceName;
 		if FLogGlobalVars["autoSwitchInstances"] then 
-			FarmLog:StartSession(instanceName)
+			self:StartSession(instanceName)
 		end 
 	elseif FLogVars["inInstance"] and inInstance == false then
 		FLogVars["inInstance"] = false;
 		if FLogGlobalVars["autoSwitchInstances"] then 
-			FarmLog:PauseSession()
+			self:PauseSession()
 		end 
 	end
-	FarmLog:RefreshSession();
+	self:RefreshSession();
 end 
 
 -- Instance info
 
-local function OnInstanceInfoEvent()
+function FarmLog:OnInstanceInfoEvent()
 	-- local count = GetNumSavedInstances()
-	-- debug("OnInstanceInfoEvent - GetNumSavedInstances = "..count)
+	-- debug("FarmLog:OnInstanceInfoEvent - GetNumSavedInstances = "..count)
 	-- for i = 1, count do 
 	-- 	local instanceName, instanceID, instanceReset, instanceDifficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, maxBosses, defeatedBosses = GetSavedInstanceInfo(i)
 	-- 	debug("instanceName="..instanceName.." instanceID="..instanceID.." instanceReset="..tostring(instanceReset).." locked="..tostring(locked))
@@ -901,41 +901,41 @@ function FarmLog:OnEvent(event, ...)
 	if FLogVars["enabled"] then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
-			OnLootOpened(...)			
+			self:OnLootOpened(...)			
 		elseif event == "CHAT_MSG_LOOT" then
 			if (... and (strfind(..., L["loot"]))) then
-				OnLootEvent(...)		
+				self:OnLootEvent(...)		
 			end	
 		elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
-			OnCombatHonorEvent(...);			
+			self:OnCombatHonorEvent(...);			
 		elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
-			OnCombatXPEvent(...);			
+			self:OnCombatXPEvent(...);			
 		elseif event == "CHAT_MSG_SKILL" then 
-			OnSkillsEvent(...);			
+			self:OnSkillsEvent(...);			
 		elseif event == "CHAT_MSG_OPENING" then 
 			debug("CHAT_MSG_OPENING")
 			debug(...)
 		elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then 
-			OnCombatLogEvent(...);		
+			self:OnCombatLogEvent(...);		
 		elseif event == "CHAT_MSG_CURRENCY" then 
-			OnCurrencyEvent(...)	
+			self:OnCurrencyEvent(...)	
 		elseif event == "CHAT_MSG_MONEY" then 
-			OnMoneyEvent(...)	
+			self:OnMoneyEvent(...)	
 		elseif event == "UNIT_SPELLCAST_SENT" then 
-			OnSpellCastEvent(...)
+			self:OnSpellCastEvent(...)
 		elseif event == "CHAT_MSG_COMBAT_FACTION_CHANGE" then 
-			OnCombatFactionChange(...)
+			self:OnCombatFactionChange(...)
 		end 
 	end 
 
 	if event == "PLAYER_ENTERING_WORLD" then
-		OnEnteringWorld(...)
+		self:OnEnteringWorld(...)
 	elseif event == "ADDON_LOADED" and ... == APPNAME then		
-		OnAddonLoaded(...)
+		self:OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
 		self:PauseSession(true)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
-		OnInstanceInfoEvent(...)
+		self:OnInstanceInfoEvent(...)
 	end
 end
 
@@ -1348,7 +1348,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 													if editName ~= newName then
 														local sessionDrops = GetSessionVar("drops")
 														if #sessionDrops[editName][editItem] == 1 then
-															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
+															FarmLog:InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															sessionDrops[editName][editItem] = nil;
 															local x = 0;
 															for a, _ in pairs (sessionDrops[editName]) do																
@@ -1358,7 +1358,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 																sessionDrops[editName] = nil;
 															end
 														else
-															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
+															FarmLog:InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
 														FarmLog:RefreshSession();
