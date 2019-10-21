@@ -157,11 +157,11 @@ local function SetSessionVar(varName, value)
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	FLogVars["sessions"][FLogVars["currentSession"]][varName] = (FLogVars["sessions"][FLogVars["currentSession"]][varName] or 0) + incValue 
+	FLogVars["sessions"][FLogVars["currentSession"]][varName] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
-	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = (FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] or 0) + incValue 
+	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName][entry] or 0) + incValue 
 end 
 
 local function GetSessionWindowTitle(customTime)
