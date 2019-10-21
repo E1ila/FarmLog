@@ -40,6 +40,7 @@ Another thing is that the more time & data you have per session, the more accura
 
 ![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
 ![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
+![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
 * 1.6

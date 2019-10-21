@@ -709,7 +709,7 @@ function FarmLog:OnCombatFactionChange(text)
 	-- debug("FarmLog:OnCombatFactionChange - text:"..text)
 	local faction, rep = self:ParseRepEvent(text)
 	if rep then 
-		IncreaseSessionVar("rep", rep)
+		IncreaseSessionDictVar("rep", faction, rep)
 		self:RefreshMainWindow()
 	end 
 end 
