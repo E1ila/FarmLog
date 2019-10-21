@@ -2,6 +2,8 @@
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
+FarmLog_ScrollRows = {}
+
 FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
@@ -25,10 +27,10 @@ FLogVars = {
 		["x"] = 0,
 		["y"] = 0,
 	},
-	["minimapButtonPosision"] = {
-		["point"] = "TOP",
-		["x"] = 0,
-		["y"] = 0,
+	["minimapButtonPosition"] = {
+		["point"] = "TOPRIGHT",
+		["x"] = -165,
+		["y"] = -127,
 	},
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
@@ -38,7 +40,6 @@ FLogVars = {
 local editName = "";
 local editItem = "";
 local editIdx = -1;
-local ScrollRows = {};
 local L = FarmLog_BuildLocalization()
 
 local visibleRows = 0
@@ -189,11 +190,16 @@ function FarmLog:Migrate()
 		FLogVars["lockFrames"] = FLogSVLockFrames
 		FLogVars["lockMinimapButton"] = FLogSVLockMinimapButton
 		FLogVars["frameRect"] = FLogSVFrame
-		FLogVars["minimapButtonPosision"] = FLogSVMinimapButtonPosition
+		FLogVars["minimapButtonPosition"] = FLogSVMinimapButtonPosition
 		FLogVars["enableMinimapButton"] = FLogSVEnableMinimapButton
 		FLogVars["itemTooltip"] = FLogSVTooltip
 		FLogSVSessions = nil 
 		out("Migrated old character vars into new database format.")
+	end 
+
+	if FLogVars["minimapButtonPosision"] then 
+		FLogVars["minimapButtonPosition"] = FLogVars["minimapButtonPosision"]
+		FLogVars["minimapButtonPosision"] = nil 
 	end 
 end 
 
@@ -324,7 +330,31 @@ function FarmLog:InitSession()
 	self:RefreshSession()
 end 
 
+function FarmLog:ToggleLogging() 
+	if FLogVars["enabled"] then 
+		self:PauseSession()
+		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
+	else 
+		self:StartSession(FLogVars["currentSession"] or "default")
+		if GetSessionVar("seconds") == 0 then 
+			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r started")
+		else 
+			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
+		end 	
+	end 
+end 
+
+
 -- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog:ToggleWindow()
+	if FarmLog_MainWindow:IsShown() then
+		FarmLog_MainWindow:Hide()
+		FLogOptionsFrame:Hide()
+	else
+		FarmLog_MainWindow:Show()
+	end
+end
 
 function FarmLog:PlaceLinkInChatEditBox(itemLink)
 	-- Copy itemLink into ChatFrame
@@ -377,10 +407,10 @@ local function CreateRow_Text(existingRow, text)
 		row["root"] = CreateFrame("FRAME", nil, FarmLog_MainWindow_Scroll_Content);		
 		row["root"]:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
 		row["root"]:SetHeight(15);
-		if #ScrollRows == 0 then 
+		if #FarmLog_ScrollRows == 0 then 
 			row["root"]:SetPoint("TOPLEFT", FarmLog_MainWindow_Scroll_Content, "TOPLEFT");
 		else 
-			row["root"]:SetPoint("TOPLEFT", ScrollRows[#ScrollRows]["root"], "BOTTOMLEFT");
+			row["root"]:SetPoint("TOPLEFT", FarmLog_ScrollRows[#FarmLog_ScrollRows]["root"], "BOTTOMLEFT");
 		end 
 	end 
 	if previousType ~= "text" then 
@@ -399,20 +429,24 @@ local function CreateRow_Text(existingRow, text)
 	row["label"]:SetText(text);
 	row["label"]:Show()
 
-	tinsert(ScrollRows, row);
+	if not existingRow then 
+		tinsert(FarmLog_ScrollRows, row);
+	end 
 	return row
 end
 
 local function HideRowsBeyond(j)
-	local n = #ScrollRows;
-	for i = j, n do
-		ScrollRows[i]["root"]:Hide();
-	end
+	local n = #FarmLog_ScrollRows;
+	if j <= n then 
+		for i = j, n do
+			FarmLog_ScrollRows[i]["root"]:Hide()
+		end
+	end 
 end
 
 local function AddItem_Text(text) 
 	visibleRows = visibleRows + 1
-	return CreateRow_Text(ScrollRows[visibleRows], text)
+	return CreateRow_Text(FarmLog_ScrollRows[visibleRows], text)
 end 
 
 local function SetItemTooltip(row, itemLink, text)
@@ -504,7 +538,7 @@ function FarmLog:RefreshSession()
 		FarmLog_MainWindow_ResetButton:Disable()
 	else 
 		self:AddSessionYieldItems()
-		if #ScrollRows > 0 then
+		if #FarmLog_ScrollRows > 0 then
 			FarmLog_MainWindow_ResetButton:Enable()
 		else
 			FarmLog_MainWindow_ResetButton:Disable()
@@ -513,29 +547,6 @@ function FarmLog:RefreshSession()
 	HideRowsBeyond(visibleRows + 1);	
 	FarmLog_MainWindow_SessionsButton:Enable()
 end
-
-function FarmLog:ToggleWindow()
-	if FarmLog_MainWindow:IsShown() then
-		FarmLog_MainWindow:Hide()
-		FLogOptionsFrame:Hide()
-	else
-		FarmLog_MainWindow:Show()
-	end
-end
-
-function FarmLog:ToggleLogging() 
-	if FLogVars["enabled"] then 
-		self:PauseSession()
-		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
-	else 
-		self:StartSession(FLogVars["currentSession"] or "default")
-		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r started")
-		else 
-			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
-		end 	
-	end 
-end 
 
 function FarmLog:RecalcTotals()
 	local sessionVendor = 0
@@ -966,36 +977,30 @@ function FarmLog_MainWindow:Init()
 	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 end
 
-function FarmLog_MinimapButton:Init() 
-	if FLogVars["minimapButtonPosision"]["x"] > GetScreenWidth() then 
-		FLogVars["minimapButtonPosision"]["x"] = GetScreenWidth() - 50
-	end 
-	if FLogVars["minimapButtonPosision"]["y"] > GetScreenWidth() then 
-		FLogVars["minimapButtonPosision"]["y"] = GetScreenHeight() - 50
-	end 
-	self:SetPoint(FLogVars["minimapButtonPosision"]["point"], Minimap, FLogVars["minimapButtonPosision"]["x"], FLogVars["minimapButtonPosision"]["y"]);
+function FarmLog_MinimapButton:Init(reload) 
+	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosition"]["point"], Minimap, FLogVars["minimapButtonPosition"]["x"], FLogVars["minimapButtonPosition"]["y"]);
 	if FLogVars["enableMinimapButton"] then
 		self:Show();
 	else
 		self:Hide();
 	end	
-	if not FLogVars["lockMinimapButton"] then		
+	if not FLogVars["lockMinimapButton"] and not reload then		
 		self:RegisterForDrag("LeftButton");			
 	end
 end 
 
 function FarmLog_MinimapButton:DragStopped() 
 	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
-	FLogVars["minimapButtonPosision"]["point"] = point;													
-	FLogVars["minimapButtonPosision"]["x"] = x;
-	FLogVars["minimapButtonPosision"]["y"] = y;
+	FLogVars["minimapButtonPosition"]["point"] = point;													
+	FLogVars["minimapButtonPosition"]["x"] = x;
+	FLogVars["minimapButtonPosition"]["y"] = y;
 end 
 
 function FarmLog_MinimapButton:Clicked(button) 
 	if button == "RightButton" then
 		FarmLog:ToggleLogging()
 	else
-		FarmLog:ToggleWindow();
+		FarmLog:ToggleWindow()
 	end
 end 
 
@@ -1508,6 +1513,12 @@ SlashCmdList["LH"] = function(msg)
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
 			FarmLog:ResetSession()
+		elseif  "RMM" == cmd or "R" == cmd then
+			FLogVars["minimapButtonPosition"]["x"] = -165
+			FLogVars["minimapButtonPosition"]["y"] = -127
+			FLogVars["minimapButtonPosition"]["point"] = "TOPRIGHT"
+			FLogVars["enableMinimapButton"] = true 
+			FarmLog_MinimapButton:Init(true)
 		else 
 			out("Unknown command "..cmd)
 		end 
