@@ -223,7 +223,7 @@ local function SetSessionVar(varName, value)
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	debug("IncreaseSessionVar varName: "..varName..", incValue: "..tostring(incValue))
+	-- debug("IncreaseSessionVar varName: "..varName..", incValue: "..tostring(incValue))
 	FLogVars["sessions"][FLogVars["currentSession"]][varName] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName] or 0) + incValue 
 end 
 
