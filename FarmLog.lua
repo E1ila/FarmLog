@@ -214,6 +214,7 @@ local function SetSessionVar(varName, value)
 end 
 
 local function IncreaseSessionVar(varName, incValue)
+	debug("IncreaseSessionVar varName: "..varName..", incValue: "..tostring(incValue))
 	FLogVars["sessions"][FLogVars["currentSession"]][varName] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName] or 0) + incValue 
 end 
 
@@ -348,12 +349,17 @@ end
 -- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 function FarmLog:ToggleWindow()
-	if FarmLog_MainWindow:IsShown() then
-		FarmLog_MainWindow:Hide()
-		FLogOptionsFrame:Hide()
-	else
+	if IsShiftKeyDown() then 
+		FarmLog_MainWindow:ResetPosition()
 		FarmLog_MainWindow:Show()
-	end
+	else 
+		if FarmLog_MainWindow:IsShown() then
+			FarmLog_MainWindow:Hide()
+			FLogOptionsFrame:Hide()
+		else
+			FarmLog_MainWindow:Show()
+		end
+	end 
 end
 
 function FarmLog:PlaceLinkInChatEditBox(itemLink)
@@ -977,6 +983,15 @@ function FarmLog_MainWindow:Init()
 	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 end
 
+function FarmLog_MainWindow:ResetPosition()
+	FLogVars["frameRect"]["width"] = 250
+	FLogVars["frameRect"]["height"] = 200
+	FLogVars["frameRect"]["x"] = 0
+	FLogVars["frameRect"]["y"] = 0
+	FLogVars["frameRect"]["point"] = "CENTER"
+	FarmLog_MainWindow:Init(true)
+end 
+
 function FarmLog_MinimapButton:Init(reload) 
 	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosition"]["point"], Minimap, FLogVars["minimapButtonPosition"]["x"], FLogVars["minimapButtonPosition"]["y"]);
 	if FLogVars["enableMinimapButton"] then
@@ -1457,6 +1472,8 @@ SlashCmdList["LH"] = function(msg)
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
+			out(" |cff00ff00/fl rmi|r resets minimap icon position")
+			out(" |cff00ff00/fl rmw|r resets main window position")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
@@ -1513,12 +1530,14 @@ SlashCmdList["LH"] = function(msg)
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
 			FarmLog:ResetSession()
-		elseif  "RMM" == cmd or "R" == cmd then
+		elseif  "RMI" == cmd then
 			FLogVars["minimapButtonPosition"]["x"] = -165
 			FLogVars["minimapButtonPosition"]["y"] = -127
 			FLogVars["minimapButtonPosition"]["point"] = "TOPRIGHT"
 			FLogVars["enableMinimapButton"] = true 
 			FarmLog_MinimapButton:Init(true)
+		elseif  "RMW" == cmd then
+			FarmLog_MainWindow:ResetPosition()
 		else 
 			out("Unknown command "..cmd)
 		end 
