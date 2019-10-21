@@ -164,7 +164,7 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName][entry] or 0) + incValue 
 end 
 
-local function GetSessionWindowTitle(customTime)
+function FarmLog:GetSessionWindowTitle(customTime)
 	local text = FLogVars["currentSession"] or ""
 	local time = customTime or GetSessionVar("seconds") or 0
 	if time > 0 then 
@@ -176,7 +176,7 @@ local function GetSessionWindowTitle(customTime)
 	return text
 end 
 
-local function UpdateMainWindowTitle()
+function FarmLog:UpdateMainWindowTitle()
 	if sessionListMode then 
 		FarmLogFrame_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
 		FarmLogFrame_MainWindow_Title_Text:SetText(L["All Sessions"])
@@ -185,20 +185,20 @@ local function UpdateMainWindowTitle()
 			FarmLogFrame_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
 		else 
 			FarmLogFrame_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
-			FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle())
+			FarmLogFrame_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle())
 		end 
 	end 
 end 
 
-local function ResumeSession() 
+function FarmLog:ResumeSession() 
 	sessionStartTime = time()
 
 	FLogVars["enabled"] = true  
 	FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
-	UpdateMainWindowTitle()
+	self:UpdateMainWindowTitle()
 end 
 
-local function PauseSession(temporary)
+function FarmLog:PauseSession(temporary)
 	if sessionStartTime then 
 		local delta = time() - sessionStartTime
 		IncreaseSessionVar("seconds", delta)
@@ -208,11 +208,11 @@ local function PauseSession(temporary)
 	if not temporary then 
 		FLogVars["enabled"] = false 
 		FarmLogFrame_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		UpdateMainWindowTitle()
+		self:UpdateMainWindowTitle()
 	end 
 end 
 
-local function ResetSessionVars()
+function FarmLog:ResetSessionVars()
 	FLogVars["sessions"][FLogVars["currentSession"]] = {
 		["drops"] = {},
 		["kills"] = {},
@@ -227,25 +227,25 @@ local function ResetSessionVars()
 	}
 end 
 
-local function StartSession(sessionName, dontPause) 
+function FarmLog:StartSession(sessionName, dontPause) 
 	if FLogVars["enabled"] then 
 		gphNeedsUpdate = true 
 		if not dontPause then 
-			PauseSession(true) 
+			self:PauseSession(true) 
 		end 
 	end 
 
 	FLogVars["currentSession"] = sessionName
 	if not FLogVars["sessions"][FLogVars["currentSession"]] then 
-		ResetSessionVars()
+		self:ResetSessionVars()
 	end 
-	ResumeSession()
+	self:ResumeSession()
 end 
 
-local function DeleteSession(name) 
+function FarmLog:DeleteSession(name) 
 	FLogVars["sessions"][name] = nil 
 	if FLogVars["currentSession"] == name then 
-		StartSession("default", true)
+		self:StartSession("default", true)
 	end 
 	if FLogVars["currentSession"] == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
@@ -254,30 +254,13 @@ local function DeleteSession(name)
 	end 
 end 
 
--- Reporting ------------------------------------------------------------
-
-local function ResetSession()
-	PauseSession(true)
-	ResetSessionVars()
-	ResumeSession()
+function FarmLog:ResetSession()
+	self:PauseSession(true)
+	self:ResetSessionVars()
+	self:ResumeSession()
 	out("Reset session |cff99ff00"..FLogVars["currentSession"])
 	gphNeedsUpdate = true 
-	FarmLog_RefreshMainWindowContent()
-end
-
-local function InsertLoot(mobName, itemLink, quantity)
-	-- out(mobName.." / "..itemLink.." / "..quantity);
-	if (mobName and itemLink and quantity) then		
-		local sessionDrops = GetSessionVar("drops")
-		if not sessionDrops[mobName] then		
-			sessionDrops[mobName] = {}
-		end 
-		if sessionDrops[mobName][itemLink] then
-			sessionDrops[mobName][itemLink][1][1] = sessionDrops[mobName][itemLink][1][1] + quantity
-		else
-			sessionDrops[mobName][itemLink] = {{quantity}};
-		end
-	end
+	self:RefreshSession()
 end
 
 
@@ -297,7 +280,7 @@ local function AddToChatFrameEditBox(itemLink)
 	end
 end
 
-local function GetOnLogItemClick(itemLink) 
+function FarmLog:GetOnLogItemClick(itemLink) 
 	return function(self, button)
 		if IsShiftKeyDown() then
 			AddToChatFrameEditBox(itemLink) -- paste in chat box
@@ -307,19 +290,19 @@ local function GetOnLogItemClick(itemLink)
 	end 
 end
 
-local function GetOnLogSessionItemClick(sessionName) 
+function FarmLog:GetOnLogSessionItemClick(sessionName) 
 	return function(self, button)
 		if button == "RightButton" then 
-			DeleteSession(sessionName)
-			FarmLog_RefreshMainWindowContent()
+			self:DeleteSession(sessionName)
+			self:RefreshSession()
 		else 
 			if IsAltKeyDown() then
 				-- edit?
 			else 
 				sessionListMode = false 
 				out("Farm session |cff99ff00"..sessionName.."|r resumed")
-				StartSession(sessionName)
-				FarmLog_RefreshMainWindowContent()
+				self:StartSession(sessionName)
+				self:RefreshSession()
 			end
 		end 
 	end 
@@ -401,7 +384,7 @@ local function SetItemActions(row, callback)
 	end);
 end 
 
-local function AddSessionYieldItems() 
+function FarmLog:AddSessionYieldItems() 
 	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
 	if GetSessionVar("ah") > 0 then AddItem(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah"))) end 
 	if GetSessionVar("gold") > 0 then AddItem(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold"))) end 
@@ -433,14 +416,14 @@ local function AddSessionYieldItems()
 				if quantity > 1 then itemText = itemText.." x"..quantity end
 				local row = AddItem(itemText)
 				SetItemTooltip(row, itemLink)
-				SetItemActions(row, GetOnLogItemClick(itemLink))
+				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row["root"]:Show();
 			end
 		end		
 	end
 end 
 
-local function AddSessionListItems() 
+function FarmLog:AddSessionListItems() 
 	for name, session in pairs(FLogVars["sessions"]) do 
 		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
 		local text = name
@@ -449,18 +432,18 @@ local function AddSessionListItems()
 		end 
 		local row = AddItem(text)
 		SetItemTooltip(row)
-		SetItemActions(row, GetOnLogSessionItemClick(name))
+		SetItemActions(row, self:GetOnLogSessionItemClick(name))
 	end 
 end 
 
-function FarmLog_RefreshMainWindowContent()
+function FarmLog:RefreshSession()
 	visibleItems = 0
 
 	if sessionListMode then 
-		AddSessionListItems()
+		self:AddSessionListItems()
 		FarmLogFrame_MainWindow_ResetButton:Disable()
 	else 
-		AddSessionYieldItems()
+		self:AddSessionYieldItems()
 		if #ItemRowFrameList > 0 then
 			FarmLogFrame_MainWindow_ResetButton:Enable()
 		else
@@ -471,7 +454,7 @@ function FarmLog_RefreshMainWindowContent()
 	FarmLogFrame_MainWindow_SessionsButton:Enable()
 end
 
-local function ToggleWindow()
+function FarmLog:ToggleWindow()
 	if FarmLogFrame_MainWindow:IsShown() then
 		FarmLogFrame_MainWindow:Hide()
 		FLogOptionsFrame:Hide()
@@ -480,12 +463,12 @@ local function ToggleWindow()
 	end
 end
 
-local function ToggleLogging() 
+function FarmLog:ToggleLogging() 
 	if FLogVars["enabled"] then 
-		PauseSession()
+		self:PauseSession()
 		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
 	else 
-		StartSession(FLogVars["currentSession"] or "default")
+		self:StartSession(FLogVars["currentSession"] or "default")
 		if GetSessionVar("seconds") == 0 then 
 			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r started")
 		else 
@@ -493,6 +476,32 @@ local function ToggleLogging()
 		end 	
 	end 
 end 
+
+function FarmLog:RecalcTotals()
+	local sessionVendor = 0
+	local sessionAH = 0
+	local sessionDrops = GetSessionVar("drops")
+	for mobName, drops in pairs(sessionDrops) do	
+		for itemLink, metalist in pairs(drops) do 
+			for j = 1, #metalist do
+				local meta = metalist[j]
+				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+				local value = FLogGlobalVars["ahPrice"][itemLink]
+				local quantity = meta[1]
+				if value and value > 0 then 
+					sessionAH = sessionAH + value * quantity
+				else
+					sessionVendor = sessionVendor + (vendorPrice or 0) * quantity
+				end 
+			end 
+		end 
+	end 
+	SetSessionVar("vendor", sessionVendor)
+	SetSessionVar("ah", sessionAH)
+	gphNeedsUpdate = true 
+	self:RefreshSession()
+end 
+
 
 -- EVENTS ----------------------------------------------------------------------------------------
 
@@ -542,7 +551,7 @@ local function OnSkillsEvent(text)
 	local skillName, level = ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		FarmLog_RefreshMainWindowContent()
+		FarmLog:RefreshSession()
 	end 
 end 
 
@@ -583,7 +592,7 @@ local function OnCombatXPEvent(text)
 	local xp = ParseXPEvent(text)
 	-- debug("OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	FarmLog_RefreshMainWindowContent()
+	FarmLog:RefreshSession()
 end 
 
 -- Faction change 
@@ -607,7 +616,7 @@ local function OnCombatFactionChange(text)
 	local faction, rep = ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionVar("rep", rep)
-		FarmLog_RefreshMainWindowContent()
+		FarmLog:RefreshSession()
 	end 
 end 
 
@@ -621,7 +630,7 @@ local function OnCombatLogEvent()
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		FarmLog_RefreshMainWindowContent()
+		FarmLog:RefreshSession()
 	end 
 end 
 
@@ -683,10 +692,24 @@ end
 local function OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	FarmLog_RefreshMainWindowContent()
+	FarmLog:RefreshSession()
 end 
 
 -- Loot receive event
+
+local function InsertLoot(mobName, itemLink, quantity)
+	if (mobName and itemLink and quantity) then		
+		local sessionDrops = GetSessionVar("drops")
+		if not sessionDrops[mobName] then		
+			sessionDrops[mobName] = {}
+		end 
+		if sessionDrops[mobName][itemLink] then
+			sessionDrops[mobName][itemLink][1][1] = sessionDrops[mobName][itemLink][1][1] + quantity
+		else
+			sessionDrops[mobName][itemLink] = {{quantity}};
+		end
+	end
+end
 
 local SelfLootStrings = {
 	_G.LOOT_ITEM_PUSHED_SELF_MULTIPLE,
@@ -742,7 +765,7 @@ local function OnLootEvent(text)
 		end 
 
 		InsertLoot(mobName, itemLink, (quantity or 1));
-		FarmLog_RefreshMainWindowContent();
+		FarmLog:RefreshSession();
 	end
 end
 
@@ -769,7 +792,7 @@ local function OnAddonLoaded()
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
 	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
-		ResetSessionVars()
+		FarmLog:ResetSessionVars()
 	end 
 
 	if FLogSVAHValue then 
@@ -818,9 +841,9 @@ local function OnAddonLoaded()
 	FarmLogFrame_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
 
 	if FLogVars["enabled"] then 
-		ResumeSession()
+		FarmLog:ResumeSession()
 	else 
-		PauseSession()
+		FarmLog:PauseSession()
 	end 
 	gphNeedsUpdate = true
 
@@ -837,7 +860,7 @@ local function OnAddonLoaded()
 	if not FLogVars["lockMinimapButton"] then		
 		FarmLogFrame_MinimapButton:RegisterForDrag("LeftButton");			
 	end
-	FarmLog_RefreshMainWindowContent();
+	FarmLog:RefreshSession();
 end 
 
 -- Entering World
@@ -850,15 +873,15 @@ local function OnEnteringWorld()
 		FLogVars["inInstance"] = true;
 		FLogVars["instanceName"] = instanceName;
 		if FLogGlobalVars["autoSwitchInstances"] then 
-			StartSession(instanceName)
+			FarmLog:StartSession(instanceName)
 		end 
 	elseif FLogVars["inInstance"] and inInstance == false then
 		FLogVars["inInstance"] = false;
 		if FLogGlobalVars["autoSwitchInstances"] then 
-			PauseSession()
+			FarmLog:PauseSession()
 		end 
 	end
-	FarmLog_RefreshMainWindowContent();
+	FarmLog:RefreshSession();
 end 
 
 -- Instance info
@@ -874,7 +897,7 @@ end
 
 -- OnEvent
 
-function FarmLogFrame_Main:OnEvent(event, ...)
+function FarmLog:OnEvent(event, ...)
 	if FLogVars["enabled"] then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
@@ -910,7 +933,7 @@ function FarmLogFrame_Main:OnEvent(event, ...)
 	elseif event == "ADDON_LOADED" and ... == APPNAME then		
 		OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
-		PauseSession(true)
+		self:PauseSession(true)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
 		OnInstanceInfoEvent(...)
 	end
@@ -918,19 +941,19 @@ end
 
 -- OnUpdate
 
-function FarmLogFrame_Main:OnUpdate() 
+function FarmLog:OnUpdate() 
 	if not sessionListMode and (gphNeedsUpdate or FLogVars["enabled"]) then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
-			FarmLogFrame_MainWindow_Title_Text:SetText(GetSessionWindowTitle(sessionTime));
+			FarmLogFrame_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle(sessionTime));
 			lastUpdate = now 
 			if gphNeedsUpdate or (now - lastGPHUpdate >= 60 and sessionTime > 0) then 
 				-- debug("Calculating GPH")
 				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 				lastGPHUpdate = now 
 				gphNeedsUpdate = false 
-				FarmLog_RefreshMainWindowContent()
+				self:RefreshSession()
 			end 
 		end 
 	end 
@@ -943,7 +966,8 @@ function FarmLogFrame_Main:OnUpdate()
 	end 
 end 
 
--- UI
+-- UI ----------------------------------------------------------------------------------------
+
 function FarmLogFrame_MinimapButton:DragStopped() 
 	local point, relativeTo, relativePoint, x, y = FarmLogFrame_MinimapButton:GetPoint();
 	FLogVars["minimapButtonPosision"]["point"] = point;													
@@ -953,9 +977,9 @@ end
 
 function FarmLogFrame_MinimapButton:Clicked(button) 
 	if button == "RightButton" then
-		ToggleLogging()
+		FarmLog:ToggleLogging()
 	else
-		ToggleWindow();
+		FarmLog:ToggleWindow();
 	end
 end 
 
@@ -971,13 +995,13 @@ end
 function FarmLogFrame_MainWindow_SessionsButton:Clicked() 
 	sessionListMode = not sessionListMode 
 	gphNeedsUpdate = true
-	UpdateMainWindowTitle()
-	FarmLog_RefreshMainWindowContent()
+	FarmLog:UpdateMainWindowTitle()
+	FarmLog:RefreshSession()
 end 
 
 function FarmLogFrame_MainWindow_ResetButton:Clicked()
 	FarmLogFrame_QuestionDialog_Yes:SetScript("OnClick", function() 
-		ResetSession()
+		FarmLog:ResetSession()
 		FarmLogFrame_QuestionDialog:Hide()
 	end)
 	FarmLogFrame_QuestionDialog_TitleText:SetText(L["reset-title"])
@@ -1337,7 +1361,7 @@ FLogEditFrameEditButton:SetScript("OnClick", function()
 															InsertLoot(newName, editItem, sessionDrops[editName][editItem][editIdx][1]);
 															tremove(sessionDrops[editName][editItem], editIdx);
 														end
-														FarmLog_RefreshMainWindowContent();
+														FarmLog:RefreshSession();
 													end
 													FLogEditFrame:Hide();													
 												end);
@@ -1376,42 +1400,18 @@ FLogHelpFrameText:SetText(L["Help"]);
 FLogHelpFrameText:SetPoint("TOPLEFT", 5, -10);
 -- end UI
 
-local function RecalcLootProfit()
-	local sessionVendor = 0
-	local sessionAH = 0
-	local sessionDrops = GetSessionVar("drops")
-	for mobName, drops in pairs(sessionDrops) do	
-		for itemLink, metalist in pairs(drops) do 
-			for j = 1, #metalist do
-				local meta = metalist[j]
-				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				local value = FLogGlobalVars["ahPrice"][itemLink]
-				local quantity = meta[1]
-				if value and value > 0 then 
-					sessionAH = sessionAH + value * quantity
-				else
-					sessionVendor = sessionVendor + (vendorPrice or 0) * quantity
-				end 
-			end 
-		end 
-	end 
-	SetSessionVar("vendor", sessionVendor)
-	SetSessionVar("ah", sessionAH)
-	gphNeedsUpdate = true 
-	FarmLog_RefreshMainWindowContent()
-end 
+-- SLASH INTERFACE ----------------------------------------------------------------------------------------
 
--- slash
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
 SlashCmdList["LH"] = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
 	if not cmd then
-		ToggleLogging()
+		FarmLog:ToggleLogging()
 	else 
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then
-			ToggleWindow()
+			FarmLog:ToggleWindow()
 		elseif "DEBUG" == cmd then 
 			FLogGlobalVars["debug"] = not FLogGlobalVars["debug"]
 			if FLogGlobalVars["debug"] then 
@@ -1452,7 +1452,7 @@ SlashCmdList["LH"] = function(msg)
 				else 
 					out("Removing "..itemLink.." from AH value table")
 				end 
-				RecalcLootProfit()
+				FarmLog:RecalcTotals()
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
 			end 
@@ -1462,12 +1462,12 @@ SlashCmdList["LH"] = function(msg)
 				out(" - |cff99ff00"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
-			DeleteSession(arg1)
+			FarmLog:DeleteSession(arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
 			if arg1 and #arg1 > 0 then 
 				out("Switching session to |cff99ff00"..arg1)
-				StartSession(arg1)
-				FarmLog_RefreshMainWindowContent() 
+				FarmLog:StartSession(arg1)
+				FarmLog:RefreshSession() 
 			else 
 				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
 			end 
@@ -1476,7 +1476,7 @@ SlashCmdList["LH"] = function(msg)
 			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]
 			FLogVars["sessions"][FLogVars["currentSession"]] = nil 
 			FLogVars["currentSession"] = arg1 
-			FarmLog_RefreshMainWindowContent() 
+			FarmLog:RefreshSession() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
 			if not FLogGlobalVars["autoSwitchInstances"] then 
@@ -1485,7 +1485,7 @@ SlashCmdList["LH"] = function(msg)
 				out("Auto switching in instances |cff44ff44"..L["enabled"])
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
-			ResetSession()
+			FarmLog:ResetSession()
 		else 
 			out("Unknown command "..cmd)
 		end 

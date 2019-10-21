@@ -13,7 +13,7 @@
     </FontHeight>
   </Font>
 
-  <Frame name="FarmLogFrame_Main">
+  <Frame name="FarmLog">
     <Scripts>
       <OnLoad>
         self:RegisterEvent("ADDON_LOADED");
