@@ -73,7 +73,6 @@ Another thing is that the more time & data you have per session, the more accura
 * Track deaths
 * Show repair bill
 * Allow listing loot without mob names
-* Add pause/resume button on window
 * Support multiboxing GPH
 * Tooltips
 * Allow ignoring certain items
