@@ -75,7 +75,5 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow listing loot without mob names
 * Add pause/resume button on window
 * Support multiboxing GPH
-* Stop instance session when leaving it (if auto started)
-* Don't auto start session when switching?
 * Tooltips
 * Allow ignoring certain items

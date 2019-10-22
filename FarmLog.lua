@@ -78,7 +78,7 @@ local function out(text)
 end 
 
 local function debug(text)
-	if FLogGlobalVars["debug"] then 
+	if FLogGlobalVars.debug then 
 		out(text)
 	end 
 end 
@@ -180,11 +180,11 @@ function FarmLog:Migrate()
 	end 
 
 	if FLogSVAHValue then 
-		FLogGlobalVars["autoSwitchInstances"] = FLogSVAutoSwitchOnInstances
-		FLogGlobalVars["debug"] = FLogSVDebugMode
-		FLogGlobalVars["ahPrice"] = FLogSVAHValue
-		FLogGlobalVars["itemQuality"] = FLogSVItemRarity
-		FLogGlobalVars["reportTo"] = FLogSVOptionReportTo
+		FLogGlobalVars.autoSwitchInstances = FLogSVAutoSwitchOnInstances
+		FLogGlobalVars.debug = FLogSVDebugMode
+		FLogGlobalVars.ahPrice = FLogSVAHValue
+		FLogGlobalVars.itemQuality = FLogSVItemRarity
+		FLogGlobalVars.reportTo = FLogSVOptionReportTo
 		FLogSVAHValue = nil 
 		out("Migrated old global vars into new database format.")
 	end 
@@ -193,7 +193,7 @@ function FarmLog:Migrate()
 		FLogVars.sessions = FLogSVSessions
 		FLogVars.enabled = FLogSVEnabled
 		FLogVars.currentSession = FLogSVCurrentSession
-		FLogVars["instanceName"] = FLogSVLastInstance
+		FLogVars.instanceName = FLogSVLastInstance
 		FLogVars.inInstance = FLogSVInInstance
 
 		FLogVars.lockFrames = FLogSVLockFrames
@@ -580,7 +580,7 @@ function FarmLog:RecalcTotals()
 			for j = 1, #metalist do
 				local meta = metalist[j]
 				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				local value = FLogGlobalVars["ahPrice"][itemLink]
+				local value = FLogGlobalVars.ahPrice[itemLink]
 				local quantity = meta[1]
 				if value and value > 0 then 
 					sessionAH = sessionAH + value * quantity
@@ -839,19 +839,19 @@ function FarmLog:OnLootEvent(text)
 	if (
 		itemType ~= "Money" and 
 		(
-			(FLogGlobalVars["itemQuality"][0] and itemRarity == 0) or
-			(FLogGlobalVars["itemQuality"][1] and itemRarity == 1) or
-			(FLogGlobalVars["itemQuality"][2] and itemRarity == 2) or
-			(FLogGlobalVars["itemQuality"][3] and itemRarity == 3) or
-			(FLogGlobalVars["itemQuality"][4] and itemRarity == 4) or
-			(FLogGlobalVars["itemQuality"][5] and itemRarity == 5) or
-			(FLogGlobalVars["itemQuality"][6] and itemRarity == 6) or 
+			(FLogGlobalVars.itemQuality[0] and itemRarity == 0) or
+			(FLogGlobalVars.itemQuality[1] and itemRarity == 1) or
+			(FLogGlobalVars.itemQuality[2] and itemRarity == 2) or
+			(FLogGlobalVars.itemQuality[3] and itemRarity == 3) or
+			(FLogGlobalVars.itemQuality[4] and itemRarity == 4) or
+			(FLogGlobalVars.itemQuality[5] and itemRarity == 5) or
+			(FLogGlobalVars.itemQuality[6] and itemRarity == 6) or 
 			mobName == L["Herbalism"] or 
 			mobName == L["Mining"] or 
 			mobName == L["Fishing"] 
 		)) 
 	then	
-		local ahValue = FLogGlobalVars["ahPrice"][itemLink]
+		local ahValue = FLogGlobalVars.ahPrice[itemLink]
 		if ahValue and ahValue > 0 then 
 			IncreaseSessionVar("ah", ahValue)
 		else
@@ -880,15 +880,15 @@ function FarmLog:OnEnteringWorld()
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
-	if not FLogVars.inInstance and inInstance and FLogVars["instanceName"] ~= instanceName then
+	if not FLogVars.inInstance and inInstance and FLogVars.instanceName ~= instanceName then
 		FLogVars.inInstance = true;
-		FLogVars["instanceName"] = instanceName;
-		if FLogGlobalVars["autoSwitchInstances"] then 
+		FLogVars.instanceName = instanceName;
+		if FLogGlobalVars.autoSwitchInstances then 
 			self:StartSession(instanceName)
 		end 
 	elseif FLogVars.inInstance and inInstance == false then
 		FLogVars.inInstance = false;
-		if FLogGlobalVars["autoSwitchInstances"] then 
+		if FLogGlobalVars.autoSwitchInstances then 
 			self:PauseSession()
 		end 
 	end
@@ -1058,7 +1058,7 @@ end
 
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
-SlashCmdList["LH"] = function(msg)
+SlashCmdList.LH = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
 	if not cmd then
 		FarmLog:ToggleLogging()
@@ -1067,8 +1067,8 @@ SlashCmdList["LH"] = function(msg)
 		if  "SHOW" == cmd or "S" == cmd then
 			FarmLog:ToggleWindow()
 		elseif "DEBUG" == cmd then 
-			FLogGlobalVars["debug"] = not FLogGlobalVars["debug"]
-			if FLogGlobalVars["debug"] then 
+			FLogGlobalVars.debug = not FLogGlobalVars.debug
+			if FLogGlobalVars.debug then 
 				out("Debug mode |cff00ff00enabled")
 			else 
 				out("Debug mode |cffff0000disabled")
@@ -1102,7 +1102,7 @@ SlashCmdList["LH"] = function(msg)
 						out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]")
 					end 
 				end				
-				FLogGlobalVars["ahPrice"][itemLink] = value 
+				FLogGlobalVars.ahPrice[itemLink] = value 
 				if value and value > 0 then 
 					out("Setting AH value of "..itemLink.." to "..GetShortCoinTextureString(value))
 				else 
@@ -1134,8 +1134,8 @@ SlashCmdList["LH"] = function(msg)
 			FLogVars.currentSession = arg1 
 			FarmLog:RefreshMainWindow() 
 		elseif "ASI" == cmd then 
-			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
-			if not FLogGlobalVars["autoSwitchInstances"] then 
+			FLogGlobalVars.autoSwitchInstances = not FLogGlobalVars.autoSwitchInstances 
+			if not FLogGlobalVars.autoSwitchInstances then 
 				out("Auto switching in instances |cffff4444"..L["disabled"])
 			else 
 				out("Auto switching in instances |cff44ff44"..L["enabled"])
