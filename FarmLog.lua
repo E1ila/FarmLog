@@ -1,5 +1,5 @@
 ﻿local VERSION = "1.8.0"
-local VERSION_INT = "1.0704"
+local VERSION_INT = "1.0800"
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 

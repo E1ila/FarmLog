@@ -269,9 +269,7 @@
         self:SetMaxResize(600, GetScreenHeight() - 100);
    			self:SetBackdropColor (0, 0, 0, 0.6)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
-
         self:SetUserPlaced(true)
-        tinsert(UISpecialFrames, self:GetName())
       </OnLoad>
     </Scripts>
 
