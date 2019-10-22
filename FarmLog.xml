@@ -329,7 +329,7 @@
             if not MouseIsOver(FarmLog_MainWindow_Title) then
          			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
             end
-            self:DragStopped()            
+            FarmLog_MainWindow:SavePosition()           
           </OnDragStop>
           <OnEnter>
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
@@ -435,11 +435,11 @@
         <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
-            FarmLog_MainWindow:StartSizing("BOTTOMRIGHT")
+            self:StartSizing("BOTTOMRIGHT")
           </OnMouseDown>
           <OnMouseUp>
-            FarmLog_MainWindow:StopMovingOrSizing()
-            self:MouseUp()
+            self:StopMovingOrSizing()
+            self:SavePosition()
           </OnMouseUp>
         </Scripts>
       </Button>

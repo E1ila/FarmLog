@@ -161,7 +161,7 @@ function FarmLog:Migrate()
 	-- migration
 	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
 		-- migrate 1 session into multi session DB
-		FLogVars["sessions"][FLogVars["currentSession"]] = {
+		FLogVars.sessions[FLogVars.currentSession] = {
 			["drops"] = FLogSVDrops,
 			["kills"] = FLogSVKills,
 			["skill"] = FLogSVSkill,
@@ -175,7 +175,7 @@ function FarmLog:Migrate()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars["sessions"][FLogVars["currentSession"]] then 
+	elseif not FLogVars.sessions[FLogVars.currentSession] then 
 		self:ResetSessionVars()
 	end 
 
@@ -190,24 +190,24 @@ function FarmLog:Migrate()
 	end 
 
 	if FLogSVSessions then 
-		FLogVars["sessions"] = FLogSVSessions
-		FLogVars["enabled"] = FLogSVEnabled
-		FLogVars["currentSession"] = FLogSVCurrentSession
+		FLogVars.sessions = FLogSVSessions
+		FLogVars.enabled = FLogSVEnabled
+		FLogVars.currentSession = FLogSVCurrentSession
 		FLogVars["instanceName"] = FLogSVLastInstance
-		FLogVars["inInstance"] = FLogSVInInstance
+		FLogVars.inInstance = FLogSVInInstance
 
-		FLogVars["lockFrames"] = FLogSVLockFrames
-		FLogVars["lockMinimapButton"] = FLogSVLockMinimapButton
-		FLogVars["frameRect"] = FLogSVFrame
-		FLogVars["minimapButtonPosition"] = FLogSVMinimapButtonPosition
-		FLogVars["enableMinimapButton"] = FLogSVEnableMinimapButton
-		FLogVars["itemTooltip"] = FLogSVTooltip
+		FLogVars.lockFrames = FLogSVLockFrames
+		FLogVars.lockMinimapButton = FLogSVLockMinimapButton
+		FLogVars.frameRect = FLogSVFrame
+		FLogVars.minimapButtonPosition = FLogSVMinimapButtonPosition
+		FLogVars.enableMinimapButton = FLogSVEnableMinimapButton
+		FLogVars.itemTooltip = FLogSVTooltip
 		FLogSVSessions = nil 
 		out("Migrated old character vars into new database format.")
 	end 
 
 	if FLogVars["minimapButtonPosision"] then 
-		FLogVars["minimapButtonPosition"] = FLogVars["minimapButtonPosision"]
+		FLogVars.minimapButtonPosition = FLogVars["minimapButtonPosision"]
 		FLogVars["minimapButtonPosision"] = nil 
 	end 
 end 
@@ -215,24 +215,24 @@ end
 -- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 local function GetSessionVar(varName, sessionName)
-	return (FLogVars["sessions"][sessionName or FLogVars["currentSession"]] or {})[varName]
+	return (FLogVars.sessions[sessionName or FLogVars.currentSession] or {})[varName]
 end 
 
 local function SetSessionVar(varName, value)
-	FLogVars["sessions"][FLogVars["currentSession"]][varName] = value 
+	FLogVars.sessions[FLogVars.currentSession][varName] = value 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
 	-- debug("IncreaseSessionVar varName: "..varName..", incValue: "..tostring(incValue))
-	FLogVars["sessions"][FLogVars["currentSession"]][varName] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName] or 0) + incValue 
+	FLogVars.sessions[FLogVars.currentSession][varName] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
-	FLogVars["sessions"][FLogVars["currentSession"]][varName][entry] = ((FLogVars["sessions"][FLogVars["currentSession"]] or {})[varName][entry] or 0) + incValue 
+	FLogVars.sessions[FLogVars.currentSession][varName][entry] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName][entry] or 0) + incValue 
 end 
 
 function FarmLog:GetSessionWindowTitle(customTime)
-	local text = FLogVars["currentSession"] or ""
+	local text = FLogVars.currentSession or ""
 	local time = customTime or GetSessionVar("seconds") or 0
 	if time > 0 then 
 		text = text .. "  --  " .. secondsToClock(time) 
@@ -248,7 +248,7 @@ function FarmLog:UpdateMainWindowTitle()
 		FarmLog_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
 		FarmLog_MainWindow_Title_Text:SetText(L["All Sessions"])
 	else 
-		if FLogVars["enabled"] then 
+		if FLogVars.enabled then 
 			FarmLog_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
 		else 
 			FarmLog_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
@@ -260,7 +260,7 @@ end
 function FarmLog:ResumeSession() 
 	sessionStartTime = time()
 
-	FLogVars["enabled"] = true  
+	FLogVars.enabled = true  
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 	self:UpdateMainWindowTitle()
 end 
@@ -273,14 +273,14 @@ function FarmLog:PauseSession(temporary)
 	end 
 
 	if not temporary then 
-		FLogVars["enabled"] = false 
+		FLogVars.enabled = false 
 		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
 		self:UpdateMainWindowTitle()
 	end 
 end 
 
 function FarmLog:ResetSessionVars()
-	FLogVars["sessions"][FLogVars["currentSession"]] = {
+	FLogVars.sessions[FLogVars.currentSession] = {
 		["drops"] = {},
 		["kills"] = {},
 		["skill"] = {},
@@ -295,7 +295,7 @@ function FarmLog:ResetSessionVars()
 end 
 
 function FarmLog:StartSession(sessionName, dontPause, dontResume) 
-	if FLogVars["enabled"] then 
+	if FLogVars.enabled then 
 		gphNeedsUpdate = true 
 		if not dontPause then 
 			self:PauseSession(true) 
@@ -303,8 +303,8 @@ function FarmLog:StartSession(sessionName, dontPause, dontResume)
 	end 
 
 	sessionListMode = false 
-	FLogVars["currentSession"] = sessionName
-	if not FLogVars["sessions"][FLogVars["currentSession"]] then 
+	FLogVars.currentSession = sessionName
+	if not FLogVars.sessions[FLogVars.currentSession] then 
 		self:ResetSessionVars()
 	end 
 	if not dontResume then 
@@ -316,11 +316,11 @@ function FarmLog:StartSession(sessionName, dontPause, dontResume)
 end 
 
 function FarmLog:DeleteSession(name) 
-	FLogVars["sessions"][name] = nil 
-	if FLogVars["currentSession"] == name then 
+	FLogVars.sessions[name] = nil 
+	if FLogVars.currentSession == name then 
 		self:StartSession("default", true)
 	end 
-	if FLogVars["currentSession"] == name and name == "default" then 
+	if FLogVars.currentSession == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
 	else 
 		out("Deleted session |cff99ff00"..name)
@@ -331,13 +331,13 @@ function FarmLog:ResetSession()
 	self:PauseSession(true)
 	self:ResetSessionVars()
 	self:ResumeSession()
-	out("Reset session |cff99ff00"..FLogVars["currentSession"])
+	out("Reset session |cff99ff00"..FLogVars.currentSession)
 	gphNeedsUpdate = true 
 	self:RefreshMainWindow()
 end
 
 function FarmLog:InitSession()
-	if FLogVars["enabled"] then 
+	if FLogVars.enabled then 
 		self:ResumeSession()
 	else 
 		self:PauseSession()
@@ -347,15 +347,15 @@ function FarmLog:InitSession()
 end 
 
 function FarmLog:ToggleLogging() 
-	if FLogVars["enabled"] then 
+	if FLogVars.enabled then 
 		self:PauseSession()
-		out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r paused|r")
+		out("Farm session |cff99ff00"..FLogVars.currentSession.."|r paused|r")
 	else 
-		self:StartSession(FLogVars["currentSession"] or "default")
+		self:StartSession(FLogVars.currentSession or "default")
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r started")
+			out("Farm session |cff99ff00"..FLogVars.currentSession.."|r started")
 		else 
-			out("Farm session |cff99ff00"..FLogVars["currentSession"].."|r resumed")
+			out("Farm session |cff99ff00"..FLogVars.currentSession.."|r resumed")
 		end 	
 	end 
 end 
@@ -480,7 +480,7 @@ local function SetItemTooltip(row, itemLink, text)
 	row.root:SetScript("OnEnter", function(self)
 		self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
 		self:SetBackdropColor(0.8,0.8,0.8,0.6);
-		if FLogVars["itemTooltip"] then
+		if FLogVars.itemTooltip then
 			GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 			if itemLink then 
 				GameTooltip:SetHyperlink(itemLink);
@@ -491,7 +491,7 @@ local function SetItemTooltip(row, itemLink, text)
 		end
 	end);
 	row.root:SetScript("OnLeave", function(self)
-		if FLogVars["itemTooltip"] then
+		if FLogVars.itemTooltip then
 			GameTooltip_Hide();
 		end
 		self:SetBackdrop(nil);
@@ -541,7 +541,7 @@ function FarmLog:AddSessionYieldItems()
 end 
 
 function FarmLog:AddSessionListItems() 
-	for name, session in pairs(FLogVars["sessions"]) do 
+	for name, session in pairs(FLogVars.sessions) do 
 		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
 		local text = name
 		if gph and gph > 0 and tostring(gph) ~= "nan" then 
@@ -870,6 +870,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog:Migrate()	
 	FarmLog_MainWindow_Title:Init()
 	FarmLog_MinimapButton:Init()
+	FarmLog_MainWindow:LoadPosition()
 	FarmLog:InitSession()
 end 
 
@@ -879,14 +880,14 @@ function FarmLog:OnEnteringWorld()
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
-	if not FLogVars["inInstance"] and inInstance and FLogVars["instanceName"] ~= instanceName then
-		FLogVars["inInstance"] = true;
+	if not FLogVars.inInstance and inInstance and FLogVars["instanceName"] ~= instanceName then
+		FLogVars.inInstance = true;
 		FLogVars["instanceName"] = instanceName;
 		if FLogGlobalVars["autoSwitchInstances"] then 
 			self:StartSession(instanceName)
 		end 
-	elseif FLogVars["inInstance"] and inInstance == false then
-		FLogVars["inInstance"] = false;
+	elseif FLogVars.inInstance and inInstance == false then
+		FLogVars.inInstance = false;
 		if FLogGlobalVars["autoSwitchInstances"] then 
 			self:PauseSession()
 		end 
@@ -908,7 +909,7 @@ end
 -- OnEvent
 
 function FarmLog:OnEvent(event, ...)
-	if FLogVars["enabled"] then 
+	if FLogVars.enabled then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
 			self:OnLootOpened(...)			
@@ -952,7 +953,7 @@ end
 -- OnUpdate
 
 function FarmLog:OnUpdate() 
-	if not sessionListMode and (gphNeedsUpdate or FLogVars["enabled"]) then 
+	if not sessionListMode and (gphNeedsUpdate or FLogVars.enabled) then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
 			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
@@ -978,38 +979,39 @@ end
 
 -- UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-function FarmLog_MainWindow:Init() 
-	FarmLog_MainWindow:SetWidth(FLogVars["frameRect"]["width"]);
-	FarmLog_MainWindow:SetHeight(FLogVars["frameRect"]["height"]);
-	FarmLog_MainWindow:SetPoint(FLogVars["frameRect"]["point"], FLogVars["frameRect"]["x"], FLogVars["frameRect"]["y"]);
+function FarmLog_MainWindow:LoadPosition()
+	self:ClearAllPoints()
+	self:SetWidth(FLogVars.frameRect.width)
+	self:SetHeight(FLogVars.frameRect.height)
+	self:SetPoint(FLogVars.frameRect.point, FLogVars.frameRect.x, FLogVars.frameRect.y)
 end
 
 function FarmLog_MainWindow:ResetPosition()
-	FLogVars["frameRect"]["width"] = 250
-	FLogVars["frameRect"]["height"] = 200
-	FLogVars["frameRect"]["x"] = 0
-	FLogVars["frameRect"]["y"] = 0
-	FLogVars["frameRect"]["point"] = "CENTER"
-	FarmLog_MainWindow:Init(true)
+	FLogVars.frameRect.width = 250
+	FLogVars.frameRect.height = 200
+	FLogVars.frameRect.x = 0
+	FLogVars.frameRect.y = 0
+	FLogVars.frameRect.point = "CENTER"
+	self:LoadPosition()
 end 
 
 function FarmLog_MinimapButton:Init(reload) 
-	FarmLog_MinimapButton:SetPoint(FLogVars["minimapButtonPosition"]["point"], Minimap, FLogVars["minimapButtonPosition"]["x"], FLogVars["minimapButtonPosition"]["y"]);
-	if FLogVars["enableMinimapButton"] then
+	FarmLog_MinimapButton:SetPoint(FLogVars.minimapButtonPosition.point, Minimap, FLogVars.minimapButtonPosition.x, FLogVars.minimapButtonPosition.y);
+	if FLogVars.enableMinimapButton then
 		self:Show();
 	else
 		self:Hide();
 	end	
-	if not FLogVars["lockMinimapButton"] and not reload then		
+	if not FLogVars.lockMinimapButton and not reload then		
 		self:RegisterForDrag("LeftButton");			
 	end
 end 
 
 function FarmLog_MinimapButton:DragStopped() 
 	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
-	FLogVars["minimapButtonPosition"]["point"] = point;													
-	FLogVars["minimapButtonPosition"]["x"] = x;
-	FLogVars["minimapButtonPosition"]["y"] = y;
+	FLogVars.minimapButtonPosition.point = point;													
+	FLogVars.minimapButtonPosition.x = x;
+	FLogVars.minimapButtonPosition.y = y;
 end 
 
 function FarmLog_MinimapButton:Clicked(button) 
@@ -1021,18 +1023,18 @@ function FarmLog_MinimapButton:Clicked(button)
 end 
 
 function FarmLog_MainWindow_Title:Init()
-	if not FLogVars["lockFrames"] then		
+	if not FLogVars.lockFrames then		
 		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
 end 
 
-function FarmLog_MainWindow_Title:DragStopped() 
-	local point, relativeTo, relativePoint, x, y = FarmLog_MainWindow:GetPoint();
-	FLogVars["frameRect"]["point"] = point;													
-	FLogVars["frameRect"]["x"] = x;
-	FLogVars["frameRect"]["y"] = y;
-	FLogVars["frameRect"]["width"] = FarmLog_MainWindow:GetWidth();
-	FLogVars["frameRect"]["height"] = FarmLog_MainWindow:GetHeight();
+function FarmLog_MainWindow:SavePosition() 
+	local point, relativeTo, relativePoint, x, y = FarmLog_MainWindow:GetPoint()
+	FLogVars.frameRect.point = point
+	FLogVars.frameRect.x = x
+	FLogVars.frameRect.y = y
+	FLogVars.frameRect.width = FarmLog_MainWindow:GetWidth()
+	FLogVars.frameRect.height = FarmLog_MainWindow:GetHeight()
 end 
 
 function FarmLog_MainWindow_SessionsButton:Clicked() 
@@ -1050,15 +1052,6 @@ function FarmLog_MainWindow_ResetButton:Clicked()
 	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
 	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
 	FarmLog_QuestionDialog:Show()
-end 
-
-function FarmLog_MainWindow_Resize:MouseUp() 
-	local point, _, _, x, y = FarmLog_MainWindow:GetPoint()
-	FLogVars["frameRect"]["point"] = point									
-	FLogVars["frameRect"]["x"] = x
-	FLogVars["frameRect"]["y"] = y
-	FLogVars["frameRect"]["width"] = FarmLog_MainWindow:GetWidth()
-	FLogVars["frameRect"]["height"] = FarmLog_MainWindow:GetHeight()
 end 
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1121,7 +1114,7 @@ SlashCmdList["LH"] = function(msg)
 			end 
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")
-			for sessionName, _ in pairs(FLogVars["sessions"]) do 
+			for sessionName, _ in pairs(FLogVars.sessions) do 
 				out(" - |cff99ff00"..sessionName)
 			end 
 		elseif  "DELETE" == cmd then
@@ -1135,10 +1128,10 @@ SlashCmdList["LH"] = function(msg)
 				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
 			end 
 		elseif  "REN" == cmd then
-			out("Renaming session from |cff99ff00"..FLogVars["currentSession"].."|r to |cff99ff00"..arg1)
-			FLogVars["sessions"][arg1] = FLogVars["sessions"][FLogVars["currentSession"]]
-			FLogVars["sessions"][FLogVars["currentSession"]] = nil 
-			FLogVars["currentSession"] = arg1 
+			out("Renaming session from |cff99ff00"..FLogVars.currentSession.."|r to |cff99ff00"..arg1)
+			FLogVars.sessions[arg1] = FLogVars.sessions[FLogVars.currentSession]
+			FLogVars.sessions[FLogVars.currentSession] = nil 
+			FLogVars.currentSession = arg1 
 			FarmLog:RefreshMainWindow() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars["autoSwitchInstances"] = not FLogGlobalVars["autoSwitchInstances"] 
@@ -1150,10 +1143,10 @@ SlashCmdList["LH"] = function(msg)
 		elseif  "RESET" == cmd or "R" == cmd then
 			FarmLog:ResetSession()
 		elseif  "RMI" == cmd then
-			FLogVars["minimapButtonPosition"]["x"] = -165
-			FLogVars["minimapButtonPosition"]["y"] = -127
-			FLogVars["minimapButtonPosition"]["point"] = "TOPRIGHT"
-			FLogVars["enableMinimapButton"] = true 
+			FLogVars.minimapButtonPosition.x = -165
+			FLogVars.minimapButtonPosition.y = -127
+			FLogVars.minimapButtonPosition.point = "TOPRIGHT"
+			FLogVars.enableMinimapButton = true 
 			FarmLog_MinimapButton:Init(true)
 		elseif  "RMW" == cmd then
 			FarmLog_MainWindow:ResetPosition()

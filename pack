@@ -1,0 +1,8 @@
+cd ..
+rm -rf ~/tmp/FarmLog
+#mkdir ~/tmp/FarmLog
+cp -r FarmLog ~/tmp/
+rm ~/tmp/FarmLog/pack
+rm -rf ~/tmp/FarmLog/.git
+cd ~/tmp
+zip -9r FarmLog_$1.zip FarmLog -x \*.DS_Store -x \_MACOSX
