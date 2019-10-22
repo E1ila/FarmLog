@@ -435,11 +435,11 @@
         <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
-            self:StartSizing("BOTTOMRIGHT")
+            FarmLog_MainWindow:StartSizing("BOTTOMRIGHT")
           </OnMouseDown>
           <OnMouseUp>
-            self:StopMovingOrSizing()
-            self:SavePosition()
+            FarmLog_MainWindow:StopMovingOrSizing()
+            FarmLog_MainWindow:SavePosition()
           </OnMouseUp>
         </Scripts>
       </Button>
