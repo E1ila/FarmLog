@@ -1,5 +1,5 @@
-﻿local VERSION = "1.8.0"
-local VERSION_INT = "1.0800"
+﻿local VERSION = "1.8.1"
+local VERSION_INT = "1.0801"
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -345,7 +345,9 @@ end
 function FarmLog:ResetSession()
 	self:PauseSession(true)
 	self:ResetSessionVars()
-	self:ResumeSession()
+	if FLogVars.enabled then 
+		self:ResumeSession()
+	end 
 	out("Reset session |cff99ff00"..FLogVars.currentSession)
 	gphNeedsUpdate = true 
 	self:RefreshMainWindow()
@@ -1084,9 +1086,9 @@ function FarmLog_MinimapButton:ShowTooltip()
 end 
 
 function FarmLog_MinimapButton:UpdateTooltipText() 
-	local sessionColor = "|cffff0000"
+	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|nG/H: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour)
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|nG/H: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 

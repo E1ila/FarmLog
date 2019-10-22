@@ -43,6 +43,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.8.1
+    * Clearing a session while paused won't resume it
+    * Updated minimap tooltip text
 * 1.8 
     * Added Tooltip on minimap icon, showing current session
     * Main window won't close when hitting ESC
