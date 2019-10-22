@@ -8,6 +8,7 @@ FarmLog_ScrollRows = {}
 FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
+	["ignoredItems"] = {},
 	["autoSwitchInstances"] = true,
 	["reportTo"] = {},
 	["version"] = VERSION,
@@ -212,9 +213,8 @@ function FarmLog:Migrate()
 		FLogVars["minimapButtonPosision"] = nil 
 	end 
 
-	if FLogGlobalVars.itemQuality then 
-		FLogGlobalVars.itemQuality = nil 
-	end 
+	if FLogGlobalVars.itemQuality then FLogGlobalVars.itemQuality = nil end 
+	if not FLogGlobalVars.ignoredItems then FLogGlobalVars.ignoredItems = {} end 
 
 	FLogVars.version = VERSION_INT
 	FLogGlobalVars.version = VERSION_INT
@@ -544,14 +544,14 @@ function FarmLog:AddSessionYieldItems()
 		local section = mobName 
 		AddItem_Text(section, sessionKills[mobName], TEXT_COLOR["mob"])
 		for _, itemLink in ipairs(sortedItemLinks) do			
-			for j = 1, #sessionDrops[mobName][itemLink] do
-				local quantity = sessionDrops[mobName][itemLink][j][1];
+			if not FLogGlobalVars.ignoredItems[itemLink] then 
+				local quantity = sessionDrops[mobName][itemLink][1][1];
 				local itemText = "    "..itemLink
 				local row = AddItem_Text(itemText, quantity)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
-			end
+			end 
 		end		
 	end
 end 
@@ -593,15 +593,17 @@ function FarmLog:RecalcTotals()
 	local sessionDrops = GetSessionVar("drops")
 	for mobName, drops in pairs(sessionDrops) do	
 		for itemLink, metalist in pairs(drops) do 
-			for j = 1, #metalist do
-				local meta = metalist[j]
-				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				local value = FLogGlobalVars.ahPrice[itemLink]
-				local quantity = meta[1]
-				if value and value > 0 then 
-					sessionAH = sessionAH + value * quantity
-				else
-					sessionVendor = sessionVendor + (vendorPrice or 0) * quantity
+			if not FLogGlobalVars.ignoredItems[itemLink] then 
+				for j = 1, #metalist do
+					local meta = metalist[j]
+					local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+					local value = FLogGlobalVars.ahPrice[itemLink]
+					local quantity = meta[1]
+					if value and value > 0 then 
+						sessionAH = sessionAH + value * quantity
+					else
+						sessionVendor = sessionVendor + (vendorPrice or 0) * quantity
+					end 
 				end 
 			end 
 		end 
@@ -1121,6 +1123,7 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
 			out(" |cff00ff00/fl r|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
+			out(" |cff00ff00/fl i <item_link>|r adds/remove an item from ignore list")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
 			out(" |cff00ff00/fl rmi|r resets minimap icon position")
@@ -1150,6 +1153,23 @@ SlashCmdList.LH = function(msg)
 				FarmLog:RecalcTotals()
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
+			end 
+		elseif "IGNORE" == cmd or "I" == cmd then
+			local startIndex, _ = string.find(arg1, "%|c");
+			local _, endIndex = string.find(arg1, "%]%|h%|r");
+			local itemLink = string.sub(arg1, startIndex, endIndex)
+		
+			if itemLink and GetItemInfo(itemLink) then 
+				if FLogGlobalVars.ignoredItems[itemLink] then 
+					FLogGlobalVars.ignoredItems[itemLink] = nil 
+					out("Removed "..itemLink.." from ignore list")
+				else 
+					FLogGlobalVars.ignoredItems[itemLink] = true
+					out("Ignoring "..itemLink)
+				end 
+				FarmLog:RecalcTotals()
+			else 
+				out("Incorrect usage of command write |cff00ff00/fl i [ITEM_LINK]|r")
 			end 
 		elseif  "LIST" == cmd or "L" == cmd then
 			out("Recorded sessions:")

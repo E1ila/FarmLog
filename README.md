@@ -45,6 +45,8 @@ Another thing is that the more time & data you have per session, the more accura
 ### Changes 
 * 1.8 
     * Added Tooltip on minimap icon, showing current session
+    * Main window won't close when hitting ESC
+    * Allow ignoring certain items for GPH, write `/fl i [Item Link]` to add/remove from ignore list
 * 1.7.3
     * Fixed bug causing to sometimes not track gray items
 * 1.7.2
@@ -77,7 +79,7 @@ Another thing is that the more time & data you have per session, the more accura
 * Track deaths
 * Show repair bill
 * Allow listing loot without mob names
+* Allow custom attribution loot to certain mob
 * Support multiboxing GPH
-* Allow ignoring certain items for GPH
 * Add button to start a new session / rename
-* Make window stay, instead of dismiss on ESC
+* Show menu when clicking items on list - delete/ignore/set AH price/reassign
