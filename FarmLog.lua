@@ -373,6 +373,7 @@ function FarmLog:ToggleWindow()
 		if FarmLog_MainWindow:IsShown() then
 			FarmLog_MainWindow:Hide()
 		else
+			FarmLog_MainWindow:LoadPosition()
 			FarmLog_MainWindow:Show()
 		end
 	end 

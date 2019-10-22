@@ -43,6 +43,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.7.3
+    * Fixed bug causing to sometimes not track gray items
 * 1.7.2
     * Fixed window positioning bug, causing position to load incorrectly
 * 1.7.1
