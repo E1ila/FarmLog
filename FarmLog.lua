@@ -1,4 +1,5 @@
-﻿local VERSION = "1.7.4"
+﻿local VERSION = "1.8.0"
+local VERSION_INT = "1.0704"
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -8,7 +9,6 @@ FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
 	["autoSwitchInstances"] = true,
-	["itemQuality"] = {true, true, true, true, true, true, true},
 	["reportTo"] = {},
 	["version"] = VERSION,
 }
@@ -42,6 +42,7 @@ local editItem = "";
 local editIdx = -1;
 local L = FarmLog_BuildLocalization()
 
+local showingMinimapTip = false
 local visibleRows = 0
 local sessionListMode = false
 local gphNeedsUpdate = false 
@@ -62,6 +63,7 @@ local TEXT_COLOR = {
 	["honor"] = "e1c73b",
 }
 
+local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
 local SPELL_FISHING = 7620
@@ -90,7 +92,7 @@ end
 local function secondsToClock(seconds)
 	local seconds = tonumber(seconds)
 
-	if seconds <= 0 then
+	if not seconds or  seconds <= 0 then
 		return "00:00:00";
 	else
 		hours = string.format("%02.f", math.floor(seconds/3600));
@@ -101,7 +103,7 @@ local function secondsToClock(seconds)
 end
 
 local function GetShortCoinTextureString(money)
-	if not money or tostring(money) == "nan" or tostring(money) == "inf"  then return "--" end 
+	if not money or tostring(money) == "nan" or tostring(money) == "inf" or money == 0 then return "--" end 
 	-- out("money = "..tostring(money))
 	if money > 100000 then 
 		money = math.floor(money / 10000) * 10000
@@ -183,7 +185,6 @@ function FarmLog:Migrate()
 		FLogGlobalVars.autoSwitchInstances = FLogSVAutoSwitchOnInstances
 		FLogGlobalVars.debug = FLogSVDebugMode
 		FLogGlobalVars.ahPrice = FLogSVAHValue
-		FLogGlobalVars.itemQuality = FLogSVItemRarity
 		FLogGlobalVars.reportTo = FLogSVOptionReportTo
 		FLogSVAHValue = nil 
 		out("Migrated old global vars into new database format.")
@@ -210,6 +211,13 @@ function FarmLog:Migrate()
 		FLogVars.minimapButtonPosition = FLogVars["minimapButtonPosision"]
 		FLogVars["minimapButtonPosision"] = nil 
 	end 
+
+	if FLogGlobalVars.itemQuality then 
+		FLogGlobalVars.itemQuality = nil 
+	end 
+
+	FLogVars.version = VERSION_INT
+	FLogGlobalVars.version = VERSION_INT
 end 
 
 -- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -231,9 +239,14 @@ local function IncreaseSessionDictVar(varName, entry, incValue)
 	FLogVars.sessions[FLogVars.currentSession][varName][entry] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName][entry] or 0) + incValue 
 end 
 
-function FarmLog:GetSessionWindowTitle(customTime)
+function FarmLog:GetCurrentSessionTime()
+	local now = time()
+	return GetSessionVar("seconds") + now - (sessionStartTime or now)
+end 
+
+function FarmLog:GetSessionWindowTitle()
 	local text = FLogVars.currentSession or ""
-	local time = customTime or GetSessionVar("seconds") or 0
+	local time = self:GetCurrentSessionTime() or 0
 	if time > 0 then 
 		text = text .. "  --  " .. secondsToClock(time) 
 	end 
@@ -960,8 +973,11 @@ function FarmLog:OnUpdate()
 	if not sessionListMode and (gphNeedsUpdate or FLogVars.enabled) then 
 		local now = time()
 		if now - lastUpdate >= 1 then 
-			local sessionTime = GetSessionVar("seconds") + now - (sessionStartTime or now)
-			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle(sessionTime));
+			local sessionTime = self:GetCurrentSessionTime()
+			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle());
+			if showingMinimapTip then 
+				FarmLog_MinimapButton:UpdateTooltipText()
+			end 
 			lastUpdate = now 
 			if gphNeedsUpdate or (now - lastGphUpdate >= 60 and sessionTime > 0) then 
 				-- debug("Calculating GPH")
@@ -1056,6 +1072,25 @@ function FarmLog_MainWindow_ResetButton:Clicked()
 	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
 	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
 	FarmLog_QuestionDialog:Show()
+end 
+
+function FarmLog_MinimapButton:ShowTooltip() 
+	GameTooltip:SetOwner(FarmLog_MinimapButton, "ANCHOR_BOTTOMLEFT")
+	self:UpdateTooltipText()
+	GameTooltip:Show()
+	showingMinimapTip = true 
+end 
+
+function FarmLog_MinimapButton:UpdateTooltipText() 
+	local sessionColor = "|cffff0000"
+	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|nG/H: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour)
+	GameTooltip:SetText(text, nil, nil, nil, nil, true)
+end 
+
+function FarmLog_MinimapButton:HideTooltip() 
+	showingMinimapTip = false
+	GameTooltip:Hide()
 end 
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

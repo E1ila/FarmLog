@@ -43,6 +43,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.8 
+    * Added Tooltip on minimap icon, showing current session
 * 1.7.3
     * Fixed bug causing to sometimes not track gray items
 * 1.7.2
@@ -70,15 +72,12 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### To do
 * Count instance IDs (total & last hour)
-* Allow named sessions, save data per session seperately
-* Maybe treat instance name as a session name
-* Calculate total AH value for items, set item AH value
-* Track quest reward
 * Track traded gold (for enchanting, etc)
 * Support Chest / Container opening
 * Track deaths
 * Show repair bill
 * Allow listing loot without mob names
 * Support multiboxing GPH
-* Tooltips
-* Allow ignoring certain items
+* Allow ignoring certain items for GPH
+* Add button to start a new session / rename
+* Make window stay, instead of dismiss on ESC

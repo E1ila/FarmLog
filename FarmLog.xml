@@ -91,13 +91,18 @@
         self:StopMovingOrSizing()
         self:DragStopped()  
       </OnDragStop>
+      <OnEnter>
+        self:ShowTooltip()
+      </OnEnter>
+      <OnLeave>
+        self:HideTooltip()
+      </OnLeave>
       <OnClick>
         self:Clicked(button)
+        self:ShowTooltip()
       </OnClick>
     </Scripts>
-    <Frames>
-    </Frames>
-  </Button>
+  </Button> <!--FarmLog_MinimapButton-->
 
   <!-- Question Dialog -->
 
