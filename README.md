@@ -43,6 +43,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.7.2
+    * Fixed window positioning bug, causing position to load incorrectly
+* 1.7.1
+    * Fixed exception when parsing +rep message
 * 1.6
     * REVAMPED USER INTERFACE!
     * Added delete session warning
