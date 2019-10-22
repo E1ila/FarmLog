@@ -81,5 +81,5 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow listing loot without mob names
 * Allow custom attribution loot to certain mob
 * Support multiboxing GPH
-* Add button to start a new session / rename
+* Add button to add a new session / rename
 * Show menu when clicking items on list - delete/ignore/set AH price/reassign

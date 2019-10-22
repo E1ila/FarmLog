@@ -102,7 +102,7 @@
         self:ShowTooltip()
       </OnClick>
     </Scripts>
-  </Button> <!--FarmLog_MinimapButton-->
+  </Button>  <!--FarmLog_MinimapButton-->
 
   <!-- Question Dialog -->
 
