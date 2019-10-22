@@ -223,7 +223,7 @@ local function SetSessionVar(varName, value)
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	-- debug("IncreaseSessionVar varName: "..varName..", incValue: "..tostring(incValue))
+	debug("IncreaseSessionVar currentSession: "..FLogVars.currentSession.." varName: "..varName..", incValue: "..tostring(incValue))
 	FLogVars.sessions[FLogVars.currentSession][varName] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName] or 0) + incValue 
 end 
 
@@ -318,7 +318,9 @@ end
 function FarmLog:DeleteSession(name) 
 	FLogVars.sessions[name] = nil 
 	if FLogVars.currentSession == name then 
-		self:StartSession("default", true)
+		self:StartSession("default", true, true)
+		sessionListMode = true 
+		self:RefreshMainWindow()
 	end 
 	if FLogVars.currentSession == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
@@ -837,19 +839,20 @@ function FarmLog:OnLootEvent(text)
 		inParty = true;
 	end
 	if (
-		itemType ~= "Money" and 
-		(
-			(FLogGlobalVars.itemQuality[0] and itemRarity == 0) or
-			(FLogGlobalVars.itemQuality[1] and itemRarity == 1) or
-			(FLogGlobalVars.itemQuality[2] and itemRarity == 2) or
-			(FLogGlobalVars.itemQuality[3] and itemRarity == 3) or
-			(FLogGlobalVars.itemQuality[4] and itemRarity == 4) or
-			(FLogGlobalVars.itemQuality[5] and itemRarity == 5) or
-			(FLogGlobalVars.itemQuality[6] and itemRarity == 6) or 
-			mobName == L["Herbalism"] or 
-			mobName == L["Mining"] or 
-			mobName == L["Fishing"] 
-		)) 
+		itemType ~= "Money" 
+		-- and (
+			-- (FLogGlobalVars.itemQuality[0] and itemRarity == 0) or
+			-- (FLogGlobalVars.itemQuality[1] and itemRarity == 1) or
+			-- (FLogGlobalVars.itemQuality[2] and itemRarity == 2) or
+			-- (FLogGlobalVars.itemQuality[3] and itemRarity == 3) or
+			-- (FLogGlobalVars.itemQuality[4] and itemRarity == 4) or
+			-- (FLogGlobalVars.itemQuality[5] and itemRarity == 5) or
+			-- (FLogGlobalVars.itemQuality[6] and itemRarity == 6) or 
+			-- mobName == L["Herbalism"] or 
+			-- mobName == L["Mining"] or 
+			-- mobName == L["Fishing"] 
+		-- )
+		) 
 	then	
 		local ahValue = FLogGlobalVars.ahPrice[itemLink]
 		if ahValue and ahValue > 0 then 
