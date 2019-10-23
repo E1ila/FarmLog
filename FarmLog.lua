@@ -62,7 +62,14 @@ local TEXT_COLOR = {
 	["mob"] = "ff000b",
 	["money"] = "fffb49",
 	["honor"] = "e1c73b",
+	["gathering"] = "4cb4ff",
+	["unknown"] = "eeeeee",
 }
+
+TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
+TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
+TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
+TEXT_COLOR[L["Unknown"]] = TEXT_COLOR["unknown"]
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
