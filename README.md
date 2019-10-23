@@ -38,6 +38,13 @@ Many times you pause your farming to do something else in game, like doing an in
 
 Another thing is that the more time & data you have per session, the more accurate gold/hour metric you're going to see. For example, you can `/fl switch Herbing` when collecting herbs and `/fl switch Fishing` whenever you fish, do that for a week and you'll get a reasonably accurate gold/hour metric.
 
+### Frequently Asked Questions
+**Why do some items appear under "Unknown"?**
+ When a loot log messages arrives, it does not contain the mob name that dropped it. Assuming that it came from the last killed mob because one may kill multiple mobs and later loot them all. So we need a loot window to appear, we then know what loot that mob dropped and make correct attribution.
+ Sometimes, a loot is received without any loot window being opened, like for instance when someone in your group loots a mob with green item and you win the roll. In this case, the addon won't know which mob dropped it.
+ This may also happen if you have addons like "Leatrix Plus" with "Fast loot" option enabled. This causes loot to be received before loot window is opened, so the addon doesn't know where it came from.
+
+
 ![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
 ![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)

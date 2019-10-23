@@ -1,5 +1,5 @@
-﻿local VERSION = "1.8.2"
-local VERSION_INT = "1.0802"
+﻿local VERSION = "1.8.3"
+local VERSION_INT = 1.0803
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -11,7 +11,7 @@ FLogGlobalVars = {
 	["ignoredItems"] = {},
 	["autoSwitchInstances"] = true,
 	["reportTo"] = {},
-	["version"] = VERSION,
+	["ver"] = VERSION,
 }
 
 FLogVars = {
@@ -35,7 +35,7 @@ FLogVars = {
 	},
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
-	["version"] = VERSION,
+	["ver"] = VERSION,
 }
 
 local editName = "";
@@ -49,11 +49,17 @@ local sessionListMode = false
 local gphNeedsUpdate = false 
 local sessionStartTime = nil 
 local lastMobLoot = {}
+local lastUnknownLoot = {}
+local lastUnknownLootTime = 0
 local skillName = nil 
 local skillNameTime = nil 
 local lastUpdate = 0
 local lastGphUpdate = 0
 local goldPerHour = 0
+
+local UNKNOWN_MOBNAME = L["Unknown"]
+local DROP_META_INDEX_COUNT =  1
+local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 
 local TEXT_COLOR = {
 	["xp"] = "6a78f9",
@@ -69,9 +75,7 @@ local TEXT_COLOR = {
 TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
-TEXT_COLOR[L["Unknown"]] = TEXT_COLOR["unknown"]
-
-local DROP_META_INDEX_COUNT =  1
+TEXT_COLOR[UNKNOWN_MOBNAME] = TEXT_COLOR["unknown"]
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
@@ -239,12 +243,15 @@ function FarmLog:Migrate()
 	if FLogGlobalVars.itemQuality then FLogGlobalVars.itemQuality = nil end 
 	if not FLogGlobalVars.ignoredItems then FLogGlobalVars.ignoredItems = {} end 
 
-	if tonumber(FLogGlobalVars.version) < 1.0802 then 
+	if FLogGlobalVars.version then 
+		out("Fixing AH prices and ignored items database links")
 		FLogGlobalVars.ahPrice = migrateItemLinkTable(FLogGlobalVars.ahPrice)
 		FLogGlobalVars.ignoredItems = migrateItemLinkTable(FLogGlobalVars.ignoredItems)
+		FLogGlobalVars.version = nil 
 	end 
 
-	if tonumber(FLogVars.version) < 1.0802 then 
+	if FLogVars.version then 
+		out("Migrating drops database structure and links")
 		for sessionName, session in pairs(FLogVars.sessions) do 
 			for mobName, items in pairs(session.drops) do 
 				local fixedItems = {}
@@ -259,10 +266,11 @@ function FarmLog:Migrate()
 				session.drops[mobName] = fixedItems
 			end 
 		end 
+		FLogVars.version = nil 
 	end 
 
-	FLogVars.version = VERSION_INT
-	FLogGlobalVars.version = VERSION_INT
+	FLogVars.ver = VERSION_INT
+	FLogGlobalVars.ver = VERSION_INT
 end 
 
 -- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -276,7 +284,7 @@ local function SetSessionVar(varName, value)
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	debug("IncreaseSessionVar currentSession: "..FLogVars.currentSession.." varName: "..varName..", incValue: "..tostring(incValue))
+	debug("|cff999999IncreaseSessionVar|r currentSession |cffff9900"..FLogVars.currentSession.."|r, varName |cffff9900"..varName.."|r, incValue |cffff9900"..tostring(incValue))
 	FLogVars.sessions[FLogVars.currentSession][varName] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName] or 0) + incValue 
 end 
 
@@ -797,14 +805,28 @@ function FarmLog:OnLootOpened(autoLoot)
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if not mobName and skillName then mobName = skillName end 
 	if not mobName then mobName = UnitName("target") end 
-	-- debug("FarmLog:OnLootOpened - mobName = "..mobName)
+	debug("|cff999999FarmLog:OnLootOpened|r mobName |cffff9900"..tostring(mobName))
 	lastMobLoot = {}
 	skillName = nil 
 	skillNameTime = nil 
+	local now = time()
 	for i = 1, lootCount do 
 		local link = GetLootSlotLink(i)
 		if link then 
+			debug("|cff999999FarmLog:OnLootOpened|r link |cffff9900"..link)
 			lastMobLoot[link] = mobName
+			if mobName and lastUnknownLoot[link] and now - lastUnknownLootTime < LOOT_AUTOFIX_TIMEOUT_SEC then 
+				-- sometimes when "Fast auto loot" is enabled, OnLootEvent will be called before OnLootOpened
+				-- so reattribute this loot now that we know from which mob it dropped
+				debug("|cff999999FarmLog:OnLootOpened|r reattributing loot")
+				local drops = GetSessionVar("drops")
+				drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] = drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] - 1
+				if drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] == 0 then 
+					drops[UNKNOWN_MOBNAME] = nil 
+				end 
+				local _, _, _, quality, _ = GetLootSlotInfo(slot)
+				self:InsertLoot(mobName, normalizeLink(itemLink), quality or 1)
+			end 
 		end 
 	end 
 end 
@@ -813,7 +835,7 @@ end
 -- Currency event
 
 function FarmLog:OnCurrencyEvent(text)
-	debug("FarmLog:OnCurrencyEvent - "..text)
+	debug("|cffff9900FarmLog:OnCurrencyEvent|r "..text)
 end 
 
 -- Money event
@@ -853,7 +875,7 @@ end
 -- Loot receive event
 
 function FarmLog:InsertLoot(mobName, itemLink, count)
-	if (mobName and itemLink and quantity) then		
+	if (mobName and itemLink and count) then		
 		local sessionDrops = GetSessionVar("drops")
 		if not sessionDrops[mobName] then		
 			sessionDrops[mobName] = {}
@@ -886,12 +908,23 @@ local function ParseSelfLootEvent(chatmsg)
 end
 
 function FarmLog:OnLootEvent(text)
+	local now = time()
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	if not itemLink then return end 
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
+	mobName = lastMobLoot[itemLink]
+
+	if not mobName then 
+		mobName = UNKNOWN_MOBNAME
+		if now - lastUnknownLootTime > LOOT_AUTOFIX_TIMEOUT_SEC then lastUnknownLoot = {} end 
+		lastUnknownLootTime = now 
+		lastUnknownLoot[itemLink] = true 
+	end 
+
 	itemLink = normalizeLink(itemLink) -- removed player level from link
-	mobName = lastMobLoot[itemLink] or "Unknown"
+
+	debug("|cff999999FarmLog:OnLootEvent|r itemLink |cffff9900"..itemLink.."|r, mobName |cffff9900"..tostring(mobName))
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -987,7 +1020,7 @@ function FarmLog:OnEvent(event, ...)
 		elseif event == "CHAT_MSG_SKILL" then 
 			self:OnSkillsEvent(...);			
 		elseif event == "CHAT_MSG_OPENING" then 
-			debug("CHAT_MSG_OPENING")
+			debug("|cffff9900CHAT_MSG_OPENING|r")
 			debug(...)
 		elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then 
 			self:OnCombatLogEvent(...);		
