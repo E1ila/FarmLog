@@ -43,6 +43,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.8.2
+    * Fixed stored links - remove player level from link, so you don't get the duplicate items once you level up. 
+    * Removed redundant level of array in database's drops.mob.item lists
 * 1.8.1
     * Clearing a session while paused won't resume it
     * Updated minimap tooltip text
@@ -86,3 +89,5 @@ Another thing is that the more time & data you have per session, the more accura
 * Support multiboxing GPH
 * Add button to add a new session / rename
 * Show menu when clicking items on list - delete/ignore/set AH price/reassign
+* Sort lists 
+* Remove specific item from the log

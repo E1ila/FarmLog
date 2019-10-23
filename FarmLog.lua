@@ -1,5 +1,5 @@
-﻿local VERSION = "1.8.1"
-local VERSION_INT = "1.0801"
+﻿local VERSION = "1.8.2"
+local VERSION_INT = "1.0802"
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -70,6 +70,8 @@ TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Unknown"]] = TEXT_COLOR["unknown"]
+
+local DROP_META_INDEX_COUNT =  1
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
@@ -165,7 +167,21 @@ local function SortByLinkKey(db)
 	return database;
 end
 
+local function normalizeLink(link)
+	-- remove player level from item link
+	local p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17 = _G.string.split(":", link)
+	return p1..":"..p2..":"..p3..":"..p4..":"..p5..":"..p6..":"..p7..":"..p8..":"..p9..":".."_"..":"..p11..":"..p12..":"..p13..":"..p14..":"..p15..":"..p16..":"..p17
+end 
+
 -- Data migration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+local function migrateItemLinkTable(t) 
+	local fixed = {}
+	for itemLink, value in pairs(t) do
+		fixed[normalizeLink(itemLink)] = value
+	end 
+	return fixed
+end 
 
 function FarmLog:Migrate() 
 	-- migration
@@ -222,6 +238,28 @@ function FarmLog:Migrate()
 
 	if FLogGlobalVars.itemQuality then FLogGlobalVars.itemQuality = nil end 
 	if not FLogGlobalVars.ignoredItems then FLogGlobalVars.ignoredItems = {} end 
+
+	if tonumber(FLogGlobalVars.version) < 1.0802 then 
+		FLogGlobalVars.ahPrice = migrateItemLinkTable(FLogGlobalVars.ahPrice)
+		FLogGlobalVars.ignoredItems = migrateItemLinkTable(FLogGlobalVars.ignoredItems)
+	end 
+
+	if tonumber(FLogVars.version) < 1.0802 then 
+		for sessionName, session in pairs(FLogVars.sessions) do 
+			for mobName, items in pairs(session.drops) do 
+				local fixedItems = {}
+				for itemLink, meta in pairs(items) do 
+					local fixedLink = normalizeLink(itemLink)
+					if fixedItems[fixedLink] then 
+						fixedItems[fixedLink] = fixedItems[fixedLink][DROP_META_INDEX_COUNT] + meta[1][DROP_META_INDEX_COUNT]
+					else 
+						fixedItems[fixedLink] = {meta[1][DROP_META_INDEX_COUNT]}
+					end 
+				end 
+				session.drops[mobName] = fixedItems
+			end 
+		end 
+	end 
 
 	FLogVars.version = VERSION_INT
 	FLogGlobalVars.version = VERSION_INT
@@ -554,9 +592,9 @@ function FarmLog:AddSessionYieldItems()
 		AddItem_Text(section, sessionKills[mobName], TEXT_COLOR["mob"])
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				local quantity = sessionDrops[mobName][itemLink][1][1];
+				local count = sessionDrops[mobName][itemLink][DROP_META_INDEX_COUNT];
 				local itemText = "    "..itemLink
-				local row = AddItem_Text(itemText, quantity)
+				local row = AddItem_Text(itemText, count)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
@@ -601,18 +639,14 @@ function FarmLog:RecalcTotals()
 	local sessionAH = 0
 	local sessionDrops = GetSessionVar("drops")
 	for mobName, drops in pairs(sessionDrops) do	
-		for itemLink, metalist in pairs(drops) do 
+		for itemLink, meta in pairs(drops) do 
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				for j = 1, #metalist do
-					local meta = metalist[j]
-					local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-					local value = FLogGlobalVars.ahPrice[itemLink]
-					local quantity = meta[1]
-					if value and value > 0 then 
-						sessionAH = sessionAH + value * quantity
-					else
-						sessionVendor = sessionVendor + (vendorPrice or 0) * quantity
-					end 
+				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+				local value = FLogGlobalVars.ahPrice[itemLink]
+				if value and value > 0 then 
+					sessionAH = sessionAH + value * meta[DROP_META_INDEX_COUNT]
+				else
+					sessionVendor = sessionVendor + (vendorPrice or 0) * meta[DROP_META_INDEX_COUNT]
 				end 
 			end 
 		end 
@@ -818,16 +852,16 @@ end
 
 -- Loot receive event
 
-function FarmLog:InsertLoot(mobName, itemLink, quantity)
+function FarmLog:InsertLoot(mobName, itemLink, count)
 	if (mobName and itemLink and quantity) then		
 		local sessionDrops = GetSessionVar("drops")
 		if not sessionDrops[mobName] then		
 			sessionDrops[mobName] = {}
 		end 
 		if sessionDrops[mobName][itemLink] then
-			sessionDrops[mobName][itemLink][1][1] = sessionDrops[mobName][itemLink][1][1] + quantity
+			sessionDrops[mobName][itemLink][DROP_META_INDEX_COUNT] = sessionDrops[mobName][itemLink][DROP_META_INDEX_COUNT] + count
 		else
-			sessionDrops[mobName][itemLink] = {{quantity}};
+			sessionDrops[mobName][itemLink] = {count};
 		end
 	end
 end
@@ -856,6 +890,7 @@ function FarmLog:OnLootEvent(text)
 	if not itemLink then return end 
 	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
+	itemLink = normalizeLink(itemLink) -- removed player level from link
 	mobName = lastMobLoot[itemLink] or "Unknown"
 
 	local inRaid = IsInRaid();
@@ -1141,7 +1176,8 @@ SlashCmdList.LH = function(msg)
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
 			local itemLink = string.sub(arg1, startIndex, endIndex);	
-		
+			itemLink = normalizeLink(itemLink) -- remove player level
+
 			if itemLink and GetItemInfo(itemLink) then 
 				local value = nil 
 				if ((endIndex + 2 ) <= (#arg1)) then
@@ -1167,7 +1203,8 @@ SlashCmdList.LH = function(msg)
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
 			local itemLink = string.sub(arg1, startIndex, endIndex)
-		
+			itemLink = normalizeLink(itemLink) -- remove player level
+
 			if itemLink and GetItemInfo(itemLink) then 
 				if FLogGlobalVars.ignoredItems[itemLink] then 
 					FLogGlobalVars.ignoredItems[itemLink] = nil 
