@@ -1,5 +1,5 @@
-﻿local VERSION = "1.8.3"
-local VERSION_INT = 1.0803
+﻿local VERSION = "1.9"
+local VERSION_INT = 1.0900
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -8,6 +8,7 @@ FarmLog_ScrollRows = {}
 FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
+	["ahScan"] = {},
 	["ignoredItems"] = {},
 	["autoSwitchInstances"] = true,
 	["reportTo"] = {},
@@ -56,10 +57,19 @@ local skillNameTime = nil
 local lastUpdate = 0
 local lastGphUpdate = 0
 local goldPerHour = 0
+local ahScanRequested = false
+local ahScanIndex = 0
+local ahScanItems = 0
+local ahScanBadItems = 0
+local ahScanning = false
+local ahScanResultsShown = 0
+local ahScanResultsTotal = 0
+local ahScanPauseTime = 0
 
 local UNKNOWN_MOBNAME = L["Unknown"]
 local DROP_META_INDEX_COUNT =  1
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
+local AH_SCAN_CHUNKS = 500
 
 local TEXT_COLOR = {
 	["xp"] = "6a78f9",
@@ -181,8 +191,8 @@ end
 
 local function migrateItemLinkTable(t) 
 	local fixed = {}
-	for itemLink, value in pairs(t) do
-		fixed[normalizeLink(itemLink)] = value
+	for itemLink, ahPrice in pairs(t) do
+		fixed[normalizeLink(itemLink)] = ahPrice
 	end 
 	return fixed
 end 
@@ -269,6 +279,8 @@ function FarmLog:Migrate()
 		FLogVars.version = nil 
 	end 
 
+	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end 
+
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
 end 
@@ -279,8 +291,8 @@ local function GetSessionVar(varName, sessionName)
 	return (FLogVars.sessions[sessionName or FLogVars.currentSession] or {})[varName]
 end 
 
-local function SetSessionVar(varName, value)
-	FLogVars.sessions[FLogVars.currentSession][varName] = value 
+local function SetSessionVar(varName, ahPrice)
+	FLogVars.sessions[FLogVars.currentSession][varName] = ahPrice 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
@@ -650,10 +662,13 @@ function FarmLog:RecalcTotals()
 		for itemLink, meta in pairs(drops) do 
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
 				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				local value = FLogGlobalVars.ahPrice[itemLink]
-				if value and value > 0 then 
-					sessionAH = sessionAH + value * meta[DROP_META_INDEX_COUNT]
-				else
+				local ahPriceManual = FLogGlobalVars.ahPrice[itemLink]
+				local ahPrice = FLogGlobalVars.ahScan[itemLink]
+				if ahPriceManual and ahPriceManual > 0 then 
+					sessionAH = sessionAH + ahPriceManual * meta[DROP_META_INDEX_COUNT]
+				elseif ahPrice and ahPrice > 0 then 
+					sessionAH = sessionAH + ahPrice * meta[DROP_META_INDEX_COUNT]
+				else 
 					sessionVendor = sessionVendor + (vendorPrice or 0) * meta[DROP_META_INDEX_COUNT]
 				end 
 			end 
@@ -1002,6 +1017,72 @@ function FarmLog:OnInstanceInfoEvent()
 	-- end 
 end 
 
+-- Auction House Scan --------------------------------------------------------------------------
+
+function FarmLog:ScanAuctionHouse()
+	canQuery, canMassQuery = CanSendAuctionQuery("list")
+	if not canMassQuery then 
+		out("|cffff4444Can't mass scan yet. You can do this once in 15 minutes.")
+		return 
+	end 
+	out("|cffffee44Starting Auction House scan... ")
+	out("|cffaaaaaaThis may take around 30 seconds, depending on how many items are on the AH.")
+	ahScanRequested = true 
+	QueryAuctionItems("", nil, nil, nil, nil, nil, 0, false, nil, true)
+end
+
+function FarmLog:OnAuctionUpdate()
+	if ahScanRequested then 
+		debug("|cff00ffffOnAuctionUpdate|r Results arrived")
+		self:PrepareAuctionHouseResults()
+		self:AnalyzeAuctionHouseResults()
+	end 
+end
+
+function FarmLog:PrepareAuctionHouseResults()
+	ahScanResultsShown, ahScanResultsTotal = GetNumAuctionItems("list");
+	ahScanRequested = false 
+	ahScanning = true 
+	ahScanIndex = 1
+	ahScanItems = 0
+	ahScanBadItems = 0
+	FLogGlobalVars.ahScan = {}
+	out("Scanning "..ahScanResultsShown.." Auction House results...")
+end 
+
+function FarmLog:AnalyzeAuctionHouseResults()
+	if ahScanResultsShown > 0 and ahScanIndex < ahScanResultsShown then
+		for x = ahScanIndex, ahScanResultsShown do
+			local 	name, texture, count, quality, canUse, level, unknown1, minBid, minIncrement, buyoutPrice, bidAmount, 
+					highestBidder, unknown2, owner, unknown3, sold, unknown4 = GetAuctionItemInfo( "list", x )
+			local 	link = GetAuctionItemLink( "list", x )
+			
+			if name == nil or name == "" or link == nil then
+				ahScanBadItems = ahScanBadItems + 1 -- removed items?? no idea why some are missing
+			else
+				ahScanItems = ahScanItems + 1
+				link = normalizeLink(link)
+				local price = FLogGlobalVars.ahScan[link]
+				-- debug(" scan -- link "..link.."  price "..tostring(price))
+				if not price or price > buyoutPrice then 
+					FLogGlobalVars.ahScan[link] = buyoutPrice 
+				end 
+			end  
+
+			-- analyze fast scan data in chunks so as not to cause client to timeout?
+			if ( x % AH_SCAN_CHUNKS ) == 0 and x < ahScanResultsShown then
+				ahScanIndex = x + 1
+				ahScanPauseTime = time()
+				out('Processed '..x..' / '..ahScanResultsShown..'...')
+				return
+			end
+		end
+	end
+	ahScanning = false 
+	out('Finished scanning '..ahScanItems..' items, there were '..ahScanBadItems..' missing items.')
+end
+
+
 -- OnEvent
 
 function FarmLog:OnEvent(event, ...)
@@ -1043,6 +1124,8 @@ function FarmLog:OnEvent(event, ...)
 		self:PauseSession(true)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
 		self:OnInstanceInfoEvent(...)
+	elseif event == "AUCTION_ITEM_LIST_UPDATE" then
+		self:OnAuctionUpdate() 	
 	end
 end
 
@@ -1073,6 +1156,9 @@ function FarmLog:OnUpdate()
 			skillNameTime = nil 
 			skillName = nil 
 		end 
+	end 
+	if ahScanning then 
+		self:AnalyzeAuctionHouseResults()
 	end 
 end 
 
@@ -1199,7 +1285,7 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl l|r lists all sessions")
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
 			out(" |cff00ff00/fl r|r reset current session")
-			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH value of an item, in gold")
+			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH ahPrice of an item, in gold")
 			out(" |cff00ff00/fl i <item_link>|r adds/remove an item from ignore list")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
@@ -1212,21 +1298,21 @@ SlashCmdList.LH = function(msg)
 			itemLink = normalizeLink(itemLink) -- remove player level
 
 			if itemLink and GetItemInfo(itemLink) then 
-				local value = nil 
+				local ahPrice = nil 
 				if ((endIndex + 2 ) <= (#arg1)) then
 					local st = string.sub(arg1, endIndex + 2, #arg1)
 					local priceGold = tonumber(st)
 					if priceGold then 
-						value = priceGold * 10000
+						ahPrice = priceGold * 10000
 					else 
 						out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]")
 					end 
 				end				
-				FLogGlobalVars.ahPrice[itemLink] = value 
-				if value and value > 0 then 
-					out("Setting AH value of "..itemLink.." to "..GetShortCoinTextureString(value))
+				FLogGlobalVars.ahPrice[itemLink] = ahPrice 
+				if ahPrice and ahPrice > 0 then 
+					out("Setting AH ahPrice of "..itemLink.." to "..GetShortCoinTextureString(ahPrice))
 				else 
-					out("Removing "..itemLink.." from AH value table")
+					out("Removing "..itemLink.." from AH ahPrice table")
 				end 
 				FarmLog:RecalcTotals()
 			else 
@@ -1288,6 +1374,8 @@ SlashCmdList.LH = function(msg)
 			FarmLog_MinimapButton:Init(true)
 		elseif  "RMW" == cmd then
 			FarmLog_MainWindow:ResetPosition()
+		elseif "AH" == cmd then 
+			FarmLog:ScanAuctionHouse()
 		else 
 			out("Unknown command "..cmd)
 		end 

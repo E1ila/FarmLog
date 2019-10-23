@@ -31,6 +31,7 @@
         self:RegisterEvent("CHAT_MSG_OPENING")
         self:RegisterEvent("PLAYER_LOGOUT")
         self:RegisterEvent("UPDATE_INSTANCE_INFO")
+        self:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
       </OnLoad>
       <OnEvent>
         self:OnEvent(event, ...)
