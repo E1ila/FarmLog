@@ -692,15 +692,42 @@ end
 
 -- SESSIONS WINDOW ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+function FarmLog_SessionsWindow:CreateRow(text, valueText)
+	local row = CreateRow_Text(self.rows[self.visibleRows], text, self)
+
+	if not row.valueLabel then 
+		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
+		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
+		row.valueLabel:SetPoint("RIGHT", 20, 0)
+		row.valueLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	end 
+	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
+	row.valueLabel:SetText(valueText or "");
+	row.valueLabel:Show()
+
+	return row
+end
+
+
+function FarmLog_SessionsWindow:AddRow(text, valueText, quantity, color) 
+	self.visibleRows = self.visibleRows + 1
+	text = "|cff"..(color or "dddddd")..text.."|r"
+	if quantity and quantity > 1 then 
+		text = text.." x"..tostring(quantity)
+	end 
+	return self:CreateRow(text, valueText)
+end 
+
 function FarmLog_SessionsWindow:Refresh()
 	self.visibleRows = 0
 	for name, session in pairs(FLogVars.sessions) do 
 		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
 		local text = name
+		local valueText = nil 
 		if gph and gph > 0 and tostring(gph) ~= "nan" and tostring(gph) ~= "inf" then 
-			text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
+			valueText = GetShortCoinTextureString(gph) .. " " .. L["g/h"]
 		end 
-		local row = AddItem_Text(text, nil, nil, self)
+		local row = self:AddRow(text, valueText)
 		SetItemTooltip(row)
 		SetItemActions(row, self:GetOnLogItemClick(name))
 	end 
@@ -1303,7 +1330,7 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|nG/H: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -1342,6 +1369,7 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH ahPrice of an item, in gold")
 			out(" |cff00ff00/fl i <item_link>|r adds/remove an item from ignore list")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
+			out(" |cff00ff00/fl ar|r enables/disables auto session resume when choosing one from the list")
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
 			out(" |cff00ff00/fl rmi|r resets minimap icon position")
 			out(" |cff00ff00/fl rmw|r resets main window position")
@@ -1431,6 +1459,13 @@ SlashCmdList.LH = function(msg)
 			FarmLog_MinimapButton:Init(true)
 		elseif  "RMW" == cmd then
 			FarmLog_MainWindow:ResetPosition()
+		elseif  "AR" == cmd then
+			FLogGlobalVars.resumeSessionOnSwitch = not FLogGlobalVars.resumeSessionOnSwitch
+			if not FLogGlobalVars.resumeSessionOnSwitch then 
+				out("Auto resume |cffff4444"..L["disabled"])
+			else 
+				out("Auto resume |cff44ff44"..L["enabled"])
+			end 
 		elseif "AH" == cmd then 
 			FarmLog:ScanAuctionHouse()
 		else 

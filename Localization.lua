@@ -55,7 +55,7 @@ function FarmLog_BuildLocalization(context)
     L["Skinning"] = "Skinning"
     L["Unknown"] = "Unknown"
     L["Gold / Hour"] = "Gold / Hour"
-    L["G/H"] = "G/H"
+    L["g/h"] = "g/h"
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
