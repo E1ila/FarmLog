@@ -282,7 +282,7 @@ function FarmLog:Migrate()
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end 
 
-	if FLogVars.ver < 1.0901 then 
+	if FLogVars.ver < 1.0902 then 
 		FarmLog_MainWindow:RecalcTotals()
 	end 
 
@@ -1330,7 +1330,7 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: |cffeeeeee" .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
