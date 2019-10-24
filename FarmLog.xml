@@ -374,12 +374,13 @@
           <OnLoad>
             self:SetHorizontalScroll(0)
             self:SetVerticalScroll(20)
+            FarmLog_MainWindow.scroll = self
           </OnLoad>
         </Scripts>
         <ScrollChild>
           <Frame name="$parent_Content">
             <Size>
-              <AbsDimension x="600" y="10"/>
+              <AbsDimension x="10" y="10"/>
             </Size>
             <Anchors>
               <Anchor point="TOPLEFT" />
