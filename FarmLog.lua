@@ -180,8 +180,12 @@ end
 
 local function normalizeLink(link)
 	-- remove player level from item link
-	local p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17 = _G.string.split(":", link)
-	return p1..":"..p2..":"..p3..":"..p4..":"..p5..":"..p6..":"..p7..":"..p8..":"..p9..":".."_"..":"..p11..":"..p12..":"..p13..":"..p14..":"..p15..":"..p16..":"..p17
+	local p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18 = _G.string.split(":", link)
+	link = p1..":"..p2..":"..p3..":"..p4..":"..p5..":"..p6..":"..p7..":"..p8..":"..p9..":".."_"..":"..p11..":"..p12..":"..p13..":"..p14..":"..p15..":"..p16..":"..p17
+	if p18 then 
+		link = link..":"..p18
+	end 
+	return link 
 end 
 
 -- Data migration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
