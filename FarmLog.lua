@@ -1291,6 +1291,7 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
 			out(" |cff00ff00/fl rmi|r resets minimap icon position")
 			out(" |cff00ff00/fl rmw|r resets main window position")
+			out(" |cff00ff00/fl ah|r scan AH for current prices, must have AH window open")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");

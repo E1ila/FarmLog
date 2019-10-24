@@ -99,3 +99,6 @@ Another thing is that the more time & data you have per session, the more accura
 * Show menu when clicking items on list - delete/ignore/set AH price/reassign
 * Sort lists 
 * Remove specific item from the log
+* Show drop chances
+* Show items value
+* Allow automatic start session when choosing session name

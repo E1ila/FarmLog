@@ -250,7 +250,7 @@
   </Frame>  <!--FarmLog_QuestionDialog-->
 
 
-  <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="DIALOG" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
     <Size>
       <AbsDimension x="160" y="100"/>
     </Size>
