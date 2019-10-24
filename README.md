@@ -50,6 +50,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.10
+    * Main loot window doesn't hide bags
+    * Main loot window visibility is saved, so if you close it, it will remain closed the next time you login
 * 1.9
     * You can now scan the auction house by opening the AH interface and writing `/fl ah`. FarmLog will record the minimal price per item and will use it to calculate AH profits. You can override item's price by setting price manually `/fl set [Arcane Crystal] 50`, then your manual entry will be used instead.
     * Fixed stored links - remove player level from link, so you don't get the duplicate items once you level up. 

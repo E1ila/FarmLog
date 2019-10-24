@@ -28,6 +28,7 @@ FLogVars = {
 		["point"] = "CENTER",
 		["x"] = 0,
 		["y"] = 0,
+		["visible"] = false,
 	},
 	["minimapButtonPosition"] = {
 		["point"] = "TOPRIGHT",
@@ -445,16 +446,18 @@ end
 
 -- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-function FarmLog:ToggleWindow()
-	if IsShiftKeyDown() then 
+function FarmLog:ToggleWindow(allowReset)
+	if allowReset and IsShiftKeyDown() then 
 		FarmLog_MainWindow:ResetPosition()
 		FarmLog_MainWindow:Show()
 	else 
 		if FarmLog_MainWindow:IsShown() then
 			FarmLog_MainWindow:Hide()
+			FarmLog_MainWindow:SaveVisibility()
 		else
 			FarmLog_MainWindow:LoadPosition()
 			FarmLog_MainWindow:Show()
+			FarmLog_MainWindow:SaveVisibility()
 		end
 	end 
 end
@@ -983,6 +986,11 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_MinimapButton:Init()
 	FarmLog_MainWindow:LoadPosition()
 	FarmLog:InitSession()
+	if FLogVars.frameRect.visible then 
+		FarmLog_MainWindow:Show()
+	else 
+		FarmLog_MainWindow:Hide()
+	end 
 end 
 
 -- Entering World
@@ -1203,7 +1211,7 @@ function FarmLog_MinimapButton:Clicked(button)
 	if button == "RightButton" then
 		FarmLog:ToggleLogging()
 	else
-		FarmLog:ToggleWindow()
+		FarmLog:ToggleWindow(true)
 	end
 end 
 
@@ -1211,6 +1219,10 @@ function FarmLog_MainWindow_Title:Init()
 	if not FLogVars.lockFrames then		
 		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
+end 
+
+function FarmLog_MainWindow:SaveVisibility() 
+	FLogVars.frameRect.visible = FarmLog_MainWindow:IsShown()
 end 
 
 function FarmLog_MainWindow:SavePosition() 
@@ -1269,7 +1281,7 @@ SlashCmdList.LH = function(msg)
 	else 
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then
-			FarmLog:ToggleWindow()
+			FarmLog:ToggleWindow(false)
 		elseif "DEBUG" == cmd then 
 			FLogGlobalVars.debug = not FLogGlobalVars.debug
 			if FLogGlobalVars.debug then 

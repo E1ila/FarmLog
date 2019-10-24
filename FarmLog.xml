@@ -289,7 +289,7 @@
         </Anchors>
         <Scripts>
           <OnClick>
-            FarmLog_MainWindow:Hide()
+            FarmLog:ToggleWindow()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
