@@ -3,14 +3,13 @@ local VERSION_INT = 1.0900
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
-FarmLog_ScrollRows = {}
-
 FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
 	["ahScan"] = {},
 	["ignoredItems"] = {},
 	["autoSwitchInstances"] = true,
+	["resumeSessionOnSwitch"] = true,
 	["reportTo"] = {},
 	["ver"] = VERSION,
 }
@@ -46,17 +45,12 @@ local editIdx = -1;
 local L = FarmLog_BuildLocalization()
 
 local showingMinimapTip = false
-local visibleRows = 0
-local sessionListMode = false
-local gphNeedsUpdate = false 
 local sessionStartTime = nil 
 local lastMobLoot = {}
 local lastUnknownLoot = {}
 local lastUnknownLootTime = 0
 local skillName = nil 
 local skillNameTime = nil 
-local lastUpdate = 0
-local lastGphUpdate = 0
 local goldPerHour = 0
 local ahScanRequested = false
 local ahScanIndex = 0
@@ -310,38 +304,12 @@ function FarmLog:GetCurrentSessionTime()
 	return GetSessionVar("seconds") + now - (sessionStartTime or now)
 end 
 
-function FarmLog:GetSessionWindowTitle()
-	local text = FLogVars.currentSession or ""
-	local time = self:GetCurrentSessionTime() or 0
-	if time > 0 then 
-		text = text .. "  --  " .. secondsToClock(time) 
-	end 
-	-- if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" tostring(goldPerHour) ~= "inf" then 
-	-- 	text = text .. " / " .. GetShortCoinTextureString(goldPerHour) .. " g/h"
-	-- end 
-	return text
-end 
-
-function FarmLog:UpdateMainWindowTitle()
-	if sessionListMode then 
-		FarmLog_MainWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
-		FarmLog_MainWindow_Title_Text:SetText(L["All Sessions"])
-	else 
-		if FLogVars.enabled then 
-			FarmLog_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
-		else 
-			FarmLog_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
-			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle())
-		end 
-	end 
-end 
-
 function FarmLog:ResumeSession() 
 	sessionStartTime = time()
 
 	FLogVars.enabled = true  
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
-	self:UpdateMainWindowTitle()
+	FarmLog_MainWindow:UpdateTitle()
 end 
 
 function FarmLog:PauseSession(temporary)
@@ -354,7 +322,7 @@ function FarmLog:PauseSession(temporary)
 	if not temporary then 
 		FLogVars.enabled = false 
 		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
-		self:UpdateMainWindowTitle()
+		FarmLog_MainWindow:UpdateTitle()
 	end 
 end 
 
@@ -373,23 +341,21 @@ function FarmLog:ResetSessionVars()
 	}
 end 
 
-function FarmLog:StartSession(sessionName, dontPause, dontResume) 
+function FarmLog:StartSession(sessionName, pause, resume) 
 	if FLogVars.enabled then 
-		gphNeedsUpdate = true 
-		if not dontPause then 
+		if pause then 
 			self:PauseSession(true) 
 		end 
 	end 
 
-	sessionListMode = false 
 	FLogVars.currentSession = sessionName
 	if not FLogVars.sessions[FLogVars.currentSession] then 
 		self:ResetSessionVars()
 	end 
-	if not dontResume then 
+	if FLogVars.enabled or resume then 
 		self:ResumeSession()
 	else 
-		self:UpdateMainWindowTitle() -- done by resume, update text color
+		FarmLog_MainWindow:UpdateTitle() -- done by resume, update text color
 	end 
 	self:RefreshMainWindow()
 end 
@@ -398,7 +364,6 @@ function FarmLog:DeleteSession(name)
 	FLogVars.sessions[name] = nil 
 	if FLogVars.currentSession == name then 
 		self:StartSession("default", true, true)
-		sessionListMode = true 
 		self:RefreshMainWindow()
 	end 
 	if FLogVars.currentSession == name and name == "default" then 
@@ -415,7 +380,6 @@ function FarmLog:ResetSession()
 		self:ResumeSession()
 	end 
 	out("Reset session |cff99ff00"..FLogVars.currentSession)
-	gphNeedsUpdate = true 
 	self:RefreshMainWindow()
 end
 
@@ -425,7 +389,6 @@ function FarmLog:InitSession()
 	else 
 		self:PauseSession()
 	end 
-	gphNeedsUpdate = true
 	self:RefreshMainWindow()
 end 
 
@@ -443,85 +406,25 @@ function FarmLog:ToggleLogging()
 	end 
 end 
 
+function FarmLog:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
+end 
 
--- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- Generic Rows Creation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-function FarmLog:ToggleWindow(allowReset)
-	if allowReset and IsShiftKeyDown() then 
-		FarmLog_MainWindow:ResetPosition()
-		FarmLog_MainWindow:Show()
-	else 
-		if FarmLog_MainWindow:IsShown() then
-			FarmLog_MainWindow:Hide()
-			FarmLog_MainWindow:SaveVisibility()
-		else
-			FarmLog_MainWindow:LoadPosition()
-			FarmLog_MainWindow:Show()
-			FarmLog_MainWindow:SaveVisibility()
-		end
-	end 
-end
-
-function FarmLog:PlaceLinkInChatEditBox(itemLink)
-	-- Copy itemLink into ChatFrame
-	local chatFrame = SELECTED_DOCK_FRAME
-	local editbox = chatFrame.editBox
-	if editbox then
-		if editbox:HasFocus() then
-			editbox:SetText(editbox:GetText()..itemLink);
-		else
-			editbox:SetFocus(true);
-			editbox:SetText(itemLink);
-		end
-	end
-end
-
-function FarmLog:GetOnLogItemClick(itemLink) 
-	return function(self, button)
-		if IsShiftKeyDown() then
-			FarmLog:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
-		elseif IsControlKeyDown() then
-			DressUpItemLink(itemLink) -- preview
-		end
-	end 
-end
-
-function FarmLog:GetOnLogSessionItemClick(sessionName) 
-	return function(self, button)
-		if button == "RightButton" then 
-			FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
-				FarmLog:DeleteSession(sessionName)
-				FarmLog:RefreshMainWindow()
-				FarmLog_QuestionDialog:Hide()
-			end)
-			FarmLog_QuestionDialog_Title_Text:SetText(L["deletesession-title"])
-			FarmLog_QuestionDialog_Question:SetText(L["deletesession-question"])
-			FarmLog_QuestionDialog:Show()
-		else 
-			if IsAltKeyDown() then
-				-- edit?
-			else 
-				sessionListMode = false 
-				out("Farm session |cff99ff00"..sessionName.."|r resumed")
-				FarmLog:StartSession(sessionName, false, true)
-			end
-		end 
-	end 
-end
-
-local function CreateRow_Text(existingRow, text)
+local function CreateRow_Text(existingRow, text, container)
 	local row = existingRow or {};
 	local previousType = row.type
 	row.type = "text"
 
 	if not row.root then 
-		row.root = CreateFrame("FRAME", nil, FarmLog_MainWindow_Scroll_Content);		
-		row.root:SetWidth(FarmLog_MainWindow_Scroll_Content:GetWidth() - 20);
+		row.root = CreateFrame("FRAME", nil, container.scrollContent);		
+		row.root:SetWidth(container.scrollContent:GetWidth() - 20);
 		row.root:SetHeight(15);
-		if #FarmLog_ScrollRows == 0 then 
-			row.root:SetPoint("TOPLEFT", FarmLog_MainWindow_Scroll_Content, "TOPLEFT");
+		if #container.rows == 0 then 
+			row.root:SetPoint("TOPLEFT", container.scrollContent, "TOPLEFT");
 		else 
-			row.root:SetPoint("TOPLEFT", FarmLog_ScrollRows[#FarmLog_ScrollRows].root, "BOTTOMLEFT");
+			row.root:SetPoint("TOPLEFT", container.rows[#container.rows].root, "BOTTOMLEFT");
 		end 
 	end 
 	row.root:SetScript("OnEnter", nil);
@@ -539,25 +442,25 @@ local function CreateRow_Text(existingRow, text)
 	row.label:Show()
 
 	if not existingRow then 
-		tinsert(FarmLog_ScrollRows, row);
+		tinsert(container.rows, row);
 	end 
 	return row
 end
 
-local function AddItem_Text(text, quantity, color) 
-	visibleRows = visibleRows + 1
+local function AddItem_Text(text, quantity, color, container) 
+	container.visibleRows = container.visibleRows + 1
 	text = "|cff"..(color or "dddddd")..text.."|r"
 	if quantity and quantity > 1 then 
 		text = text.." x"..tostring(quantity)
 	end 
-	return CreateRow_Text(FarmLog_ScrollRows[visibleRows], text)
+	return CreateRow_Text(container.rows[container.visibleRows], text, container)
 end 
 
-local function HideRowsBeyond(j)
-	local n = #FarmLog_ScrollRows;
+local function HideRowsBeyond(j, container)
+	local n = #container.rows;
 	if j <= n then 
 		for i = j, n do
-			FarmLog_ScrollRows[i].root:Hide()
+			container.rows[i].root:Hide()
 		end
 	end 
 end
@@ -591,17 +494,76 @@ local function SetItemActions(row, callback)
 	end);
 end 
 
-function FarmLog:AddSessionYieldItems() 
-	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem_Text(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour)) end 
-	if GetSessionVar("ah") > 0 then AddItem_Text(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah")), nil, TEXT_COLOR["money"]) end 
-	if GetSessionVar("gold") > 0 then AddItem_Text(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold")), nil, TEXT_COLOR["money"]) end 
-	if GetSessionVar("vendor") > 0 then AddItem_Text(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor")), nil, TEXT_COLOR["money"]) end 
-	if GetSessionVar("xp") > 0 then AddItem_Text(L["XP"].." "..GetSessionVar("xp"), nil, TEXT_COLOR["xp"]) end 
-	for faction, rep in pairs(GetSessionVar("rep")) do AddItem_Text(rep.." "..faction.." "..L["reputation"], nil, TEXT_COLOR["rep"]) end 
-	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem_Text("+"..levels.." "..skillName, nil, TEXT_COLOR["skill"]) end 
+
+-- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog_MainWindow:GetTitleText()
+	local text = FLogVars.currentSession or ""
+	local time = FarmLog:GetCurrentSessionTime() or 0
+	if time > 0 then 
+		text = text .. "  --  " .. secondsToClock(time) 
+	end 
+	-- if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" tostring(goldPerHour) ~= "inf" then 
+	-- 	text = text .. " / " .. GetShortCoinTextureString(goldPerHour) .. " g/h"
+	-- end 
+	return text
+end 
+
+function FarmLog_MainWindow:UpdateTitle()
+	if FLogVars.enabled then 
+		FarmLog_MainWindow_Title_Text:SetTextColor(0, 1, 0, 1.0);
+	else 
+		FarmLog_MainWindow_Title_Text:SetTextColor(1, 1, 0, 1.0);
+		FarmLog_MainWindow_Title_Text:SetText(self:GetTitleText())
+	end 
+end 
+
+function FarmLog_MainWindow:ToggleWindow()
+	if self:IsShown() then
+		self:Hide()
+		self:SaveVisibility()
+	else
+		self:LoadPosition()
+		self:Show()
+		self:SaveVisibility()
+	end
+end
+
+function FarmLog_MainWindow:PlaceLinkInChatEditBox(itemLink)
+	-- Copy itemLink into ChatFrame
+	local chatFrame = SELECTED_DOCK_FRAME
+	local editbox = chatFrame.editBox
+	if editbox then
+		if editbox:HasFocus() then
+			editbox:SetText(editbox:GetText()..itemLink);
+		else
+			editbox:SetFocus(true);
+			editbox:SetText(itemLink);
+		end
+	end
+end
+
+function FarmLog_MainWindow:GetOnLogItemClick(itemLink) 
+	return function(self, button)
+		if IsShiftKeyDown() then
+			FarmLog_MainWindow:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
+		elseif IsControlKeyDown() then
+			DressUpItemLink(itemLink) -- preview
+		end
+	end 
+end
+
+function FarmLog_MainWindow:AddSessionYieldItems() 
+	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then AddItem_Text(L["Gold / Hour"] .. " " .. GetShortCoinTextureString(goldPerHour), nil, nil, self) end 
+	if GetSessionVar("ah") > 0 then AddItem_Text(L["Auction House"].." "..GetShortCoinTextureString(GetSessionVar("ah")), nil, TEXT_COLOR["money"], self) end 
+	if GetSessionVar("gold") > 0 then AddItem_Text(L["Money"].." "..GetShortCoinTextureString(GetSessionVar("gold")), nil, TEXT_COLOR["money"], self) end 
+	if GetSessionVar("vendor") > 0 then AddItem_Text(L["Vendor"].." "..GetShortCoinTextureString(GetSessionVar("vendor")), nil, TEXT_COLOR["money"], self) end 
+	if GetSessionVar("xp") > 0 then AddItem_Text(L["XP"].." "..GetSessionVar("xp"), nil, TEXT_COLOR["xp"], self) end 
+	for faction, rep in pairs(GetSessionVar("rep")) do AddItem_Text(rep.." "..faction.." "..L["reputation"], nil, TEXT_COLOR["rep"], self) end 
+	for skillName, levels in pairs(GetSessionVar("skill")) do AddItem_Text("+"..levels.." "..skillName, nil, TEXT_COLOR["skill"], self) end 
 
 	local sessionKills = GetSessionVar("kills")
-	local sortedNames = SortByStringKey(sessionKills);
+	local sortedNames = SortByStringKey(sessionKills)
 	-- add missing mobNames like Herbalism / Mining / Fishing
 	local sessionDrops = GetSessionVar("drops")
 	for name, _ in pairs(sessionDrops) do 
@@ -612,12 +574,12 @@ function FarmLog:AddSessionYieldItems()
 	for _, mobName in ipairs(sortedNames) do	
 		local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
 		local section = mobName 
-		AddItem_Text(section, sessionKills[mobName], TEXT_COLOR["mob"])
+		AddItem_Text(section, sessionKills[mobName], TEXT_COLOR["mob"], self)
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
 				local count = sessionDrops[mobName][itemLink][DROP_META_INDEX_COUNT];
 				local itemText = "    "..itemLink
-				local row = AddItem_Text(itemText, count)
+				local row = AddItem_Text(itemText, count, nil, self)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
@@ -626,38 +588,20 @@ function FarmLog:AddSessionYieldItems()
 	end
 end 
 
-function FarmLog:AddSessionListItems() 
-	for name, session in pairs(FLogVars.sessions) do 
-		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
-		local text = name
-		if gph and gph > 0 and tostring(gph) ~= "nan" then 
-			text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
-		end 
-		local row = AddItem_Text(text)
-		SetItemTooltip(row)
-		SetItemActions(row, self:GetOnLogSessionItemClick(name))
-	end 
-end 
-
-function FarmLog:RefreshMainWindow()
-	visibleRows = 0
-
-	if sessionListMode then 
-		self:AddSessionListItems()
+function FarmLog_MainWindow:Refresh()
+	self.visibleRows = 0
+	self:UpdateCalcs()
+	self:AddSessionYieldItems()
+	if #self.rows > 0 then
+		FarmLog_MainWindow_ResetButton:Enable()
+	else
 		FarmLog_MainWindow_ResetButton:Disable()
-	else 
-		self:AddSessionYieldItems()
-		if #FarmLog_ScrollRows > 0 then
-			FarmLog_MainWindow_ResetButton:Enable()
-		else
-			FarmLog_MainWindow_ResetButton:Disable()
-		end	
-	end 
-	HideRowsBeyond(visibleRows + 1);	
+	end	
+	HideRowsBeyond(self.visibleRows + 1, self)
 	FarmLog_MainWindow_SessionsButton:Enable()
 end
 
-function FarmLog:RecalcTotals()
+function FarmLog_MainWindow:RecalcTotals()
 	local sessionVendor = 0
 	local sessionAH = 0
 	local sessionDrops = GetSessionVar("drops")
@@ -679,10 +623,65 @@ function FarmLog:RecalcTotals()
 	end 
 	SetSessionVar("vendor", sessionVendor)
 	SetSessionVar("ah", sessionAH)
-	gphNeedsUpdate = true 
 	self:RefreshMainWindow()
 end 
 
+function FarmLog_MainWindow:UpdateTime()
+	local sessionTime = FarmLog:GetCurrentSessionTime()
+	FarmLog_MainWindow_Title_Text:SetText(self:GetTitleText());
+	if showingMinimapTip then 
+		FarmLog_MinimapButton:UpdateTooltipText()
+	end 
+end 
+
+function FarmLog_MainWindow:UpdateCalcs()
+	local sessionTime = FarmLog:GetCurrentSessionTime()
+	if sessionTime > 0 then 
+		-- debug("Calculating GPH")
+		goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
+	end 
+end 
+
+
+-- SESSIONS WINDOW ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog_SessionsWindow:Refresh()
+	self.visibleRows = 0
+	for name, session in pairs(FLogVars.sessions) do 
+		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
+		local text = name
+		if gph and gph > 0 and tostring(gph) ~= "nan" and tostring(gph) ~= "inf" then 
+			text = text .. " " .. GetShortCoinTextureString(gph) .. " " .. L["G/H"]
+		end 
+		local row = AddItem_Text(text, nil, nil, self)
+		SetItemTooltip(row)
+		SetItemActions(row, self:GetOnLogItemClick(name))
+	end 
+	HideRowsBeyond(self.visibleRows + 1, self)
+end
+
+function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName) 
+	return function(self, button)
+		if button == "RightButton" then 
+			FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+				FarmLog:DeleteSession(sessionName)
+				FarmLog:RefreshMainWindow()
+				FarmLog_QuestionDialog:Hide()
+			end)
+			FarmLog_QuestionDialog_Title_Text:SetText(L["deletesession-title"])
+			FarmLog_QuestionDialog_Question:SetText(L["deletesession-question"])
+			FarmLog_QuestionDialog:Show()
+		else 
+			if IsAltKeyDown() then
+				-- edit?
+			else 
+				out("Switched to farm session |cff99ff00"..sessionName.."|r")
+				FarmLog:StartSession(sessionName, true, FLogVars.resumeSessionOnSwitch)
+				FarmLog_SessionsWindow:Hide()
+			end
+		end 
+	end 
+end
 
 -- EVENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -982,8 +981,11 @@ end
 function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 	FarmLog:Migrate()	
-	FarmLog_MainWindow_Title:Init()
-	FarmLog_MinimapButton:Init()
+	if not FLogVars.lockFrames then		
+		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
+	end
+	FarmLog_SessionsWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
+	FarmLog_SessionsWindow_Title_Text:SetText(L["All Sessions"])
 	FarmLog_MainWindow:LoadPosition()
 	FarmLog:InitSession()
 	if FLogVars.frameRect.visible then 
@@ -1140,23 +1142,8 @@ end
 -- OnUpdate
 
 function FarmLog:OnUpdate() 
-	if not sessionListMode and (gphNeedsUpdate or FLogVars.enabled) then 
-		local now = time()
-		if now - lastUpdate >= 1 then 
-			local sessionTime = self:GetCurrentSessionTime()
-			FarmLog_MainWindow_Title_Text:SetText(self:GetSessionWindowTitle());
-			if showingMinimapTip then 
-				FarmLog_MinimapButton:UpdateTooltipText()
-			end 
-			lastUpdate = now 
-			if gphNeedsUpdate or (now - lastGphUpdate >= 60 and sessionTime > 0) then 
-				-- debug("Calculating GPH")
-				goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
-				lastGphUpdate = now 
-				gphNeedsUpdate = false 
-				self:RefreshMainWindow()
-			end 
-		end 
+	if FLogVars.enabled then 
+		FarmLog_MainWindow:UpdateTime()
 	end 
 	if skillNameTime then 
 		local now = time()
@@ -1169,6 +1156,7 @@ function FarmLog:OnUpdate()
 		self:AnalyzeAuctionHouseResults()
 	end 
 end 
+
 
 -- UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1211,13 +1199,14 @@ function FarmLog_MinimapButton:Clicked(button)
 	if button == "RightButton" then
 		FarmLog:ToggleLogging()
 	else
-		FarmLog:ToggleWindow(true)
-	end
-end 
-
-function FarmLog_MainWindow_Title:Init()
-	if not FLogVars.lockFrames then		
-		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
+		if IsShiftKeyDown() then 
+			FarmLog_MainWindow:ResetPosition()
+			FarmLog_MainWindow:Show()
+		elseif IsControlKeyDown() then 
+			FarmLog_MainWindow_SessionsButton:Clicked() 
+		else  
+			FarmLog_MainWindow:ToggleWindow()
+		end 
 	end
 end 
 
@@ -1235,10 +1224,12 @@ function FarmLog_MainWindow:SavePosition()
 end 
 
 function FarmLog_MainWindow_SessionsButton:Clicked() 
-	sessionListMode = not sessionListMode 
-	gphNeedsUpdate = true
-	FarmLog:UpdateMainWindowTitle()
-	FarmLog:RefreshMainWindow()
+	if FarmLog_SessionsWindow:IsShown() then 
+		FarmLog_SessionsWindow:Hide()
+	else 
+		FarmLog_SessionsWindow:Refresh()
+		FarmLog_SessionsWindow:Show()
+	end 
 end 
 
 function FarmLog_MainWindow_ResetButton:Clicked()
@@ -1281,7 +1272,7 @@ SlashCmdList.LH = function(msg)
 	else 
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then
-			FarmLog:ToggleWindow(false)
+			FarmLog_MainWindow:ToggleWindow()
 		elseif "DEBUG" == cmd then 
 			FLogGlobalVars.debug = not FLogGlobalVars.debug
 			if FLogGlobalVars.debug then 
@@ -1327,7 +1318,7 @@ SlashCmdList.LH = function(msg)
 				else 
 					out("Removing "..itemLink.." from AH ahPrice table")
 				end 
-				FarmLog:RecalcTotals()
+				FarmLog_MainWindow:RecalcTotals()
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
 			end 
@@ -1345,7 +1336,7 @@ SlashCmdList.LH = function(msg)
 					FLogGlobalVars.ignoredItems[itemLink] = true
 					out("Ignoring "..itemLink)
 				end 
-				FarmLog:RecalcTotals()
+				FarmLog_MainWindow:RecalcTotals()
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl i [ITEM_LINK]|r")
 			end 
@@ -1359,7 +1350,7 @@ SlashCmdList.LH = function(msg)
 		elseif  "SWITCH" == cmd or "W" == cmd then
 			if arg1 and #arg1 > 0 then 
 				out("Switching session to |cff99ff00"..arg1)
-				FarmLog:StartSession(arg1)
+				FarmLog:StartSession(arg1, true, true)
 				FarmLog:RefreshMainWindow() 
 			else 
 				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")

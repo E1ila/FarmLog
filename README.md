@@ -53,6 +53,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.10
     * Main loot window doesn't hide bags
     * Main loot window visibility is saved, so if you close it, it will remain closed the next time you login
+    * Sessions list now has a separate window
 * 1.9
     * You can now scan the auction house by opening the AH interface and writing `/fl ah`. FarmLog will record the minimal price per item and will use it to calculate AH profits. You can override item's price by setting price manually `/fl set [Arcane Crystal] 50`, then your manual entry will be used instead.
     * Fixed stored links - remove player level from link, so you don't get the duplicate items once you level up. 
@@ -105,3 +106,4 @@ Another thing is that the more time & data you have per session, the more accura
 * Show drop chances
 * Show items value
 * Allow automatic start session when choosing session name
+* Save GPH calc in session var
