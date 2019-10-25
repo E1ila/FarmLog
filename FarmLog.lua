@@ -693,7 +693,7 @@ function FarmLog_MainWindow:Refresh()
 end
 
 function FarmLog_MainWindow:RecalcTotals()
-	debug("|cff999999FarmLog_MainWindow:RecalcTotals()")
+	-- debug("|cff999999FarmLog_MainWindow:RecalcTotals()")
 	local sessionVendor = 0
 	local sessionAH = 0
 	local sessionDrops = GetSessionVar("drops")
@@ -796,7 +796,7 @@ function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName)
 				-- edit?
 			else 
 				out("Switched to farm session |cff99ff00"..sessionName.."|r")
-				FarmLog:StartSession(sessionName, true, FLogVars.resumeSessionOnSwitch)
+				FarmLog:StartSession(sessionName, true, FLogGlobalVars.resumeSessionOnSwitch)
 				FarmLog_SessionsWindow:Hide()
 			end
 		end 
@@ -1533,7 +1533,7 @@ SlashCmdList.LH = function(msg)
 		elseif  "RMW" == cmd then
 			FarmLog_MainWindow:ResetPosition()
 		elseif  "AR" == cmd then
-			FLogGlobalVars.resumeSessionOnSwitch = not FLogGlobalVars.resumeSessionOnSwitch
+			FLogGlobalVars.resumeSessionOnSwitch = not (FLogGlobalVars.resumeSessionOnSwitch or false) 
 			if not FLogGlobalVars.resumeSessionOnSwitch then 
 				out("Auto resume |cffff4444"..L["disabled"])
 			else 
