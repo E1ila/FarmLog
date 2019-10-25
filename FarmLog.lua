@@ -1,5 +1,5 @@
-﻿local VERSION = "1.9.1"
-local VERSION_INT = 1.0901
+﻿local VERSION = "1.11"
+local VERSION_INT = 1.1101
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 
@@ -388,8 +388,9 @@ end
 function FarmLog:DeleteSession(name) 
 	FLogVars.sessions[name] = nil 
 	if FLogVars.currentSession == name then 
-		self:StartSession("default", true, true)
+		self:StartSession("default", false, FLogVars.enabled)
 		self:RefreshMainWindow()
+		out("Switched to farm session |cff99ff00default|r")
 	end 
 	if FLogVars.currentSession == name and name == "default" then 
 		out("Reset the |cff99ff00"..name.."|r session")
@@ -786,6 +787,7 @@ function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName)
 			FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
 				FarmLog:DeleteSession(sessionName)
 				FarmLog:RefreshMainWindow()
+				FarmLog_SessionsWindow:Refresh()
 				FarmLog_QuestionDialog:Hide()
 			end)
 			FarmLog_QuestionDialog_Title_Text:SetText(L["deletesession-title"])
@@ -1403,7 +1405,7 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r"
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -1502,13 +1504,10 @@ SlashCmdList.LH = function(msg)
 		elseif  "DELETE" == cmd then
 			FarmLog:DeleteSession(arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
-			if arg1 and #arg1 > 0 then 
-				out("Switching session to |cff99ff00"..arg1)
-				FarmLog:StartSession(arg1, true, true)
-				FarmLog:RefreshMainWindow() 
-			else 
-				out("Wrong input, also write the name of the new session, as in |cff00ff00/fl w <session_name>")
-			end 
+			if not arg1 or #arg1 == 0 then arg1 = GetMinimapZoneText() end 
+			out("Switching session to |cff99ff00"..arg1)
+			FarmLog:StartSession(arg1, true, true)
+			FarmLog:RefreshMainWindow() 
 		elseif  "REN" == cmd then
 			out("Renaming session from |cff99ff00"..FLogVars.currentSession.."|r to |cff99ff00"..arg1)
 			FLogVars.sessions[arg1] = FLogVars.sessions[FLogVars.currentSession]
