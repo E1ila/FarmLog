@@ -44,6 +44,8 @@ local editItem = "";
 local editIdx = -1;
 local L = FarmLog_BuildLocalization()
 
+local mouseOnMainWindow = false 
+local lastShiftState = false
 local showingMinimapTip = false
 local sessionStartTime = nil 
 local lastMobLoot = {}
@@ -62,9 +64,23 @@ local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 
 local UNKNOWN_MOBNAME = L["Unknown"]
+
 local DROP_META_INDEX_COUNT =  1
 local DROP_META_INDEX_VALUE =  2
 local DROP_META_INDEX_VALUE_EACH =  3
+local DROP_META_INDEX_VALUE_TYPE =  4
+
+local VALUE_TYPE_MANUAL = 'M'
+local VALUE_TYPE_SCAN = 'S'
+local VALUE_TYPE_VENDOR = 'V'
+
+local VALUE_TYPE_COLOR = {
+	["M"] = "e1d592",
+	["S"] = "95d6e5",
+	["V"] = "fbf9ed",
+	["?"] = "f3c0c0",
+}
+
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
 
@@ -282,10 +298,6 @@ function FarmLog:Migrate()
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end 
 
-	if FLogVars.ver < 1.0902 then 
-		FarmLog_MainWindow:RecalcTotals()
-	end 
-
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
 end 
@@ -319,6 +331,8 @@ function FarmLog:ResumeSession()
 
 	FLogVars.enabled = true  
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	FarmLog_MainWindow:RecalcTotals()
+	FarmLog_MainWindow:Refresh()
 	FarmLog_MainWindow:UpdateTitle()
 end 
 
@@ -365,6 +379,7 @@ function FarmLog:StartSession(sessionName, pause, resume)
 	if FLogVars.enabled or resume then 
 		self:ResumeSession()
 	else 
+		FarmLog_MainWindow:RecalcTotals()
 		FarmLog_MainWindow:UpdateTitle() -- done by resume, update text color
 	end 
 	self:RefreshMainWindow()
@@ -392,15 +407,6 @@ function FarmLog:ResetSession()
 	out("Reset session |cff99ff00"..FLogVars.currentSession)
 	self:RefreshMainWindow()
 end
-
-function FarmLog:InitSession()
-	if FLogVars.enabled then 
-		self:ResumeSession()
-	else 
-		self:PauseSession()
-	end 
-	self:RefreshMainWindow()
-end 
 
 function FarmLog:ToggleLogging() 
 	if FLogVars.enabled then 
@@ -434,7 +440,7 @@ local function CreateRow_Text(existingRow, text, container)
 		row.root:SetBackdropColor(1, 0, 0, 1)
 		if #container.rows == 0 then 
 			row.root:SetPoint("TOPLEFT", container.scrollContent);
-			row.root:SetPoint("RIGHT", container.scroll, -20, 0);
+			row.root:SetPoint("RIGHT", container.scroll, 0, 0);
 		else 
 			row.root:SetPoint("TOPLEFT", container.rows[#container.rows].root, "BOTTOMLEFT");
 			row.root:SetPoint("TOPRIGHT", container.rows[#container.rows].root, "BOTTOMRIGHT");
@@ -471,19 +477,21 @@ end
 
 local function SetItemTooltip(row, itemLink, text)
 	row.root:SetScript("OnEnter", function(self)
-		self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"});
-		self:SetBackdropColor(0.8,0.8,0.8,0.6);
+		FarmLog_MainWindow:MouseEnter()
+		self:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background"})
+		self:SetBackdropColor(0.8,0.8,0.8,0.6)
 		if FLogVars.itemTooltip then
-			GameTooltip:SetOwner(self, "ANCHOR_LEFT");
+			GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 			if itemLink then 
-				GameTooltip:SetHyperlink(itemLink);
+				GameTooltip:SetHyperlink(itemLink)
 			elseif text then 
-				GameTooltip:SetText(text);
+				GameTooltip:SetText(text)
 			end 					
-			GameTooltip:Show();
+			GameTooltip:Show()
 		end
 	end);
 	row.root:SetScript("OnLeave", function(self)
+		FarmLog_MainWindow:MouseLeave()
 		if FLogVars.itemTooltip then
 			GameTooltip_Hide();
 		end
@@ -501,13 +509,33 @@ end
 
 -- Main Window UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+function FarmLog_MainWindow:OnEvent(event, ...)
+	if event == "MODIFIER_STATE_CHANGED" then 
+		if IsShiftKeyDown() and not lastShiftState and mouseOnMainWindow then 
+			lastShiftState = true 
+			self:Refresh()
+		elseif not IsShiftKeyDown() and lastShiftState then 
+			lastShiftState = false 
+			self:Refresh()
+		end  
+	end
+end 
+
+function FarmLog_MainWindow:MouseEnter()
+	mouseOnMainWindow = true 
+end 
+
+function FarmLog_MainWindow:MouseLeave()
+	mouseOnMainWindow = false
+end 
+
 function FarmLog_MainWindow:CreateRow(text, valueText)
 	local row = CreateRow_Text(self.rows[self.visibleRows], text, self)
 
 	if not row.valueLabel then 
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
-		row.valueLabel:SetPoint("RIGHT", 20, 0)
+		row.valueLabel:SetPoint("RIGHT", 0, 0)
 		row.valueLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	end 
 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
@@ -518,9 +546,12 @@ function FarmLog_MainWindow:CreateRow(text, valueText)
 end
 
 
-function FarmLog_MainWindow:AddRow(text, valueText, quantity, color) 
+function FarmLog_MainWindow:AddRow(text, valueText, quantity, color, valueColor) 
 	self.visibleRows = self.visibleRows + 1
 	text = "|cff"..(color or "dddddd")..text.."|r"
+	if valueText and valueColor then 
+		valueText = "|cff"..valueColor..valueText.."|r"
+	end 
 	if quantity and quantity > 1 then 
 		text = text.." x"..tostring(quantity)
 	end 
@@ -583,7 +614,19 @@ function FarmLog_MainWindow:GetOnLogItemClick(itemLink)
 	end 
 end
 
-function FarmLog_MainWindow:AddSessionYieldItems() 
+function FarmLog_MainWindow:Refresh()
+	self.visibleRows = 0
+
+	-- calculate GPH
+	local sessionTime = FarmLog:GetCurrentSessionTime()
+	if sessionTime > 0 then 
+		-- debug("Calculating GPH")
+		goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
+	else 
+		goldPerHour = 0
+	end 
+	
+	-- add special rows
 	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then 
 		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
 	end 
@@ -606,15 +649,19 @@ function FarmLog_MainWindow:AddSessionYieldItems()
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 	end 
 
+	-- add missing mobNames like Herbalism / Mining / Fishing
 	local sessionKills = GetSessionVar("kills")
 	local sortedNames = SortByStringKey(sessionKills)
-	-- add missing mobNames like Herbalism / Mining / Fishing
 	local sessionDrops = GetSessionVar("drops")
 	for name, _ in pairs(sessionDrops) do 
 		if not sessionKills[name] then 
 			tinsert(sortedNames, 1, name)
 		end 
 	end 
+	-- add mob rows
+	local valueIndex = DROP_META_INDEX_VALUE
+	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
+
 	for _, mobName in ipairs(sortedNames) do	
 		local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
 		local section = mobName 
@@ -622,49 +669,56 @@ function FarmLog_MainWindow:AddSessionYieldItems()
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
 				local meta = sessionDrops[mobName][itemLink]
-				local count = meta[DROP_META_INDEX_COUNT];
-				local itemText = "    "..itemLink
-				local row = self:AddRow(itemText, GetShortCoinTextureString(meta[DROP_META_INDEX_VALUE]), count, nil)
+				local colorType = meta[DROP_META_INDEX_VALUE_TYPE] or "?"
+				local color = VALUE_TYPE_COLOR[colorType]
+				-- debug("|cff999999FarmLog_MainWindow:Refresh|r link |cffff9900"..itemLink.."|r color |cffff9900"..color.."|r")
+				local row = self:AddRow("    "..itemLink, GetShortCoinTextureString(meta[valueIndex]), meta[DROP_META_INDEX_COUNT], nil, color)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
 			end 
 		end		
 	end
-end 
 
-function FarmLog_MainWindow:Refresh()
-	self.visibleRows = 0
-	self:UpdateCalcs()
-	self:AddSessionYieldItems()
+	-- buttons state
 	if #self.rows > 0 then
 		FarmLog_MainWindow_ResetButton:Enable()
 	else
 		FarmLog_MainWindow_ResetButton:Disable()
 	end	
-	HideRowsBeyond(self.visibleRows + 1, self)
 	FarmLog_MainWindow_SessionsButton:Enable()
+
+	-- hide unused rows
+	HideRowsBeyond(self.visibleRows + 1, self)
 end
 
 function FarmLog_MainWindow:RecalcTotals()
+	debug("|cff999999FarmLog_MainWindow:RecalcTotals()")
 	local sessionVendor = 0
 	local sessionAH = 0
 	local sessionDrops = GetSessionVar("drops")
 	for mobName, drops in pairs(sessionDrops) do	
 		for itemLink, meta in pairs(drops) do 
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				local ahPrice = FLogGlobalVars.ahPrice[itemLink] or FLogGlobalVars.ahScan[itemLink]
+				local ahPrice = FLogGlobalVars.ahPrice[itemLink]
+				local priceType = VALUE_TYPE_MANUAL
+				if not ahPrice then 
+					ahPrice = FLogGlobalVars.ahScan[itemLink]
+					priceType = VALUE_TYPE_SCAN
+				end 
 				local count = meta[DROP_META_INDEX_COUNT]
 				if ahPrice and ahPrice > 0 then 
 					local value = ahPrice * count
 					sessionAH = sessionAH + value 
 					meta[DROP_META_INDEX_VALUE] = value
 					meta[DROP_META_INDEX_VALUE_EACH] = ahPrice					
+					meta[DROP_META_INDEX_VALUE_TYPE] = priceType
 				else 
 					local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 					sessionVendor = sessionVendor + (vendorPrice or 0) * count
 					meta[DROP_META_INDEX_VALUE] = (vendorPrice or 0) * count
 					meta[DROP_META_INDEX_VALUE_EACH] = (vendorPrice or 0)					
+					meta[DROP_META_INDEX_VALUE_TYPE] = VALUE_TYPE_VENDOR
 				end 
 			end 
 		end 
@@ -678,14 +732,6 @@ function FarmLog_MainWindow:UpdateTime()
 	FarmLog_MainWindow_Title_Text:SetText(self:GetTitleText());
 	if showingMinimapTip then 
 		FarmLog_MinimapButton:UpdateTooltipText()
-	end 
-end 
-
-function FarmLog_MainWindow:UpdateCalcs()
-	local sessionTime = FarmLog:GetCurrentSessionTime()
-	if sessionTime > 0 then 
-		-- debug("Calculating GPH")
-		goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
 	end 
 end 
 
@@ -967,10 +1013,19 @@ end
 
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	if (mobName and itemLink and count) then		
-		local ahValue = FLogGlobalVars.ahPrice[itemLink] or FLogGlobalVars.ahScan[itemLink]
-		local value = ahValue or vendorPrice or 0
-		if ahValue and ahValue > 0 then 
-			IncreaseSessionVar("ah", ahValue * count)
+		local ahPrice = FLogGlobalVars.ahPrice[itemLink]
+		local priceType = VALUE_TYPE_MANUAL
+		if not ahPrice then 
+			ahPrice = FLogGlobalVars.ahScan[itemLink]
+			priceType = VALUE_TYPE_SCAN
+		end 
+		local value = ahPrice or vendorPrice or 0
+		if not value then 
+			value = vendorPrice or 0
+			priceType = VALUE_TYPE_VENDOR
+		end 
+		if ahPrice and ahPrice > 0 then 
+			IncreaseSessionVar("ah", ahPrice * count)
 		else
 			IncreaseSessionVar("vendor", (vendorPrice or 0) * count)
 		end 
@@ -984,8 +1039,9 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 			meta[DROP_META_INDEX_COUNT] = meta[DROP_META_INDEX_COUNT] + count
 			meta[DROP_META_INDEX_VALUE] = value * count 
 			meta[DROP_META_INDEX_VALUE_EACH] = value				
+			meta[DROP_META_INDEX_VALUE_TYPE] = priceType				
 		else
-			sessionDrops[mobName][itemLink] = {count, value * count, value};
+			sessionDrops[mobName][itemLink] = {count, value * count, value, priceType};
 end
 	end
 end
@@ -1058,14 +1114,27 @@ end
 
 function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
+
 	FarmLog:Migrate()	
+
 	if not FLogVars.lockFrames then		
 		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
+
 	FarmLog_SessionsWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
 	FarmLog_SessionsWindow_Title_Text:SetText(L["All Sessions"])
+
+	-- init session
+	if FLogVars.enabled then 
+		self:ResumeSession()
+	else 
+		self:PauseSession()
+		FarmLog_MainWindow:RecalcTotals()
+	end 
+	self:RefreshMainWindow()
+
+	-- init window visibility
 	FarmLog_MainWindow:LoadPosition()
-	FarmLog:InitSession()
 	if FLogVars.frameRect.visible then 
 		FarmLog_MainWindow:Show()
 	else 
@@ -1149,11 +1218,14 @@ function FarmLog:AnalyzeAuctionHouseResults()
 				ahScanBadItems = ahScanBadItems + 1 -- removed items?? no idea why some are missing
 			else
 				ahScanItems = ahScanItems + 1
-				link = normalizeLink(link)
-				local price = FLogGlobalVars.ahScan[link]
-				-- debug(" scan -- link "..link.."  price "..tostring(price))
-				if not price or price > buyoutPrice then 
-					FLogGlobalVars.ahScan[link] = buyoutPrice 
+				-- ignore items without buyout
+				if buyoutPrice and buyoutPrice > 0 then 
+					link = normalizeLink(link)
+					local price = FLogGlobalVars.ahScan[link]
+					-- debug(" scan -- link "..link.."  buyoutPrice "..tostring(buyoutPrice))
+					if not price or price > buyoutPrice then 
+						FLogGlobalVars.ahScan[link] = buyoutPrice 
+					end 
 				end 
 			end  
 
@@ -1168,6 +1240,7 @@ function FarmLog:AnalyzeAuctionHouseResults()
 	end
 	ahScanning = false 
 	out('Finished scanning '..ahScanItems..' items, there were '..ahScanBadItems..' missing items.')
+	FarmLog_MainWindow:RecalcTotals()
 end
 
 
@@ -1213,7 +1286,7 @@ function FarmLog:OnEvent(event, ...)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
 		self:OnInstanceInfoEvent(...)
 	elseif event == "AUCTION_ITEM_LIST_UPDATE" then
-		self:OnAuctionUpdate() 	
+		self:OnAuctionUpdate()
 	end
 end
 

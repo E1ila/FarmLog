@@ -267,12 +267,22 @@
     </Backdrop>
     <Scripts>
       <OnLoad>
+        self:RegisterEvent("MODIFIER_STATE_CHANGED")
         self:SetMaxResize(600, GetScreenHeight() - 100);
    			self:SetBackdropColor (0, 0, 0, 0.6)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
         self:SetUserPlaced(true)
         self.rows = {}
       </OnLoad>
+      <OnEvent>
+        self:OnEvent(event, ...)
+      </OnEvent>
+      <OnEnter>
+        self:MouseEnter()
+      </OnEnter>
+      <OnLeave>
+        self:MouseLeave()
+      </OnLeave>
     </Scripts>
 
     <Frames>
