@@ -975,7 +975,7 @@ function FarmLog:OnLootOpened(autoLoot)
 	local mobName = nil 
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if not mobName and skillName then mobName = skillName end 
-	if not mobName then mobName = UnitName("target") end 
+	if not mobName and UnitIsEnemy("player", "target") then mobName = UnitName("target") end 
 	debug("|cff999999FarmLog:OnLootOpened|r mobName |cffff9900"..tostring(mobName))
 	lastMobLoot = {}
 	skillName = nil 
