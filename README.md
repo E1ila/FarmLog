@@ -53,6 +53,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.11
     * Writing `/fl w` without a session name will use the current minimap zone for a session name
     * Fixed some bugs occuring when deleting a session
+    * Buttons added to loot window: sort by name, sort by gold, show gray, common, uncommon, toggle mob name
 * 1.10
     * Main loot window doesn't hide bags
     * Main loot window visibility is saved, so if you close it, it will remain closed the next time you login
@@ -118,3 +119,5 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow ignoring certain drop from g/h calc
 * Ignore gray items in AH scan
 * Allow filtering loot window with buttons
+* Allow sub-sessions
+* Start instance session on first hit

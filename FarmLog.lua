@@ -2,69 +2,10 @@
 local VERSION_INT = 1.1101
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
-
-FLogGlobalVars = {
-	["debug"] = false,
-	["ahPrice"] = {},
-	["ahScan"] = {},
-	["ahMinQuality"] = 1,
-	["ignoredItems"] = {},
-	["autoSwitchInstances"] = true,
-	["resumeSessionOnSwitch"] = true,
-	["reportTo"] = {},
-	["ver"] = VERSION,
-}
-
-FLogVars = {
-	["enabled"] = false,
-	["sessions"] = {},
-	["currentSession"] = "default",
-	["inInstance"] = false,
-	["lockFrames"] = false,
-	["lockMinimapButton"] = false,
-	["frameRect"] = {
-		["width"] = 250,
-		["height"] = 200,
-		["point"] = "CENTER",
-		["x"] = 0,
-		["y"] = 0,
-		["visible"] = false,
-	},
-	["minimapButtonPosition"] = {
-		["point"] = "TOPRIGHT",
-		["x"] = -165,
-		["y"] = -127,
-	},
-	["enableMinimapButton"] = true, 
-	["itemTooltip"] = true,
-	["ver"] = VERSION,
-}
-
-local editName = "";
-local editItem = "";
-local editIdx = -1;
-local L = FarmLog_BuildLocalization()
-
-local mouseOnMainWindow = false 
-local lastShiftState = false
-local showingMinimapTip = false
-local sessionStartTime = nil 
-local lastMobLoot = {}
-local lastUnknownLoot = {}
-local lastUnknownLootTime = 0
-local skillName = nil 
-local skillNameTime = nil 
-local goldPerHour = 0
-local ahScanRequested = false
-local ahScanIndex = 0
-local ahScanItems = 0
-local ahScanBadItems = 0
-local ahScanning = false
-local ahScanResultsShown = 0
-local ahScanResultsTotal = 0
-local ahScanPauseTime = 0
-
+local FONT_NAME = "Fonts\\FRIZQT__.TTF"
 local MAX_AH_RETRY = 0
+
+local L = FarmLog_BuildLocalization()
 local UNKNOWN_MOBNAME = L["Unknown"]
 
 local DROP_META_INDEX_COUNT =  1
@@ -75,13 +16,16 @@ local DROP_META_INDEX_VALUE_TYPE =  4
 local VALUE_TYPE_MANUAL = 'M'
 local VALUE_TYPE_SCAN = 'S'
 local VALUE_TYPE_VENDOR = 'V'
-
 local VALUE_TYPE_COLOR = {
 	["M"] = "e1d592",
 	["S"] = "95d6e5",
 	["V"] = "fbf9ed",
 	["?"] = "f3c0c0",
 }
+
+local SORT_BY_TEXT = "A"
+local SORT_BY_GOLD = "$"
+local SORT_BY_KILLS = "K"
 
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
@@ -113,6 +57,68 @@ local SPELL_SKINNING = {
 	["8613"] = 1,
 }
 local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
+
+FLogGlobalVars = {
+	["debug"] = false,
+	["ahPrice"] = {},
+	["ahScan"] = {},
+	["ahMinQuality"] = 1,
+	["ignoredItems"] = {},
+	["autoSwitchInstances"] = true,
+	["resumeSessionOnSwitch"] = true,
+	["reportTo"] = {},
+	["dismissLootWindowOnEsc"] = false,
+	["sortBy"] = SORT_BY_TEXT,
+	["ver"] = VERSION,
+}
+
+FLogVars = {
+	["enabled"] = false,
+	["sessions"] = {},
+	["currentSession"] = "default",
+	["inInstance"] = false,
+	["lockFrames"] = false,
+	["lockMinimapButton"] = false,
+	["frameRect"] = {
+		["width"] = 250,
+		["height"] = 200,
+		["point"] = "CENTER",
+		["x"] = 0,
+		["y"] = 0,
+		["visible"] = false,
+	},
+	["minimapButtonPosition"] = {
+		["point"] = "TOPRIGHT",
+		["x"] = -165,
+		["y"] = -127,
+	},
+	["enableMinimapButton"] = true, 
+	["itemTooltip"] = true,
+	["ver"] = VERSION,
+}
+
+local editName = "";
+local editItem = "";
+local editIdx = -1;
+
+local mouseOnMainWindow = false 
+local lastShiftState = false
+local showingMinimapTip = false
+local sessionStartTime = nil 
+local lastMobLoot = {}
+local lastUnknownLoot = {}
+local lastUnknownLootTime = 0
+local skillName = nil 
+local skillNameTime = nil 
+local goldPerHour = 0
+local ahScanRequested = false
+local ahScanIndex = 0
+local ahScanItems = 0
+local ahScanBadItems = 0
+local ahScanning = false
+local ahScanResultsShown = 0
+local ahScanResultsTotal = 0
+local ahScanPauseTime = 0
 
 local function out(text)
 	print(" |cffff8800<|cffffbb00FarmLog|cffff8800>|r "..text)
@@ -152,22 +158,42 @@ local function GetShortCoinTextureString(money)
 	return GetCoinTextureString(money, 12)
 end 
 
-local function SortByStringKey(db)
-	local database = {};
-	for name, _ in pairs(db) do	
+local function SortMap(db, byValue)
+	local result = {}
+	for key, val in pairs(db) do	
 		local i = 1
-		local n = #database + 1;
+		local n = #result + 1
+		local element = key 
+		if byValue then element = value end 
 		while i <= n do			
 			if i == n then
-				tinsert(database, name);
-			elseif name <= database[i] then
-				tinsert(database, i, name);					
-				i = n;			
+				tinsert(result, element)
+			elseif element <= result[i] then
+				tinsert(result, i, element)			
+				i = n		
 			end
-			i = i + 1;
+			i = i + 1
 		end
 	end
-	return database;
+	return result
+end
+
+local function SortList(db)
+	local result = {}
+	for key, element in ipairs(db) do	
+		local i = 1
+		local n = #result + 1
+		while i <= n do			
+			if i == n then
+				tinsert(result, element)
+			elseif element <= result[i] then
+				tinsert(result, i, element)			
+				i = n		
+			end
+			i = i + 1
+		end
+	end
+	return result
 end
 
 local function SortByLinkKey(db)
@@ -459,7 +485,7 @@ local function CreateRow_Text(existingRow, text, container)
 		row.label = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.label:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.label:SetPoint("LEFT")
-		row.label:SetFont("Fonts\\FRIZQT__.TTF", 12)
+		row.label:SetFont(FONT_NAME, 12)
 	end 
 	row.label:SetText(text);
 	row.label:Show()
@@ -540,7 +566,7 @@ function FarmLog_MainWindow:CreateRow(text, valueText)
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.valueLabel:SetPoint("RIGHT", 0, 0)
-		row.valueLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+		row.valueLabel:SetFont(FONT_NAME, 12)
 	end 
 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
 	row.valueLabel:SetText(valueText or "");
@@ -647,7 +673,7 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(L["XP"], GetSessionVar("xp"), nil, TEXT_COLOR["xp"]) 
 	end 
 	for faction, rep in pairs(GetSessionVar("rep")) do 
-		self:AddRow(rep.." "..faction, L["reputation"], nil, TEXT_COLOR["rep"]) 
+		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
 	end 
 	for skillName, levels in pairs(GetSessionVar("skill")) do 
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
@@ -655,13 +681,17 @@ function FarmLog_MainWindow:Refresh()
 
 	-- add missing mobNames like Herbalism / Mining / Fishing
 	local sessionKills = GetSessionVar("kills")
-	local sortedNames = SortByStringKey(sessionKills)
+	local sortedNames = SortMap(sessionKills)
 	local sessionDrops = GetSessionVar("drops")
+	local needsResort = false
 	for name, _ in pairs(sessionDrops) do 
 		if not sessionKills[name] then 
 			tinsert(sortedNames, 1, name)
+			needsResort = true 
 		end 
 	end 
+	if needsResort then sortedNames = SortList(sortedNames) end 
+	
 	-- add mob rows
 	local valueIndex = DROP_META_INDEX_VALUE
 	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
@@ -749,9 +779,8 @@ function FarmLog_SessionsWindow:CreateRow(text, valueText)
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.valueLabel:SetPoint("RIGHT", 20, 0)
-		row.valueLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	end 
-	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
+		row.valueLabel:SetFont(FONT_NAME, 12)
+	end 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
 	row.valueLabel:SetText(valueText or "");
 	row.valueLabel:Show()
 
@@ -1122,12 +1151,27 @@ function FarmLog:OnAddonLoaded()
 
 	FarmLog:Migrate()	
 
+	if FLogGlobalVars.dismissLootWindowOnEsc then  
+		tinsert(UISpecialFrames, FarmLog_MainWindow:GetName())
+	end 
+
 	if not FLogVars.lockFrames then		
 		FarmLog_MainWindow_Title:RegisterForDrag("LeftButton");			
 	end
 
 	FarmLog_SessionsWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
 	FarmLog_SessionsWindow_Title_Text:SetText(L["All Sessions"])
+
+	if FLogGlobalVars.sortBy == SORT_BY_TEXT then 
+		FarmLog_MainWindow_Buttons_SortAbcButton.selected = true 
+	elseif FLogGlobalVars.sortBy == SORT_BY_GOLD then 
+		FarmLog_MainWindow_Buttons_SortGoldButton.selected = true 
+	elseif FLogGlobalVars.sortBy == SORT_BY_KILLS then 
+		FarmLog_MainWindow_Buttons_SortKillsButton.selected = true 
+	end 
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
 
 	-- init session
 	if FLogVars.enabled then 
@@ -1408,6 +1452,71 @@ function FarmLog_MainWindow_ResetButton:Clicked()
 	FarmLog_QuestionDialog:Show()
 end 
 
+function FarmLog_SetTextButtonBackdropColor(btn, hovering)
+	if hovering then 
+		if btn.selected then 
+			btn:SetBackdropColor(0.4, 0.4, 0.4, 0.4)
+			btn:SetBackdropBorderColor(1, 1, 1, 0.25)
+		else 
+			btn:SetBackdropColor(0.3, 0.3, 0.3, 0.2)
+			btn:SetBackdropBorderColor(1, 1, 1, 0.15)
+		end 
+	else 
+		if btn.selected then 
+			btn:SetBackdropColor(0.4, 0.4, 0.4, 0.3)
+			btn:SetBackdropBorderColor(1, 1, 1, 0.2)
+		else 
+			btn:SetBackdropColor(0, 0, 0, 0.4)
+			btn:SetBackdropBorderColor(1, 1, 1, 0.1)
+		end 
+	end 
+end 
+
+function FarmLog_MainWindow_Buttons_SortAbcButton:Clicked() 
+	if FarmLog_MainWindow_Buttons_SortGoldButton.selected then 
+		FarmLog_MainWindow_Buttons_SortGoldButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
+	end 
+	if FarmLog_MainWindow_Buttons_SortKillsButton.selected then 
+		FarmLog_MainWindow_Buttons_SortKillsButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortBy = SORT_BY_TEXT
+	FarmLog:RefreshMainWindow()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
+function FarmLog_MainWindow_Buttons_SortGoldButton:Clicked() 
+	if FarmLog_MainWindow_Buttons_SortAbcButton.selected then 
+		FarmLog_MainWindow_Buttons_SortAbcButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
+	end 
+	if FarmLog_MainWindow_Buttons_SortKillsButton.selected then 
+		FarmLog_MainWindow_Buttons_SortKillsButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortBy = SORT_BY_GOLD
+	FarmLog:RefreshMainWindow()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
+function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked() 
+	if FarmLog_MainWindow_Buttons_SortAbcButton.selected then 
+		FarmLog_MainWindow_Buttons_SortAbcButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
+	end 
+	if FarmLog_MainWindow_Buttons_SortGoldButton.selected then 
+		FarmLog_MainWindow_Buttons_SortGoldButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortBy = SORT_BY_KILLS
+	FarmLog:RefreshMainWindow()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
 function FarmLog_MinimapButton:ShowTooltip() 
 	GameTooltip:SetOwner(FarmLog_MinimapButton, "ANCHOR_BOTTOMLEFT")
 	self:UpdateTooltipText()
@@ -1426,6 +1535,8 @@ function FarmLog_MinimapButton:HideTooltip()
 	showingMinimapTip = false
 	GameTooltip:Hide()
 end 
+
+
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
