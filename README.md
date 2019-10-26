@@ -116,3 +116,5 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow automatic start session when choosing session name
 * Save GPH calc in session var
 * Allow ignoring certain drop from g/h calc
+* Ignore gray items in AH scan
+* Allow filtering loot window with buttons

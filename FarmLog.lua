@@ -7,6 +7,7 @@ FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
 	["ahScan"] = {},
+	["ahMinQuality"] = 1,
 	["ignoredItems"] = {},
 	["autoSwitchInstances"] = true,
 	["resumeSessionOnSwitch"] = true,
@@ -63,6 +64,7 @@ local ahScanResultsShown = 0
 local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 
+local MAX_AH_RETRY = 0
 local UNKNOWN_MOBNAME = L["Unknown"]
 
 local DROP_META_INDEX_COUNT =  1
@@ -296,7 +298,8 @@ function FarmLog:Migrate()
 		FLogVars.version = nil 
 	end 
 
-	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end 
+	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end
+	if not FLogGlobalVars.ahMinQuality then FLogGlobalVars.ahMinQuality = 1 end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -1187,7 +1190,7 @@ function FarmLog:ScanAuctionHouse()
 	out("|cffffee44Starting Auction House scan... ")
 	out("|cffaaaaaaThis may take around 30 seconds, depending on how many items are on the AH.")
 	ahScanRequested = true 
-	QueryAuctionItems("", nil, nil, nil, nil, nil, 0, false, nil, true)
+	QueryAuctionItems("", nil, nil, 0, false, FLogGlobalVars.ahMinQuality, true)
 end
 
 function FarmLog:OnAuctionUpdate()
@@ -1211,17 +1214,26 @@ end
 
 function FarmLog:AnalyzeAuctionHouseResults()
 	if ahScanResultsShown > 0 and ahScanIndex < ahScanResultsShown then
-		for x = ahScanIndex, ahScanResultsShown do
+		local x = ahScanIndex
+		local tries = 0
+		while x <= ahScanResultsShown do
 			local 	name, texture, count, quality, canUse, level, unknown1, minBid, minIncrement, buyoutPrice, bidAmount, 
 					highestBidder, unknown2, owner, unknown3, sold, unknown4 = GetAuctionItemInfo( "list", x )
 			local 	link = GetAuctionItemLink( "list", x )
 			
 			if name == nil or name == "" or link == nil then
-				ahScanBadItems = ahScanBadItems + 1 -- removed items?? no idea why some are missing
+				-- debug(" scan -- bad item " .. x .. " link " .. tostring(link) .. " name ".. tostring(name))
+				if tries < MAX_AH_RETRY then 
+					x = x - 1
+					tries = tries + 1
+				else 
+					ahScanBadItems = ahScanBadItems + 1 -- removed items?? no idea why some are missing
+				end 
 			else
+				tries = 0
 				ahScanItems = ahScanItems + 1
 				-- ignore items without buyout
-				if buyoutPrice and buyoutPrice > 0 then 
+				if buyoutPrice and buyoutPrice > 0 and quality >= FLogGlobalVars.ahMinQuality then 
 					link = normalizeLink(link)
 					local price = FLogGlobalVars.ahScan[link]
 					-- debug(" scan -- link "..link.."  buyoutPrice "..tostring(buyoutPrice))
@@ -1238,10 +1250,11 @@ function FarmLog:AnalyzeAuctionHouseResults()
 				out('Processed '..x..' / '..ahScanResultsShown..'...')
 				return
 			end
+			x = x + 1
 		end
 	end
 	ahScanning = false 
-	out('Finished scanning '..ahScanItems..' items, there were '..ahScanBadItems..' missing items.')
+	out('Scanned price for '..ahScanItems..' items.')
 	FarmLog_MainWindow:RecalcTotals()
 end
 
