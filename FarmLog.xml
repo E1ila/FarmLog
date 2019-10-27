@@ -305,9 +305,9 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <!-- <Button name="$parent_ToggleMobNameButton">
+      <Button name="$parent_ToggleMobNameButton">
         <Size>
-          <AbsDimension x="28" y="16"/>
+          <AbsDimension x="28" y="14"/>
         </Size>
         <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
           <EdgeSize>
@@ -320,7 +320,7 @@
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
-              <AbsDimension x="-2" y="-2"/>
+              <AbsDimension x="3" y="-4"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -335,6 +335,9 @@
           </Layer>
         </Layers>
         <Scripts>
+          <OnLoad>
+            self.label = FarmLog_MainWindow_ToggleMobNameButton_Text
+          </OnLoad>
           <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
           </OnEnter>
@@ -345,7 +348,7 @@
                 self:Clicked()
           </OnClick>
         </Scripts>
-      </Button>      $parent_ToggleMobNameButton -->
+      </Button>      <!--$parent_ToggleMobNameButton-->
 
       <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
         <Size>
@@ -430,7 +433,7 @@
         <Frames>
           <Button name="$parent_SortGoldButton">
             <Size>
-              <AbsDimension x="28" y="16"/>
+              <AbsDimension x="28" y="14"/>
             </Size>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>
@@ -443,7 +446,7 @@
             <Anchors>
               <Anchor point="TOPRIGHT">
                 <Offset>
-                  <AbsDimension x="-2" y="-2"/>
+                  <AbsDimension x="-2" y="-3"/>
                 </Offset>
               </Anchor>
             </Anchors>
@@ -458,6 +461,9 @@
               </Layer>
             </Layers>
             <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_SortGoldButton_Text
+              </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
               </OnEnter>
@@ -472,7 +478,7 @@
 
           <Button name="$parent_SortKillsButton">
             <Size>
-              <AbsDimension x="28" y="16"/>
+              <AbsDimension x="28" y="14"/>
             </Size>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>
@@ -500,6 +506,9 @@
               </Layer>
             </Layers>
             <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_SortKillsButton_Text
+              </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
               </OnEnter>
@@ -514,7 +523,7 @@
 
           <Button name="$parent_SortAbcButton">
             <Size>
-              <AbsDimension x="28" y="16"/>
+              <AbsDimension x="28" y="14"/>
             </Size>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>
@@ -542,6 +551,9 @@
               </Layer>
             </Layers>
             <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_SortAbcButton_Text
+              </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
               </OnEnter>
@@ -659,7 +671,7 @@
 
   <Frame name="FarmLog_SessionsWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true">
     <Size>
-      <AbsDimension x="160" y="100"/>
+      <AbsDimension x="200" y="200"/>
     </Size>
     <Anchors>
       <Anchor point="CENTER" />

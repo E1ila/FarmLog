@@ -1,4 +1,4 @@
-﻿local VERSION = "1.11.3"
+﻿local VERSION = "1.12"
 local VERSION_INT = 1.1103
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -284,7 +284,11 @@ function FarmLog:Migrate()
 					if fixedItems[fixedLink] then 
 						fixedItems[fixedLink] = fixedItems[fixedLink][DROP_META_INDEX_COUNT] + meta[1][DROP_META_INDEX_COUNT]
 					else 
-						fixedItems[fixedLink] = {meta[1][DROP_META_INDEX_COUNT]}
+						if type(meta[1]) == "table" then 
+							fixedItems[fixedLink] = {meta[1][DROP_META_INDEX_COUNT]}
+						else 
+							fixedItems[fixedLink] = meta -- nothing to fix??
+						end 
 					end 
 				end 
 				session.drops[mobName] = fixedItems
@@ -292,6 +296,9 @@ function FarmLog:Migrate()
 		end 
 		FLogVars.version = nil 
 	end 
+
+	if not FLogVars.ver then FLogVars.ver = 1.0802 end 
+	if not FLogGlobalVars.ver then FLogGlobalVars.ver = 1.0802 end 
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end
 	if not FLogGlobalVars.ahMinQuality then FLogGlobalVars.ahMinQuality = 1 end 
@@ -1185,9 +1192,13 @@ function FarmLog:OnAddonLoaded()
 	elseif FLogGlobalVars.sortBy == SORT_BY_KILLS then 
 		FarmLog_MainWindow_Buttons_SortKillsButton.selected = true 
 	end 
+	if FLogGlobalVars.groupByMobName then 
+		FarmLog_MainWindow_ToggleMobNameButton.selected = true 
+	end 
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ToggleMobNameButton, false)
 
 	-- init session
 	if FLogVars.enabled then 
@@ -1479,17 +1490,21 @@ function FarmLog_SetTextButtonBackdropColor(btn, hovering)
 		if btn.selected then 
 			btn:SetBackdropColor(0.4, 0.4, 0.4, 0.4)
 			btn:SetBackdropBorderColor(1, 1, 1, 0.25)
+			btn.label:SetTextColor(1, 1, 1, 1)
 		else 
 			btn:SetBackdropColor(0.3, 0.3, 0.3, 0.2)
 			btn:SetBackdropBorderColor(1, 1, 1, 0.15)
+			btn.label:SetTextColor(0.8, 0.8, 0.8, 1)
 		end 
 	else 
 		if btn.selected then 
 			btn:SetBackdropColor(0.4, 0.4, 0.4, 0.3)
 			btn:SetBackdropBorderColor(1, 1, 1, 0.2)
+			btn.label:SetTextColor(1, 1, 1, 1)
 		else 
 			btn:SetBackdropColor(0, 0, 0, 0.4)
 			btn:SetBackdropBorderColor(1, 1, 1, 0.1)
+			btn.label:SetTextColor(0.8, 0.8, 0.8, 1)
 		end 
 	end 
 end 
@@ -1539,12 +1554,12 @@ function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
--- function FarmLog_MainWindow_ToggleMobNameButton:Clicked() 
--- 	self.selected = not self.selected
--- 	FLogGlobalVars.groupByMobName = self.selected
--- 	FarmLog:RefreshMainWindow()
--- 	FarmLog_SetTextButtonBackdropColor(self, false)
--- end 
+function FarmLog_MainWindow_ToggleMobNameButton:Clicked() 
+	self.selected = not self.selected
+	FLogGlobalVars.groupByMobName = self.selected
+	FarmLog:RefreshMainWindow()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
 
 -- tooltip
 
