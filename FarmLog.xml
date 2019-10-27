@@ -584,7 +584,7 @@
         <Scripts>
           <OnLoad>
             self:SetHorizontalScroll(0)
-            self:SetVerticalScroll(20)
+            self:SetVerticalScroll(0)
             FarmLog_MainWindow.scroll = self
           </OnLoad>
         </Scripts>
