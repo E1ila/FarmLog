@@ -677,50 +677,77 @@ function FarmLog_MainWindow:Refresh()
 	end 
 
 	local sessionDrops = GetSessionVar("drops")
-	local sessionKills = GetSessionVar("kills")
-	local sortedNames
-	if FLogGlobalVars.sortBy == SORT_BY_GOLD then 
-		local mobGold = {}
-		for mobName, _ in pairs(sessionKills) do 
-			local mobDrops = sessionDrops[mobName]
-			local gold = 0
-			if mobDrops then 
-				for _, meta in pairs(mobDrops) do 
-					gold = gold + (meta[DROP_META_INDEX_VALUE] or 0)
-				end 
-			end 
-			mobGold[mobName] = gold 
-		end 
-		sortedNames = SortMapKeys(mobGold, true, true)
-	else 
-		local sortByKills = FLogGlobalVars.sortBy == SORT_BY_KILLS
-		sortedNames = SortMapKeys(sessionKills, sortByKills, sortByKills)
-	end 
-
-	-- add mob rows
-	local valueIndex = DROP_META_INDEX_VALUE
-	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
-	local sortByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
+	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
 	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
 	local extractLink = function (link) return GetItemInfo(link) or link end  
+	local valueIndex = DROP_META_INDEX_VALUE
+	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
 
-	for _, mobName in ipairs(sortedNames) do	
-		local sortedItemLinks = SortMapKeys(sessionDrops[mobName] or {}, not sortByText, not sortByText, extractLink, extractGold)
-		local section = mobName 
-		self:AddRow(section, nil, sessionKills[mobName], TEXT_COLOR["mob"])
+	local addDropRows = function (dropMap, indent) 
+		local sortedItemLinks = SortMapKeys(dropMap, not sortLinksByText, not sortLinksByText, extractLink, extractGold)
 		for _, itemLink in ipairs(sortedItemLinks) do			
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				local meta = sessionDrops[mobName][itemLink]
+				local meta = dropMap[itemLink]
 				local colorType = meta[DROP_META_INDEX_VALUE_TYPE] or "?"
 				local color = VALUE_TYPE_COLOR[colorType]
 				-- debug("|cff999999FarmLog_MainWindow:Refresh|r link |cffff9900"..itemLink.."|r color |cffff9900"..color.."|r")
-				local row = self:AddRow("    "..itemLink, GetShortCoinTextureString(meta[valueIndex]), meta[DROP_META_INDEX_COUNT], nil, color)
+				local text = itemLink
+				if indent then text = "    "..text end 
+				local row = self:AddRow(text, GetShortCoinTextureString(meta[valueIndex]), meta[DROP_META_INDEX_COUNT], nil, color)
 				SetItemTooltip(row, itemLink)
 				SetItemActions(row, self:GetOnLogItemClick(itemLink))
 				row.root:Show();
 			end 
 		end		
-	end
+	end 
+
+	if FLogGlobalVars.groupByMobName then 
+		local sessionKills = GetSessionVar("kills")
+		local sortedNames
+		if FLogGlobalVars.sortBy == SORT_BY_GOLD then 
+			local mobGold = {}
+			for mobName, _ in pairs(sessionKills) do 
+				local mobDrops = sessionDrops[mobName]
+				local gold = 0
+				if mobDrops then 
+					for _, meta in pairs(mobDrops) do 
+						gold = gold + (meta[DROP_META_INDEX_VALUE] or 0)
+					end 
+				end 
+				mobGold[mobName] = gold 
+			end 
+			sortedNames = SortMapKeys(mobGold, true, true)
+		else 
+			local sortByKills = FLogGlobalVars.sortBy == SORT_BY_KILLS
+			sortedNames = SortMapKeys(sessionKills, sortByKills, sortByKills)
+		end 
+
+		-- add mob rows
+
+		for _, mobName in ipairs(sortedNames) do	
+			self:AddRow(mobName, nil, sessionKills[mobName], TEXT_COLOR["mob"])
+			addDropRows(sessionDrops[mobName] or {}, true)
+		end
+	else 
+		local mergedDrops = {}
+		for _, drops in pairs(sessionDrops) do	
+			for link, meta in pairs(drops) do 
+				local mergedMeta = mergedDrops[link]
+				if not mergedMeta then 
+					mergedDrops[link] = { 
+						meta[DROP_META_INDEX_COUNT], 
+						meta[DROP_META_INDEX_VALUE], 
+						meta[DROP_META_INDEX_VALUE_EACH], 
+						meta[DROP_META_INDEX_VALUE_TYPE] 
+					} 
+				else 
+					mergedMeta[DROP_META_INDEX_COUNT] = mergedMeta[DROP_META_INDEX_COUNT] + meta[DROP_META_INDEX_COUNT]
+					mergedMeta[DROP_META_INDEX_VALUE] = mergedMeta[DROP_META_INDEX_VALUE] + meta[DROP_META_INDEX_VALUE]
+				end 
+			end
+		end 
+		addDropRows(mergedDrops)
+	end 
 
 	-- buttons state
 	if #self.rows > 0 then
@@ -1192,9 +1219,8 @@ function FarmLog:OnAddonLoaded()
 	elseif FLogGlobalVars.sortBy == SORT_BY_KILLS then 
 		FarmLog_MainWindow_Buttons_SortKillsButton.selected = true 
 	end 
-	if FLogGlobalVars.groupByMobName then 
-		FarmLog_MainWindow_ToggleMobNameButton.selected = true 
-	end 
+	FarmLog_MainWindow_ToggleMobNameButton.selected = FLogGlobalVars.groupByMobName
+	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
@@ -1486,7 +1512,11 @@ end
 -- filtering buttons
 
 function FarmLog_SetTextButtonBackdropColor(btn, hovering)
-	if hovering then 
+	if btn.disabled then 
+		btn:SetBackdropColor(0.3, 0.3, 0.3, 0.1)
+		btn:SetBackdropBorderColor(1, 1, 1, 0.08)
+		btn.label:SetTextColor(0.8, 0.8, 0.8, 0.5)
+	elseif hovering then 
 		if btn.selected then 
 			btn:SetBackdropColor(0.4, 0.4, 0.4, 0.4)
 			btn:SetBackdropBorderColor(1, 1, 1, 0.25)
@@ -1510,6 +1540,7 @@ function FarmLog_SetTextButtonBackdropColor(btn, hovering)
 end 
 
 function FarmLog_MainWindow_Buttons_SortAbcButton:Clicked() 
+	if self.disabled then return end 
 	if FarmLog_MainWindow_Buttons_SortGoldButton.selected then 
 		FarmLog_MainWindow_Buttons_SortGoldButton.selected = false 
 		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
@@ -1525,6 +1556,7 @@ function FarmLog_MainWindow_Buttons_SortAbcButton:Clicked()
 end 
 
 function FarmLog_MainWindow_Buttons_SortGoldButton:Clicked() 
+	if self.disabled then return end 
 	if FarmLog_MainWindow_Buttons_SortAbcButton.selected then 
 		FarmLog_MainWindow_Buttons_SortAbcButton.selected = false 
 		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
@@ -1540,6 +1572,7 @@ function FarmLog_MainWindow_Buttons_SortGoldButton:Clicked()
 end 
 
 function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked() 
+	if self.disabled then return end 
 	if FarmLog_MainWindow_Buttons_SortAbcButton.selected then 
 		FarmLog_MainWindow_Buttons_SortAbcButton.selected = false 
 		FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
@@ -1555,10 +1588,17 @@ function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked()
 end 
 
 function FarmLog_MainWindow_ToggleMobNameButton:Clicked() 
+	if self.disabled then return end 
 	self.selected = not self.selected
 	FLogGlobalVars.groupByMobName = self.selected
-	FarmLog:RefreshMainWindow()
+	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not self.selected
+	if not self.selected and FarmLog_MainWindow_Buttons_SortKillsButton.selected then 
+		FarmLog_MainWindow_Buttons_SortAbcButton:Clicked()
+	else 
+		FarmLog:RefreshMainWindow()
+	end 
 	FarmLog_SetTextButtonBackdropColor(self, false)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
 end 
 
 -- tooltip
