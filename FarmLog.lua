@@ -158,23 +158,29 @@ local function GetShortCoinTextureString(money)
 	return GetCoinTextureString(money, 12)
 end 
 
-local function SortMap(db, byValue)
-	local result = {}
+function SortMapKeys(db, byValue, descending)
+	local sorted = {}
+	local compareIndex = 1
+	if byValue then compareIndex = 2 end 
 	for key, val in pairs(db) do	
+		local element = {key, val}
 		local i = 1
-		local n = #result + 1
-		local element = key 
-		if byValue then element = value end 
+		local n = #sorted + 1
 		while i <= n do			
 			if i == n then
-				tinsert(result, element)
-			elseif element <= result[i] then
-				tinsert(result, i, element)			
+				tinsert(sorted, element)
+			elseif not descending and element[compareIndex] <= sorted[i][compareIndex] then
+				tinsert(sorted, i, element)			
+				i = n		
+			elseif descending and element[compareIndex] >= sorted[i][compareIndex] then
+				tinsert(sorted, i, element)			
 				i = n		
 			end
 			i = i + 1
 		end
 	end
+	local result = {}
+	for _, element in ipairs(sorted) do tinsert(result, element[1]) end 
 	return result
 end
 
@@ -186,9 +192,11 @@ local function SortList(db)
 		while i <= n do			
 			if i == n then
 				tinsert(result, element)
-			elseif element <= result[i] then
-				tinsert(result, i, element)			
-				i = n		
+			else
+				if element <= result[i] then
+					tinsert(result, i, element)			
+					i = n		
+				end 
 			end
 			i = i + 1
 		end
@@ -679,18 +687,35 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 	end 
 
-	-- add missing mobNames like Herbalism / Mining / Fishing
 	local sessionKills = GetSessionVar("kills")
-	local sortedNames = SortMap(sessionKills)
 	local sessionDrops = GetSessionVar("drops")
-	local needsResort = false
-	for name, _ in pairs(sessionDrops) do 
-		if not sessionKills[name] then 
-			tinsert(sortedNames, 1, name)
-			needsResort = true 
+	local sortedNames
+	if FLogGlobalVars.sortBy == SORT_BY_GOLD then 
+		local mobGold = {}
+		for mobName, _ in pairs(sessionKills) do 
+			local mobDrops = sessionDrops[mobName]
+			local gold = 0
+			if mobDrops then 
+				for _, meta in pairs(mobDrops) do 
+					gold = gold + (meta[DROP_META_INDEX_VALUE] or 0)
+				end 
+			end 
+			mobGold[mobName] = gold 
 		end 
+		sortedNames = SortMapKeys(mobGold, true, true)
+	else 
+		sortedNames = SortMapKeys(sessionKills, FLogGlobalVars.sortBy == SORT_BY_KILLS, FLogGlobalVars.sortBy == SORT_BY_KILLS)
 	end 
-	if needsResort then sortedNames = SortList(sortedNames) end 
+
+	-- add missing mobNames like Herbalism / Mining / Fishing
+	-- local needsResort = false
+	-- for name, _ in pairs(sessionDrops) do 
+	-- 	if not sessionKills[name] then 
+	-- 		tinsert(sortedNames, 1, name)
+	-- 		needsResort = true 
+	-- 	end 
+	-- end 
+	-- if needsResort then sortedNames = SortList(sortedNames) end 
 	
 	-- add mob rows
 	local valueIndex = DROP_META_INDEX_VALUE
@@ -975,7 +1000,13 @@ function FarmLog:OnLootOpened(autoLoot)
 	local mobName = nil 
 	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
 	if not mobName and skillName then mobName = skillName end 
-	if not mobName and UnitIsEnemy("player", "target") then mobName = UnitName("target") end 
+	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") then mobName = UnitName("target") end 
+	
+	local sessionDrops = GetSessionVar("drops")
+	if mobName and not sessionDrops[mobName] then		
+		sessionDrops[mobName] = {}
+	end 
+
 	debug("|cff999999FarmLog:OnLootOpened|r mobName |cffff9900"..tostring(mobName))
 	lastMobLoot = {}
 	skillName = nil 
