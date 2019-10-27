@@ -1,5 +1,5 @@
-﻿local VERSION = "1.11.2"
-local VERSION_INT = 1.1102
+﻿local VERSION = "1.11.3"
+local VERSION_INT = 1.1103
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -68,6 +68,7 @@ FLogGlobalVars = {
 	["resumeSessionOnSwitch"] = true,
 	["reportTo"] = {},
 	["dismissLootWindowOnEsc"] = false,
+	["groupByMobName"] = true,
 	["sortBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
 }
@@ -158,12 +159,18 @@ local function GetShortCoinTextureString(money)
 	return GetCoinTextureString(money, 12)
 end 
 
-function SortMapKeys(db, byValue, descending)
+function SortMapKeys(db, byValue, descending, keyExtract, valueExtract)
 	local sorted = {}
-	local compareIndex = 1
-	if byValue then compareIndex = 2 end 
-	for key, val in pairs(db) do	
-		local element = {key, val}
+	local compareIndex = 2
+	if byValue then compareIndex = 3 end 
+	for key, val in pairs(db) do
+		-- index 2 and 3 may be replaced with a sort values, but we will return the key
+		local element = {key, key, val}
+		if byValue and valueExtract then 
+			element[3] = valueExtract(val)
+		elseif not byValue and keyExtract then 
+			element[2] = keyExtract(key)
+		end  
 		local i = 1
 		local n = #sorted + 1
 		while i <= n do			
@@ -182,52 +189,6 @@ function SortMapKeys(db, byValue, descending)
 	local result = {}
 	for _, element in ipairs(sorted) do tinsert(result, element[1]) end 
 	return result
-end
-
-local function SortList(db)
-	local result = {}
-	for key, element in ipairs(db) do	
-		local i = 1
-		local n = #result + 1
-		while i <= n do			
-			if i == n then
-				tinsert(result, element)
-			else
-				if element <= result[i] then
-					tinsert(result, i, element)			
-					i = n		
-				end 
-			end
-			i = i + 1
-		end
-	end
-	return result
-end
-
-local function SortByLinkKey(db)
-	local database = {};
-	for itemLink, _ in pairs(db) do	
-		local name1, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(itemLink);
-		if name1 then
-			local i = 1
-			local n = #database + 1;
-			while i <= n do			
-				if i == n then
-					tinsert(database, itemLink);
-				else
-					local name2, _, _, _, _, _, _, _, _, _, _ = GetItemInfo(database[i]);					
-					if name2 then
-						if name1 <= name2 then
-							tinsert(database, i, itemLink);					
-							i = n;
-						end
-					end
-				end
-				i = i + 1;
-			end
-		end
-	end
-	return database;
 end
 
 local function normalizeLink(link)
@@ -350,6 +311,10 @@ function FarmLog:Migrate()
 				end 
 			end 
 		end 
+	end 
+
+	if FLogVars.ver < 1.1103 then 
+		FLogGlobalVars.groupByMobName = true 
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -721,15 +686,19 @@ function FarmLog_MainWindow:Refresh()
 		end 
 		sortedNames = SortMapKeys(mobGold, true, true)
 	else 
-		sortedNames = SortMapKeys(sessionKills, FLogGlobalVars.sortBy == SORT_BY_KILLS, FLogGlobalVars.sortBy == SORT_BY_KILLS)
+		local sortByKills = FLogGlobalVars.sortBy == SORT_BY_KILLS
+		sortedNames = SortMapKeys(sessionKills, sortByKills, sortByKills)
 	end 
 
 	-- add mob rows
 	local valueIndex = DROP_META_INDEX_VALUE
 	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
+	local sortByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
+	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
+	local extractLink = function (link) return GetItemInfo(link) or link end  
 
 	for _, mobName in ipairs(sortedNames) do	
-		local sortedItemLinks = SortByLinkKey(sessionDrops[mobName] or {});	
+		local sortedItemLinks = SortMapKeys(sessionDrops[mobName] or {}, not sortByText, not sortByText, extractLink, extractGold)
 		local section = mobName 
 		self:AddRow(section, nil, sessionKills[mobName], TEXT_COLOR["mob"])
 		for _, itemLink in ipairs(sortedItemLinks) do			
@@ -1417,6 +1386,8 @@ end
 
 -- UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-- dragging & positioning
+
 function FarmLog_MainWindow:LoadPosition()
 	self:ClearAllPoints()
 	self:SetWidth(FLogVars.frameRect.width)
@@ -1480,6 +1451,8 @@ function FarmLog_MainWindow:SavePosition()
 	FLogVars.frameRect.height = FarmLog_MainWindow:GetHeight()
 end 
 
+-- big action buttons
+
 function FarmLog_MainWindow_SessionsButton:Clicked() 
 	if FarmLog_SessionsWindow:IsShown() then 
 		FarmLog_SessionsWindow:Hide()
@@ -1498,6 +1471,8 @@ function FarmLog_MainWindow_ResetButton:Clicked()
 	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
 	FarmLog_QuestionDialog:Show()
 end 
+
+-- filtering buttons
 
 function FarmLog_SetTextButtonBackdropColor(btn, hovering)
 	if hovering then 
@@ -1563,6 +1538,15 @@ function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked()
 	FarmLog:RefreshMainWindow()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
+
+-- function FarmLog_MainWindow_ToggleMobNameButton:Clicked() 
+-- 	self.selected = not self.selected
+-- 	FLogGlobalVars.groupByMobName = self.selected
+-- 	FarmLog:RefreshMainWindow()
+-- 	FarmLog_SetTextButtonBackdropColor(self, false)
+-- end 
+
+-- tooltip
 
 function FarmLog_MinimapButton:ShowTooltip() 
 	GameTooltip:SetOwner(FarmLog_MinimapButton, "ANCHOR_BOTTOMLEFT")

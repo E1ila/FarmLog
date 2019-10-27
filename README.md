@@ -50,10 +50,14 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.12
+    * show gray, common, uncommon, toggle mob name
+* 1.11.3
+    * Fixed loot window sorting bug
 * 1.11
     * Writing `/fl w` without a session name will use the current minimap zone for a session name
     * Fixed some bugs occuring when deleting a session
-    * Buttons added to loot window: sort by name/gold/kills, show gray, common, uncommon, toggle mob name
+    * Buttons added to loot window: sort by name/gold/kills
 * 1.10
     * Main loot window doesn't hide bags
     * Main loot window visibility is saved, so if you close it, it will remain closed the next time you login

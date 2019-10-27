@@ -42,53 +42,6 @@
     </Scripts>
   </Frame>
 
-  <!-- MainWindow Button Template -->
-
-  <Button name="FarmLog_TextButton" hidden="true" virtual="true">
-    <Size>
-      <AbsDimension x="24" y="16"/>
-    </Size>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
-    <Anchors>
-      <Anchor point="TOPRIGHT">
-        <Offset>
-          <AbsDimension x="-2" y="-2"/>
-        </Offset>
-      </Anchor>
-    </Anchors>
-    <Layers>
-      <Layer level="ARTWORK">
-        <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Ab">
-          <Color r="1" g="1" b="1"/>
-          <Anchors>
-            <Anchor point="CENTER" />
-          </Anchors>
-        </FontString>
-      </Layer>
-    </Layers>
-    <Scripts>
-      <OnLoad>
-        FarmLog_SetTextButtonBackdropColor(self, false)
-      </OnLoad>
-      <OnEnter>
-        FarmLog_SetTextButtonBackdropColor(self, true)
-      </OnEnter>
-      <OnLeave>
-        FarmLog_SetTextButtonBackdropColor(self, false)
-      </OnLeave>
-      <OnClick>
-        self:Clicked()
-      </OnClick>
-    </Scripts>
-  </Button>  <!--$parent_SortAbcButton-->
-
   <!-- Minimap Button -->
 
   <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
@@ -351,6 +304,48 @@
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
+
+      <!-- <Button name="$parent_ToggleMobNameButton">
+        <Size>
+          <AbsDimension x="28" y="16"/>
+        </Size>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Anchors>
+          <Anchor point="TOPLEFT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Mobs">
+              <Color r="1" g="1" b="1"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+          </OnEnter>
+          <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+          </OnLeave>
+          <OnClick>
+                self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>      $parent_ToggleMobNameButton -->
 
       <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
         <Size>
