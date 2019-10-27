@@ -1,5 +1,5 @@
-﻿local VERSION = "1.12"
-local VERSION_INT = 1.1103
+﻿local VERSION = "1.11"
+local VERSION_INT = 1.1104
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"

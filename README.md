@@ -50,7 +50,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
-* 1.12
+* 1.11.4
+    * You can now disable groupping by mob name
     * show gray, common, uncommon, toggle mob name
 * 1.11.3
     * Fixed loot window sorting bug
