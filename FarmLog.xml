@@ -299,7 +299,7 @@
 
   <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
     <Size>
-      <AbsDimension x="160" y="100"/>
+      <AbsDimension x="250" y="250"/>
     </Size>
     <ResizeBounds>
       <minResize x="200" y="200" />

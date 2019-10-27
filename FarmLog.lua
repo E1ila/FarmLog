@@ -1,5 +1,5 @@
-﻿local VERSION = "1.11"
-local VERSION_INT = 1.1101
+﻿local VERSION = "1.11.2"
+local VERSION_INT = 1.1102
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -334,6 +334,23 @@ function FarmLog:Migrate()
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end
 	if not FLogGlobalVars.ahMinQuality then FLogGlobalVars.ahMinQuality = 1 end 
+
+	if FLogVars.ver < 1.1102 then 
+		-- make sure each killed mob has a drop table, even an empty one
+		for sessionName, session in pairs(FLogVars.sessions) do 
+			for mobName, _ in pairs(session.kills) do 
+				if not session.drops[mobName] then 
+					session.drops[mobName] = {}
+				end 
+			end 
+			-- make sure each drop source has a kill count - herbalism, mining, unknown
+			for mobName, _ in pairs(session.drops) do 
+				if not session.kills[mobName] then 
+					session.kills[mobName] = 1
+				end 
+			end 
+		end 
+	end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -687,8 +704,8 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 	end 
 
-	local sessionKills = GetSessionVar("kills")
 	local sessionDrops = GetSessionVar("drops")
+	local sessionKills = GetSessionVar("kills")
 	local sortedNames
 	if FLogGlobalVars.sortBy == SORT_BY_GOLD then 
 		local mobGold = {}
@@ -707,16 +724,6 @@ function FarmLog_MainWindow:Refresh()
 		sortedNames = SortMapKeys(sessionKills, FLogGlobalVars.sortBy == SORT_BY_KILLS, FLogGlobalVars.sortBy == SORT_BY_KILLS)
 	end 
 
-	-- add missing mobNames like Herbalism / Mining / Fishing
-	-- local needsResort = false
-	-- for name, _ in pairs(sessionDrops) do 
-	-- 	if not sessionKills[name] then 
-	-- 		tinsert(sortedNames, 1, name)
-	-- 		needsResort = true 
-	-- 	end 
-	-- end 
-	-- if needsResort then sortedNames = SortList(sortedNames) end 
-	
 	-- add mob rows
 	local valueIndex = DROP_META_INDEX_VALUE
 	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
@@ -986,8 +993,17 @@ function FarmLog:OnCombatLogEvent()
 	local eventName = eventInfo[2]
 	if eventName == "PARTY_KILL" then 
 		local mobName = eventInfo[9]
+
+		-- count mob kill
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
+
+		-- make sure this mob has a drops entry, even if it won't drop anything
+		local sessionDrops = GetSessionVar("drops")
+		if not sessionDrops[mobName] then 
+			sessionDrops[mobName] = {}
+		end 
+
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
 		self:RefreshMainWindow()
 	end 
@@ -998,15 +1014,14 @@ end
 function FarmLog:OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
 	local mobName = nil 
-	if not mobName and IsFishingLoot() then mobName = L["Fishing"] end 
-	if not mobName and skillName then mobName = skillName end 
+	if not mobName and skillName then 
+		mobName = skillName 
+		-- count gathering skill act in kills table
+		local sessionKills = GetSessionVar("kills")
+		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
+	end 
 	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") then mobName = UnitName("target") end 
 	
-	local sessionDrops = GetSessionVar("drops")
-	if mobName and not sessionDrops[mobName] then		
-		sessionDrops[mobName] = {}
-	end 
-
 	debug("|cff999999FarmLog:OnLootOpened|r mobName |cffff9900"..tostring(mobName))
 	lastMobLoot = {}
 	skillName = nil 
@@ -1143,6 +1158,7 @@ function FarmLog:OnLootEvent(text)
 		if now - lastUnknownLootTime > LOOT_AUTOFIX_TIMEOUT_SEC then lastUnknownLoot = {} end 
 		lastUnknownLootTime = now 
 		lastUnknownLoot[itemLink] = true 
+		GetSessionVar("kills")[UNKNOWN_MOBNAME] = 1
 	end 
 
 	itemLink = normalizeLink(itemLink) -- removed player level from link
