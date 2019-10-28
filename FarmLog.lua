@@ -1,5 +1,5 @@
-﻿local VERSION = "1.11.5"
-local VERSION_INT = 1.1105
+﻿local VERSION = "1.11.6"
+local VERSION_INT = 1.1106
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -121,6 +121,7 @@ local ahScanning = false
 local ahScanResultsShown = 0
 local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
+local sessionSearchResult = nil 
 
 local function out(text)
 	print(" |cffff8800<|cffffbb00FarmLog|cffff8800>|r "..text)
@@ -160,32 +161,34 @@ local function GetShortCoinTextureString(money)
 	return GetCoinTextureString(money, 12)
 end 
 
-function SortMapKeys(db, byValue, descending, keyExtract, valueExtract)
+function SortMapKeys(db, byValue, descending, keyExtract, valueExtract, searchText)
 	local sorted = {}
 	local compareIndex = 2
 	if byValue then compareIndex = 3 end 
 	for key, val in pairs(db) do
-		-- index 2 and 3 may be replaced with a sort values, but we will return the key
-		local element = {key, key, val}
-		if byValue and valueExtract then 
-			element[3] = valueExtract(val)
-		elseif not byValue and keyExtract then 
-			element[2] = keyExtract(key)
-		end  
-		local i = 1
-		local n = #sorted + 1
-		while i <= n do			
-			if i == n then
-				tinsert(sorted, element)
-			elseif not descending and element[compareIndex] <= sorted[i][compareIndex] then
-				tinsert(sorted, i, element)			
-				i = n		
-			elseif descending and element[compareIndex] >= sorted[i][compareIndex] then
-				tinsert(sorted, i, element)			
-				i = n		
+		if not searchText or #searchText == 0 or strfind(key:upper(), searchText:upper()) then 
+			-- index 2 and 3 may be replaced with a sort values, but we will return the key
+			local element = {key, key, val}
+			if byValue and valueExtract then 
+				element[3] = valueExtract(val)
+			elseif not byValue and keyExtract then 
+				element[2] = keyExtract(key)
+			end  
+			local i = 1
+			local n = #sorted + 1
+			while i <= n do			
+				if i == n then
+					tinsert(sorted, element)
+				elseif not descending and element[compareIndex] <= sorted[i][compareIndex] then
+					tinsert(sorted, i, element)			
+					i = n		
+				elseif descending and element[compareIndex] >= sorted[i][compareIndex] then
+					tinsert(sorted, i, element)			
+					i = n		
+				end
+				i = i + 1
 			end
-			i = i + 1
-		end
+		end 
 	end
 	local result = {}
 	for _, element in ipairs(sorted) do tinsert(result, element[1]) end 
@@ -840,17 +843,20 @@ end
 function FarmLog_SessionsWindow:Refresh()
 	self.visibleRows = 0
 
+	local searchText = FarmLog_SessionsWindow_Buttons_SearchBox:GetText()
+
 	local sortedKeys
 	if FLogGlobalVars.sortSessionBy == SORT_BY_TEXT then 
-		sortedKeys = SortMapKeys(FLogVars.sessions)
+		sortedKeys = SortMapKeys(FLogVars.sessions, nil, nil, nil, nil, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_GOLD then 
 		local gphExtract = function (session) return session.goldPerHour or 0 end
-		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, gphExtract)
+		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, gphExtract, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_USE then 
 		local useExtract = function (session) return session.lastUse or 0 end
-		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, useExtract)
+		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, useExtract, searchText)
 	end 
 
+	if #sortedKeys == 1 then sessionSearchResult = sortedKeys[1] else sessionSearchResult = nil end 
 
 	for _, name in ipairs(sortedKeys) do 
 		local session = FLogVars.sessions[name]
@@ -1618,6 +1624,7 @@ function FarmLog_MainWindow_SessionsButton:Clicked()
 	if FarmLog_SessionsWindow:IsShown() then 
 		FarmLog_SessionsWindow:Hide()
 	else 
+		FarmLog_SessionsWindow_Buttons_SearchBox:SetText("")
 		FarmLog_SessionsWindow:Refresh()
 		FarmLog_SessionsWindow:Show()
 	end 
@@ -1685,6 +1692,13 @@ function FarmLog_SessionsWindow_Buttons_SortUseButton:Clicked()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
+function FarmLog_SessionsWindow_Buttons_SearchBox:EnterPressed() 
+	if sessionSearchResult then 
+		out("Switching session to |cff99ff00"..sessionSearchResult)
+		FarmLog:StartSession(sessionSearchResult)
+		FarmLog_SessionsWindow:Hide()
+	end 
+end 
 
 -- tooltip
 

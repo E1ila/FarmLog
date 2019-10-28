@@ -987,6 +987,45 @@
             </Scripts>
           </Button>          <!--$parent_SortAbcButton-->
 
+          <EditBox name="$parent_SearchBox" letters="80" autoFocus="false">
+            <Size x="10" y="16" />
+            <Anchors>
+              <Anchor point="LEFT">
+                <Offset x="2" y="0" />
+              </Anchor>
+              <Anchor point="RIGHT" relativeTo="$parent_SortAbcButton" relativePoint="LEFT">
+                <Offset x="-4" y="0" />
+              </Anchor>
+            </Anchors>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Scripts>
+              <OnLoad>
+                self:SetBackdropColor(0, 0, 0, 0.8)
+            		self:SetBackdropBorderColor(0.5, 0.5, 0.5, 0)
+              </OnLoad>
+              <OnEscapePressed>
+                self:ClearFocus()
+              </OnEscapePressed>
+              <OnTabPressed>
+                self:ClearFocus()
+              </OnTabPressed>
+              <OnTextChanged>
+                FarmLog_SessionsWindow:Refresh()
+              </OnTextChanged>
+              <OnEnterPressed>
+                self:EnterPressed()
+              </OnEnterPressed>
+            </Scripts>
+            <FontString inherits="FarmLogFont" />
+          </EditBox>
+
         </Frames>
       </Frame>      <!--$parent_Buttons-->
 
@@ -995,7 +1034,7 @@
           <AbsDimension x="16" y="16"/>
         </Size>
         <Anchors>
-          <Anchor point="BOTTOMLEFT" >
+          <Anchor point="BOTTOMLEFT">
             <Offset>
               <AbsDimension x="-2" y="-2"/>
             </Offset>
@@ -1020,7 +1059,7 @@
               <AbsDimension x="5" y="-3"/>
             </Offset>
           </Anchor>
-          <Anchor point="BOTTOMRIGHT" >
+          <Anchor point="BOTTOMRIGHT">
             <Offset>
               <AbsDimension x="-25" y="3"/>
             </Offset>

@@ -51,9 +51,10 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.12
-* 1.11.5
+* 1.11.6
     * You can now disable groupping by mob name
     * Added sort buttons to sessions window
+    * Added search box in sessions window
 * 1.11.3
     * Fixed loot window sorting bug
 * 1.11
