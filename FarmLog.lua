@@ -1627,6 +1627,7 @@ function FarmLog_MainWindow_SessionsButton:Clicked()
 		FarmLog_SessionsWindow_Buttons_SearchBox:SetText("")
 		FarmLog_SessionsWindow:Refresh()
 		FarmLog_SessionsWindow:Show()
+		FarmLog_SessionsWindow_Buttons_SearchBox:SetFocus()
 	end 
 end 
 
@@ -1695,7 +1696,7 @@ end
 function FarmLog_SessionsWindow_Buttons_SearchBox:EnterPressed() 
 	if sessionSearchResult then 
 		out("Switching session to |cff99ff00"..sessionSearchResult)
-		FarmLog:StartSession(sessionSearchResult)
+		FarmLog:StartSession(sessionSearchResult, true, FLogGlobalVars.resumeSessionOnSwitch)
 		FarmLog_SessionsWindow:Hide()
 	end 
 end 

@@ -1012,6 +1012,7 @@
               </OnLoad>
               <OnEscapePressed>
                 self:ClearFocus()
+                FarmLog_SessionsWindow:Hide()
               </OnEscapePressed>
               <OnTabPressed>
                 self:ClearFocus()
