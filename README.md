@@ -50,9 +50,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
-* 1.11.4
+* 1.12
+* 1.11.5
     * You can now disable groupping by mob name
-    * show gray, common, uncommon, toggle mob name
+    * Added sort buttons to sessions window
 * 1.11.3
     * Fixed loot window sorting bug
 * 1.11
@@ -128,3 +129,4 @@ Another thing is that the more time & data you have per session, the more accura
 * Start instance session on first hit
 * Allow manually increasing/decreasing kill values
 * Allow sending session report
+* Ask if user wants to resume when logging in

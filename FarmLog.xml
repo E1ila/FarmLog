@@ -305,9 +305,9 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <Button name="$parent_ToggleMobNameButton">
+      <Button name="$parent_SessionsButton">
         <Size>
-          <AbsDimension x="28" y="14"/>
+          <AbsDimension x="14" y="14"/>
         </Size>
         <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
           <EdgeSize>
@@ -320,13 +320,13 @@
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
-              <AbsDimension x="3" y="-4"/>
+              <AbsDimension x="4" y="-4"/>
             </Offset>
           </Anchor>
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Mobs">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="S">
               <Color r="1" g="1" b="1"/>
               <Anchors>
                 <Anchor point="CENTER" />
@@ -336,19 +336,64 @@
         </Layers>
         <Scripts>
           <OnLoad>
-            self.label = FarmLog_MainWindow_ToggleMobNameButton_Text
+            self.label = FarmLog_MainWindow_SessionsButton_Text
           </OnLoad>
           <OnEnter>
-                FarmLog_SetTextButtonBackdropColor(self, true)
+            FarmLog_SetTextButtonBackdropColor(self, true)
           </OnEnter>
           <OnLeave>
-                FarmLog_SetTextButtonBackdropColor(self, false)
+            FarmLog_SetTextButtonBackdropColor(self, false)
           </OnLeave>
           <OnClick>
-                self:Clicked()
+            self:Clicked()
           </OnClick>
         </Scripts>
-      </Button>      <!--$parent_ToggleMobNameButton-->
+      </Button>      <!--$parent_SessionsButton-->
+
+      <Button name="$parent_ClearButton">
+        <Size>
+          <AbsDimension x="14" y="14"/>
+        </Size>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent_SessionsButton" relativePoint="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="4" y="0"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="C">
+              <Color r="1" g="1" b="1"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnLoad>
+            self.label = FarmLog_MainWindow_ClearButton_Text
+          </OnLoad>
+          <OnEnter>
+            FarmLog_SetTextButtonBackdropColor(self, true)
+          </OnEnter>
+          <OnLeave>
+            FarmLog_SetTextButtonBackdropColor(self, false)
+          </OnLeave>
+          <OnClick>
+            self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_ClearButton-->
 
       <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
         <Size>
@@ -565,8 +610,78 @@
               </OnClick>
             </Scripts>
           </Button>          <!--$parent_SortAbcButton-->
+
+          <Button name="$parent_ToggleMobNameButton">
+            <Size>
+              <AbsDimension x="28" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="3" y="-3"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Mobs">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_ToggleMobNameButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_ToggleMobNameButton-->
+
         </Frames>
       </Frame>      <!--$parent_Buttons-->
+
+      <Button name="$parent_Resize">
+        <Size>
+          <AbsDimension x="16" y="16"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <Scripts>
+          <OnMouseDown>
+            FarmLog_MainWindow:StartSizing("BOTTOMLEFT")
+          </OnMouseDown>
+          <OnMouseUp>
+            FarmLog_MainWindow:StopMovingOrSizing()
+            FarmLog_MainWindow:SavePosition()
+          </OnMouseUp>
+        </Scripts>
+      </Button>
 
       <ScrollFrame name="$parent_Scroll" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
         <Anchors>
@@ -577,7 +692,7 @@
           </Anchor>
           <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
             <Offset>
-              <AbsDimension x="-25" y="30"/>
+              <AbsDimension x="-25" y="3"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -605,66 +720,6 @@
           </Frame>
         </ScrollChild>
       </ScrollFrame>      <!--$parent_Scroll-->
-
-      <Button name="$parent_ResetButton" inherits="UIPanelButtonTemplate" text="Clear">
-        <Size>
-          <AbsDimension x="80" y="20"/>
-        </Size>
-        <Anchors>
-          <Anchor point="BOTTOM">
-            <Offset>
-              <AbsDimension x="-42" y="5"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnClick>
-            self:Clicked()
-          </OnClick>
-        </Scripts>
-      </Button>      <!--$parent_ResetButton-->
-
-      <Button name="$parent_SessionsButton" inherits="UIPanelButtonTemplate" text="Sessions">
-        <Size>
-          <AbsDimension x="80" y="20"/>
-        </Size>
-        <Anchors>
-          <Anchor point="BOTTOM">
-            <Offset>
-              <AbsDimension x="42" y="5"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnClick>
-            self:Clicked()
-          </OnClick>
-        </Scripts>
-      </Button>
-
-      <Button name="$parent_Resize">
-        <Size>
-          <AbsDimension x="16" y="16"/>
-        </Size>
-        <Anchors>
-          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
-            <Offset>
-              <AbsDimension x="2" y="-2"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <Scripts>
-          <OnMouseDown>
-            FarmLog_MainWindow:StartSizing("BOTTOMRIGHT")
-          </OnMouseDown>
-          <OnMouseUp>
-            FarmLog_MainWindow:StopMovingOrSizing()
-            FarmLog_MainWindow:SavePosition()
-          </OnMouseUp>
-        </Scripts>
-      </Button>
 
     </Frames>
   </Frame>  <!--FarmLog_MainWindow-->
@@ -743,28 +798,16 @@
         </Backdrop>
         <Scripts>
           <OnLoad>
-       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
-        		self:SetBackdropBorderColor(0, 0, 0, 1)
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
+        		self:SetBackdropBorderColor(0, 0, 0, 0)
             self:RegisterForDrag("LeftButton")
           </OnLoad>
           <OnDragStart>
             FarmLog_SessionsWindow:StartMoving()
-       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
           </OnDragStart>
           <OnDragStop>
           	FarmLog_SessionsWindow:StopMovingOrSizing();
-            if not MouseIsOver(FarmLog_SessionsWindow_Title) then
-         			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
-            end
           </OnDragStop>
-          <OnEnter>
-       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
-          </OnEnter>
-          <OnLeave>
-            if not IsMouseButtonDown("LeftButton") then
-         			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
-            end
-          </OnLeave>
         </Scripts>
         <Layers>
           <Layer level="BACKGROUND">
@@ -778,23 +821,215 @@
         </Layers>
       </Frame>      <!--$parent_Title-->
 
-      <ScrollFrame name="$parent_Scroll" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
+      <Frame name="$parent_Buttons" enableMouse="true" movable="true" resizable="true">
+        <Size>
+          <AbsDimension y="20"/>
+        </Size>
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+          <Anchor point="TOPLEFT" relativeTo="$parent_Title" relativePoint="BOTTOMLEFT">
             <Offset>
-              <AbsDimension x="5" y="-25"/>
+              <AbsDimension x="0" y="-2"/>
             </Offset>
           </Anchor>
-          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
+          <Anchor point="TOPRIGHT" relativeTo="$parent_Title" relativePoint="BOTTOMRIGHT">
             <Offset>
-              <AbsDimension x="-25" y="30"/>
+              <AbsDimension x="0" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Scripts>
+          <OnLoad>
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.1)
+        		self:SetBackdropBorderColor(0, 0, 0, 0)
+          </OnLoad>
+        </Scripts>
+        <Frames>
+          <Button name="$parent_SortGoldButton">
+            <Size>
+              <AbsDimension x="28" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="-2" y="-3"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="G/H">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_SessionsWindow_Buttons_SortGoldButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_SortGoldButton-->
+
+          <Button name="$parent_SortUseButton">
+            <Size>
+              <AbsDimension x="28" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPRIGHT" relativeTo="$parent_SortGoldButton" relativePoint="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="-2" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Use">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_SessionsWindow_Buttons_SortUseButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_SortUseButton-->
+
+          <Button name="$parent_SortAbcButton">
+            <Size>
+              <AbsDimension x="28" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPRIGHT" relativeTo="$parent_SortUseButton" relativePoint="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="-2" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Abc">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_SessionsWindow_Buttons_SortAbcButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_SortAbcButton-->
+
+        </Frames>
+      </Frame>      <!--$parent_Buttons-->
+
+      <Button name="$parent_Resize">
+        <Size>
+          <AbsDimension x="16" y="16"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMLEFT" >
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <Scripts>
+          <OnMouseDown>
+            FarmLog_SessionsWindow:StartSizing("BOTTOMLEFT")
+          </OnMouseDown>
+          <OnMouseUp>
+            FarmLog_SessionsWindow:StopMovingOrSizing()
+          </OnMouseUp>
+        </Scripts>
+      </Button>
+
+      <ScrollFrame name="$parent_Scroll" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent_Buttons" relativePoint="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="5" y="-3"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="BOTTOMRIGHT" >
+            <Offset>
+              <AbsDimension x="-25" y="3"/>
             </Offset>
           </Anchor>
         </Anchors>
         <Scripts>
           <OnLoad>
             self:SetHorizontalScroll(0)
-            self:SetVerticalScroll(20)
+            self:SetVerticalScroll(0)
             FarmLog_SessionsWindow.scroll = self
           </OnLoad>
         </Scripts>
@@ -816,49 +1051,8 @@
         </ScrollChild>
       </ScrollFrame>      <!--$parent_Scroll-->
 
-      <Button name="$parent_AddButton" inherits="UIPanelButtonTemplate" text="Add">
-        <Size>
-          <AbsDimension x="80" y="20"/>
-        </Size>
-        <Anchors>
-          <Anchor point="BOTTOM">
-            <Offset>
-              <AbsDimension x="0" y="5"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnClick>
-            self:Clicked()
-          </OnClick>
-        </Scripts>
-      </Button>      <!--$parent_AddButton-->
-
-      <Button name="$parent_Resize">
-        <Size>
-          <AbsDimension x="16" y="16"/>
-        </Size>
-        <Anchors>
-          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT">
-            <Offset>
-              <AbsDimension x="2" y="-2"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <Scripts>
-          <OnMouseDown>
-            FarmLog_SessionsWindow:StartSizing("BOTTOMRIGHT")
-          </OnMouseDown>
-          <OnMouseUp>
-            FarmLog_SessionsWindow:StopMovingOrSizing()
-          </OnMouseUp>
-        </Scripts>
-      </Button>
-
     </Frames>
-  </Frame>  <!--FarmLog_MainWindow-->
+  </Frame>  <!--FarmLog_SessionsWindow-->
 
   <Frame name="FarmLogFrame_Options">
   </Frame>  <!---->

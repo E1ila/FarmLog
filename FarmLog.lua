@@ -1,5 +1,5 @@
-﻿local VERSION = "1.11"
-local VERSION_INT = 1.1104
+﻿local VERSION = "1.11.5"
+local VERSION_INT = 1.1105
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -26,6 +26,7 @@ local VALUE_TYPE_COLOR = {
 local SORT_BY_TEXT = "A"
 local SORT_BY_GOLD = "$"
 local SORT_BY_KILLS = "K"
+local SORT_BY_USE = "U"
 
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
@@ -70,6 +71,7 @@ FLogGlobalVars = {
 	["dismissLootWindowOnEsc"] = false,
 	["groupByMobName"] = true,
 	["sortBy"] = SORT_BY_TEXT,
+	["sortSessionBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
 }
 
@@ -111,7 +113,6 @@ local lastUnknownLoot = {}
 local lastUnknownLootTime = 0
 local skillName = nil 
 local skillNameTime = nil 
-local goldPerHour = 0
 local ahScanRequested = false
 local ahScanIndex = 0
 local ahScanItems = 0
@@ -297,8 +298,8 @@ function FarmLog:Migrate()
 		FLogVars.version = nil 
 	end 
 
-	if not FLogVars.ver then FLogVars.ver = 1.0802 end 
-	if not FLogGlobalVars.ver then FLogGlobalVars.ver = 1.0802 end 
+	if not FLogVars.ver or type(FLogVars.ver) == "string" then FLogVars.ver = 1.0802 end 
+	if not FLogGlobalVars.ver or type(FLogGlobalVars.ver) == "string" then FLogGlobalVars.ver = 1.0802 end 
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end
 	if not FLogGlobalVars.ahMinQuality then FLogGlobalVars.ahMinQuality = 1 end 
@@ -320,9 +321,16 @@ function FarmLog:Migrate()
 		end 
 	end 
 
-	if FLogVars.ver < 1.1103 then 
-		FLogGlobalVars.groupByMobName = true 
+	if FLogVars.ver < 1.1103 then FLogGlobalVars.groupByMobName = true end 
+
+	if FLogVars.ver < 1.1105 then 
+		for name, session in pairs(FLogVars.sessions) do 
+			local gph = (session.ah + session.vendor + session.gold) / (session.seconds / 3600)
+			session.goldPerHour = gph
+		end 
 	end 
+
+	if not FLogGlobalVars.sortSessionBy then FLogGlobalVars.sortSessionBy = SORT_BY_TEXT end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -354,6 +362,7 @@ end
 
 function FarmLog:ResumeSession() 
 	sessionStartTime = time()
+	SetSessionVar("lastUse", sessionStartTime)
 
 	FLogVars.enabled = true  
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
@@ -384,6 +393,7 @@ function FarmLog:ResetSessionVars()
 		["rep"] = {},
 		["gold"] = 0,
 		["vendor"] = 0,
+		["goldPerHour"] = 0,
 		["ah"] = 0,
 		["xp"] = 0,
 		["honor"] = 0,
@@ -646,12 +656,11 @@ function FarmLog_MainWindow:Refresh()
 
 	-- calculate GPH
 	local sessionTime = FarmLog:GetCurrentSessionTime()
+	local goldPerHour = 0
 	if sessionTime > 0 then 
-		-- debug("Calculating GPH")
 		goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
-	else 
-		goldPerHour = 0
 	end 
+	SetSessionVar("goldPerHour", goldPerHour)
 	
 	-- add special rows
 	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then 
@@ -750,12 +759,8 @@ function FarmLog_MainWindow:Refresh()
 	end 
 
 	-- buttons state
-	if #self.rows > 0 then
-		FarmLog_MainWindow_ResetButton:Enable()
-	else
-		FarmLog_MainWindow_ResetButton:Disable()
-	end	
-	FarmLog_MainWindow_SessionsButton:Enable()
+	FarmLog_MainWindow_ClearButton.disabled = #self.rows == 0
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ClearButton)
 
 	-- hide unused rows
 	HideRowsBeyond(self.visibleRows + 1, self)
@@ -834,8 +839,22 @@ end
 
 function FarmLog_SessionsWindow:Refresh()
 	self.visibleRows = 0
-	for name, session in pairs(FLogVars.sessions) do 
-		local gph = (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
+
+	local sortedKeys
+	if FLogGlobalVars.sortSessionBy == SORT_BY_TEXT then 
+		sortedKeys = SortMapKeys(FLogVars.sessions)
+	elseif FLogGlobalVars.sortSessionBy == SORT_BY_GOLD then 
+		local gphExtract = function (session) return session.goldPerHour or 0 end
+		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, gphExtract)
+	elseif FLogGlobalVars.sortSessionBy == SORT_BY_USE then 
+		local useExtract = function (session) return session.lastUse or 0 end
+		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, useExtract)
+	end 
+
+
+	for _, name in ipairs(sortedKeys) do 
+		local session = FLogVars.sessions[name]
+		local gph = session.goldPerHour or 0 -- (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
 		local text = name
 		local valueText = nil 
 		if gph and gph > 0 and tostring(gph) ~= "nan" and tostring(gph) ~= "inf" then 
@@ -1212,6 +1231,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_SessionsWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
 	FarmLog_SessionsWindow_Title_Text:SetText(L["All Sessions"])
 
+	-- loot window buttons
 	if FLogGlobalVars.sortBy == SORT_BY_TEXT then 
 		FarmLog_MainWindow_Buttons_SortAbcButton.selected = true 
 	elseif FLogGlobalVars.sortBy == SORT_BY_GOLD then 
@@ -1219,13 +1239,27 @@ function FarmLog:OnAddonLoaded()
 	elseif FLogGlobalVars.sortBy == SORT_BY_KILLS then 
 		FarmLog_MainWindow_Buttons_SortKillsButton.selected = true 
 	end 
-	FarmLog_MainWindow_ToggleMobNameButton.selected = FLogGlobalVars.groupByMobName
+	FarmLog_MainWindow_Buttons_ToggleMobNameButton.selected = FLogGlobalVars.groupByMobName
 	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
-	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton, false)
-	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton, false)
-	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
-	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ToggleMobNameButton, false)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_ToggleMobNameButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_SessionsButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ClearButton)
 
+	-- sessions window buttons
+	if FLogGlobalVars.sortSessionsBy == SORT_BY_TEXT then 
+		FarmLog_SessionsWindow_Buttons_SortAbcButton.selected = true 
+	elseif FLogGlobalVars.sortSessionsBy == SORT_BY_GOLD then 
+		FarmLog_SessionsWindow_Buttons_SortGoldButton.selected = true 
+	elseif FLogGlobalVars.sortSessionsBy == SORT_BY_USE then 
+		FarmLog_SessionsWindow_Buttons_SortUseButton.selected = true 
+	end 
+	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortAbcButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortGoldButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortUseButton)
+	
 	-- init session
 	if FLogVars.enabled then 
 		self:ResumeSession()
@@ -1488,28 +1522,7 @@ function FarmLog_MainWindow:SavePosition()
 	FLogVars.frameRect.height = FarmLog_MainWindow:GetHeight()
 end 
 
--- big action buttons
-
-function FarmLog_MainWindow_SessionsButton:Clicked() 
-	if FarmLog_SessionsWindow:IsShown() then 
-		FarmLog_SessionsWindow:Hide()
-	else 
-		FarmLog_SessionsWindow:Refresh()
-		FarmLog_SessionsWindow:Show()
-	end 
-end 
-
-function FarmLog_MainWindow_ResetButton:Clicked()
-	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
-		FarmLog:ResetSession()
-		FarmLog_QuestionDialog:Hide()
-	end)
-	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
-	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
-	FarmLog_QuestionDialog:Show()
-end 
-
--- filtering buttons
+-- loot buttons
 
 function FarmLog_SetTextButtonBackdropColor(btn, hovering)
 	if btn.disabled then 
@@ -1587,7 +1600,7 @@ function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
-function FarmLog_MainWindow_ToggleMobNameButton:Clicked() 
+function FarmLog_MainWindow_Buttons_ToggleMobNameButton:Clicked() 
 	if self.disabled then return end 
 	self.selected = not self.selected
 	FLogGlobalVars.groupByMobName = self.selected
@@ -1601,6 +1614,78 @@ function FarmLog_MainWindow_ToggleMobNameButton:Clicked()
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
 end 
 
+function FarmLog_MainWindow_SessionsButton:Clicked() 
+	if FarmLog_SessionsWindow:IsShown() then 
+		FarmLog_SessionsWindow:Hide()
+	else 
+		FarmLog_SessionsWindow:Refresh()
+		FarmLog_SessionsWindow:Show()
+	end 
+end 
+
+function FarmLog_MainWindow_ClearButton:Clicked()
+	if self.disabled then return end 
+	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+		FarmLog:ResetSession()
+		FarmLog_QuestionDialog:Hide()
+	end)
+	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
+	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
+	FarmLog_QuestionDialog:Show()
+end 
+
+-- sessions buttons
+
+
+function FarmLog_SessionsWindow_Buttons_SortAbcButton:Clicked() 
+	if self.disabled then return end 
+	if FarmLog_SessionsWindow_Buttons_SortGoldButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortGoldButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortGoldButton, false)
+	end 
+	if FarmLog_SessionsWindow_Buttons_SortUseButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortUseButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortUseButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortSessionBy = SORT_BY_TEXT
+	FarmLog_SessionsWindow:Refresh()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
+function FarmLog_SessionsWindow_Buttons_SortGoldButton:Clicked() 
+	if self.disabled then return end 
+	if FarmLog_SessionsWindow_Buttons_SortAbcButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortAbcButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortAbcButton, false)
+	end 
+	if FarmLog_SessionsWindow_Buttons_SortUseButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortUseButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortUseButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortSessionBy = SORT_BY_GOLD
+	FarmLog_SessionsWindow:Refresh()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
+function FarmLog_SessionsWindow_Buttons_SortUseButton:Clicked() 
+	if self.disabled then return end 
+	if FarmLog_SessionsWindow_Buttons_SortAbcButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortAbcButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortAbcButton, false)
+	end 
+	if FarmLog_SessionsWindow_Buttons_SortGoldButton.selected then 
+		FarmLog_SessionsWindow_Buttons_SortGoldButton.selected = false 
+		FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortGoldButton, false)
+	end 
+	self.selected = true
+	FLogGlobalVars.sortSessionBy = SORT_BY_USE
+	FarmLog_SessionsWindow:Refresh()
+	FarmLog_SetTextButtonBackdropColor(self, false)
+end 
+
+
 -- tooltip
 
 function FarmLog_MinimapButton:ShowTooltip() 
@@ -1613,6 +1698,7 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
+	local goldPerHour = GetSessionVar("goldPerHour") or 0
 	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
