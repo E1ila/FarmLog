@@ -1,5 +1,5 @@
-﻿local VERSION = "1.11.6"
-local VERSION_INT = 1.1106
+﻿local VERSION = "1.12"
+local VERSION_INT = 1.1203
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -7,6 +7,7 @@ local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
 local UNKNOWN_MOBNAME = L["Unknown"]
+local REALM = GetRealmName()
 
 local DROP_META_INDEX_COUNT =  1
 local DROP_META_INDEX_VALUE =  2
@@ -205,6 +206,24 @@ local function normalizeLink(link)
 	return link 
 end 
 
+-- Auction house access ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function GetAHScanPrice(itemLink)
+	return FLogGlobalVars.ahScan[REALM][itemLink]
+end 
+
+function GetManualPrice(itemLink)
+	return FLogGlobalVars.ahPrice[REALM][itemLink]
+end 
+
+function SetAHScanPrice(itemLink, price)
+	FLogGlobalVars.ahScan[REALM][itemLink] = price 
+end 
+
+function SetManualPrice(itemLink, price)
+	FLogGlobalVars.ahPrice[REALM][itemLink] = price 
+end 
+
 -- Data migration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 local function migrateItemLinkTable(t) 
@@ -334,6 +353,11 @@ function FarmLog:Migrate()
 	end 
 
 	if not FLogGlobalVars.sortSessionBy then FLogGlobalVars.sortSessionBy = SORT_BY_TEXT end 
+
+	if FLogVars.ver < 1.1203 then 
+		FLogGlobalVars.ahScan = {[REALM] = FLogGlobalVars.ahScan}
+		FLogGlobalVars.ahPrice = {[REALM] = FLogGlobalVars.ahPrice}
+	end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -777,10 +801,10 @@ function FarmLog_MainWindow:RecalcTotals()
 	for mobName, drops in pairs(sessionDrops) do	
 		for itemLink, meta in pairs(drops) do 
 			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				local ahPrice = FLogGlobalVars.ahPrice[itemLink]
+				local ahPrice = GetManualPrice(itemLink)
 				local priceType = VALUE_TYPE_MANUAL
 				if not ahPrice then 
-					ahPrice = FLogGlobalVars.ahScan[itemLink]
+					ahPrice = GetAHScanPrice(itemLink)
 					priceType = VALUE_TYPE_SCAN
 				end 
 				local count = meta[DROP_META_INDEX_COUNT]
@@ -1121,10 +1145,10 @@ end
 
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	if (mobName and itemLink and count) then		
-		local ahPrice = FLogGlobalVars.ahPrice[itemLink]
+		local ahPrice = GetManualPrice(itemLink)
 		local priceType = VALUE_TYPE_MANUAL
 		if not ahPrice then 
-			ahPrice = FLogGlobalVars.ahScan[itemLink]
+			ahPrice = GetAHScanPrice(itemLink)
 			priceType = VALUE_TYPE_SCAN
 		end 
 		local value = ahPrice or vendorPrice or 0
@@ -1225,6 +1249,9 @@ function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
 
 	FarmLog:Migrate()	
+
+	if not FLogGlobalVars.ahScan[REALM] then FLogGlobalVars.ahScan[REALM] = {} end 
+	if not FLogGlobalVars.ahPrice[REALM] then FLogGlobalVars.ahPrice[REALM] = {} end 
 
 	if FLogGlobalVars.dismissLootWindowOnEsc then  
 		tinsert(UISpecialFrames, FarmLog_MainWindow:GetName())
@@ -1345,7 +1372,7 @@ function FarmLog:PrepareAuctionHouseResults()
 	ahScanIndex = 1
 	ahScanItems = 0
 	ahScanBadItems = 0
-	FLogGlobalVars.ahScan = {}
+	FLogGlobalVars.ahScan[REALM] = {}
 	out("Scanning "..ahScanResultsShown.." Auction House results...")
 end 
 
@@ -1372,10 +1399,10 @@ function FarmLog:AnalyzeAuctionHouseResults()
 				-- ignore items without buyout
 				if buyoutPrice and buyoutPrice > 0 and quality >= FLogGlobalVars.ahMinQuality then 
 					link = normalizeLink(link)
-					local price = FLogGlobalVars.ahScan[link]
+					local price = GetAHScanPrice(link)
 					-- debug(" scan -- link "..link.."  buyoutPrice "..tostring(buyoutPrice))
 					if not price or price > buyoutPrice then 
-						FLogGlobalVars.ahScan[link] = buyoutPrice 
+						SetAHScanPrice(link, buyoutPrice)
 					end 
 				end 
 			end  
@@ -1777,7 +1804,7 @@ SlashCmdList.LH = function(msg)
 						out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]")
 					end 
 				end				
-				FLogGlobalVars.ahPrice[itemLink] = ahPrice 
+				SetManualPrice(itemLink, ahPrice)
 				if ahPrice and ahPrice > 0 then 
 					out("Setting AH ahPrice of "..itemLink.." to "..GetShortCoinTextureString(ahPrice))
 				else 

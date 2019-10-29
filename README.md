@@ -51,6 +51,7 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.12
+    * AH prices are saved per realm
 * 1.11.6
     * You can now disable groupping by mob name
     * Added sort buttons to sessions window
