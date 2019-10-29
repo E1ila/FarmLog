@@ -354,7 +354,7 @@ function FarmLog:Migrate()
 
 	if not FLogGlobalVars.sortSessionBy then FLogGlobalVars.sortSessionBy = SORT_BY_TEXT end 
 
-	if FLogVars.ver < 1.1203 then 
+	if FLogGlobalVars.ver < 1.1203 then 
 		FLogGlobalVars.ahScan = {[REALM] = FLogGlobalVars.ahScan}
 		FLogGlobalVars.ahPrice = {[REALM] = FLogGlobalVars.ahPrice}
 	end 
@@ -425,6 +425,7 @@ function FarmLog:ResetSessionVars()
 		["xp"] = 0,
 		["honor"] = 0,
 		["seconds"] = 0,
+		["resets"] = 0,
 	}
 end 
 
@@ -1317,11 +1318,11 @@ function FarmLog:OnEnteringWorld()
 	local inInstance, _ = IsInInstance();
 	inInstance = tobool(inInstance);
 	local instanceName = GetInstanceInfo();		
-	if not FLogVars.inInstance and inInstance and FLogVars.instanceName ~= instanceName then
+	if not FLogVars.inInstance and inInstance then
 		FLogVars.inInstance = true;
 		FLogVars.instanceName = instanceName;
 		if FLogGlobalVars.autoSwitchInstances then 
-			self:StartSession(instanceName)
+			self:StartSession(instanceName, true, true)
 		end 
 	elseif FLogVars.inInstance and inInstance == false then
 		FLogVars.inInstance = false;
@@ -1329,7 +1330,7 @@ function FarmLog:OnEnteringWorld()
 			self:PauseSession()
 		end 
 	end
-	self:RefreshMainWindow();
+	self:RefreshMainWindow()
 end 
 
 -- Instance info
