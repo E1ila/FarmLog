@@ -1207,11 +1207,18 @@ function FarmLog:OnLootEvent(text)
 	mobName = lastMobLoot[itemLink]
 
 	if not mobName then 
-		mobName = UNKNOWN_MOBNAME
-		if now - lastUnknownLootTime > LOOT_AUTOFIX_TIMEOUT_SEC then lastUnknownLoot = {} end 
-		lastUnknownLootTime = now 
-		lastUnknownLoot[itemLink] = true 
-		GetSessionVar("kills")[UNKNOWN_MOBNAME] = 1
+		-- loot window hasn't opened yet
+		if not UnitInParty("player") and not IsInRaid() and UnitIsEnemy("player", "target") and UnitIsDead("target") then 
+			-- with fast loot the loot window opens late and is empty, we assume that our dead target is the source
+			-- unless in party / raid where we can receive items from rolls / ML
+			mobName = UnitName("target")
+		else 
+			mobName = UNKNOWN_MOBNAME
+			if now - lastUnknownLootTime > LOOT_AUTOFIX_TIMEOUT_SEC then lastUnknownLoot = {} end 
+			lastUnknownLootTime = now 
+			lastUnknownLoot[itemLink] = true 
+			GetSessionVar("kills")[UNKNOWN_MOBNAME] = 1
+		end 
 	end 
 
 	itemLink = normalizeLink(itemLink) -- removed player level from link
