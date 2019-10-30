@@ -1787,6 +1787,8 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl ren <new_name>|r renames current session")
 			out(" |cff00ff00/fl rmi|r resets minimap icon position")
 			out(" |cff00ff00/fl rmw|r resets main window position")
+			out(" |cff00ff00/fl inc|r increase kill count of selected target")
+			out(" |cff00ff00/fl dec|r decrease kill count of selected target")
 			out(" |cff00ff00/fl ah|r scan AH for current prices, must have AH window open")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
@@ -1852,6 +1854,16 @@ SlashCmdList.LH = function(msg)
 			FLogVars.sessions[arg1] = FLogVars.sessions[FLogVars.currentSession]
 			FLogVars.sessions[FLogVars.currentSession] = nil 
 			FLogVars.currentSession = arg1 
+			FarmLog:RefreshMainWindow() 
+		elseif  "INC" == cmd then
+			local mobName = GetUnitName("target")
+			out("Increasing kill count of |cff00ff99"..mobName)
+			IncreaseSessionDictVar("kills", mobName, 1)
+			FarmLog:RefreshMainWindow() 
+		elseif  "DEC" == cmd then
+			local mobName = GetUnitName("target")
+			out("Increasing kill count of |cff00ff99"..mobName)
+			IncreaseSessionDictVar("kills", mobName, -1)
 			FarmLog:RefreshMainWindow() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars.autoSwitchInstances = not FLogGlobalVars.autoSwitchInstances 
