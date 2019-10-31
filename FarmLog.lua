@@ -1146,22 +1146,20 @@ end
 
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	if (mobName and itemLink and count) then		
-		local ahPrice = GetManualPrice(itemLink)
+		local value = GetManualPrice(itemLink)
 		local priceType = VALUE_TYPE_MANUAL
-		if not ahPrice then 
-			ahPrice = GetAHScanPrice(itemLink)
+		if not value then 
+			value = GetAHScanPrice(itemLink)
 			priceType = VALUE_TYPE_SCAN
 		end 
-		local value = ahPrice or vendorPrice or 0
-		if not value then 
+		if not value or value == 0 then 
 			value = vendorPrice or 0
 			priceType = VALUE_TYPE_VENDOR
+			IncreaseSessionVar("vendor", value * count)
+		else 
+			IncreaseSessionVar("ah", value * count)
 		end 
-		if ahPrice and ahPrice > 0 then 
-			IncreaseSessionVar("ah", ahPrice * count)
-		else
-			IncreaseSessionVar("vendor", (vendorPrice or 0) * count)
-		end 
+		debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
 
 		local sessionDrops = GetSessionVar("drops")
 		if not sessionDrops[mobName] then		
@@ -1169,8 +1167,9 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 		end 
 		local meta = sessionDrops[mobName][itemLink]
 		if meta then
+			debug("|cff999999FarmLog:InsertLoot|r meta |cffff9900"..meta[1]..","..meta[2]..","..meta[3]..","..meta[4])
 			meta[DROP_META_INDEX_COUNT] = meta[DROP_META_INDEX_COUNT] + count
-			meta[DROP_META_INDEX_VALUE] = value * count 
+			meta[DROP_META_INDEX_VALUE] = value * meta[DROP_META_INDEX_COUNT] 
 			meta[DROP_META_INDEX_VALUE_EACH] = value				
 			meta[DROP_META_INDEX_VALUE_TYPE] = priceType				
 		else

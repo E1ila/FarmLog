@@ -51,7 +51,9 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.12
-    * AH prices are saved per realm
+    * AH prices are saved separately per realm
+    * Fixed "Unknown" mob name with fast loot, when not in party / raid
+    * Fixed bug causing miscalculation of new loot, was using the latest quantity looted instead of total for item's total profit
 * 1.11.6
     * You can now disable groupping by mob name
     * Added sort buttons to sessions window
