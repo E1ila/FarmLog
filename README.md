@@ -51,6 +51,7 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.12
+    * Showing the number of instance IDs you've been to in the last hour
     * AH prices are saved separately per realm
     * Fixed "Unknown" mob name with fast loot, when not in party / raid
     * Fixed bug causing miscalculation of new loot, was using the latest quantity looted instead of total for item's total profit

@@ -9,6 +9,10 @@ local L = FarmLog_BuildLocalization()
 local UNKNOWN_MOBNAME = L["Unknown"]
 local REALM = GetRealmName()
 
+local MAX_INSTANCES_SECONDS = 3600
+local MAX_INSTANCES_COUNT = 5
+local INSTANCE_RESET_SECONDS = 3600
+
 local DROP_META_INDEX_COUNT =  1
 local DROP_META_INDEX_VALUE =  2
 local DROP_META_INDEX_VALUE_EACH =  3
@@ -71,6 +75,7 @@ FLogGlobalVars = {
 	["reportTo"] = {},
 	["dismissLootWindowOnEsc"] = false,
 	["groupByMobName"] = true,
+	["instances"] = {},
 	["sortBy"] = SORT_BY_TEXT,
 	["sortSessionBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
@@ -162,7 +167,7 @@ local function GetShortCoinTextureString(money)
 	return GetCoinTextureString(money, 12)
 end 
 
-function SortMapKeys(db, byValue, descending, keyExtract, valueExtract, searchText)
+local function SortMapKeys(db, byValue, descending, keyExtract, valueExtract, searchText)
 	local sorted = {}
 	local compareIndex = 2
 	if byValue then compareIndex = 3 end 
@@ -206,25 +211,26 @@ local function normalizeLink(link)
 	return link 
 end 
 
--- Auction house access ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-function GetAHScanPrice(itemLink)
+-- Auction house access 
+
+local function GetAHScanPrice(itemLink)
 	return FLogGlobalVars.ahScan[REALM][itemLink]
 end 
 
-function GetManualPrice(itemLink)
+local function GetManualPrice(itemLink)
 	return FLogGlobalVars.ahPrice[REALM][itemLink]
 end 
 
-function SetAHScanPrice(itemLink, price)
+local function SetAHScanPrice(itemLink, price)
 	FLogGlobalVars.ahScan[REALM][itemLink] = price 
 end 
 
-function SetManualPrice(itemLink, price)
+local function SetManualPrice(itemLink, price)
 	FLogGlobalVars.ahPrice[REALM][itemLink] = price 
 end 
 
--- Data migration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- Data migration 
 
 local function migrateItemLinkTable(t) 
 	local fixed = {}
@@ -359,11 +365,11 @@ function FarmLog:Migrate()
 		FLogGlobalVars.ahPrice = {[REALM] = FLogGlobalVars.ahPrice}
 	end 
 
+	if not FLogGlobalVars.instances then FLogGlobalVars.instances = {} end 
+
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
 end 
-
--- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 local function GetSessionVar(varName, sessionName)
 	return (FLogVars.sessions[sessionName or FLogVars.currentSession] or {})[varName]
@@ -381,6 +387,67 @@ end
 local function IncreaseSessionDictVar(varName, entry, incValue)
 	FLogVars.sessions[FLogVars.currentSession][varName][entry] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName][entry] or 0) + incValue 
 end 
+
+-- Auction house access 
+
+function FarmLog:UpdateInstanceCount()
+	local c = #FLogGlobalVars.instances[REALM]
+	FarmLog_MainWindow_Buttons_Instances_Text:SetText(c)
+	if c <= 2 then 
+		FarmLog_MainWindow_Buttons_Instances:SetBackdropBorderColor(0, 1, 0, 0.6)
+		FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(0, 1, 0, 1)
+	elseif c <= 4 then 
+		FarmLog_MainWindow_Buttons_Instances:SetBackdropBorderColor(1, 1, 0, 0.6)
+		FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(1, 1, 0, 1)
+	else 
+		FarmLog_MainWindow_Buttons_Instances:SetBackdropBorderColor(1, 0, 0, 0.6)
+		FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(1, 0, 0, 1)
+	end
+end 
+
+function FarmLog:AddInstance(name, enterTime)
+	self:PurgeInstances()
+	tinsert(FLogGlobalVars.instances[REALM], 1, {
+		["name"] = name,
+		["enter"] = enterTime or time(),
+		["player"] = GetUnitName("player"),
+	})
+	self:UpdateInstanceCount()
+end 
+
+function FarmLog:PurgeInstances()
+	now = time()
+	local newtable = {}
+	for i, meta in ipairs(FLogGlobalVars.instances[REALM]) do 
+		if meta.leave and now - meta.leave >= MAX_INSTANCES_SECONDS then break end 
+		tinsert(newtable, meta)
+	end 
+	FLogGlobalVars.instances[REALM] = newtable
+end 
+
+function FarmLog:GetLastInstance(name)
+	for i, meta in ipairs(FLogGlobalVars.instances[REALM]) do 
+		if meta.name == name then 
+			return meta, i
+		end 
+	end 
+end 
+
+function FarmLog:RepushInstance(index)
+	local meta = tremove(FLogGlobalVars.instances[REALM], index)
+	tinsert(FLogGlobalVars.instances[REALM], 1, meta)
+	self:UpdateInstanceCount()
+end 
+
+function FarmLog:CloseOpenInstances()
+	for _, meta in ipairs(FLogGlobalVars.instances[REALM]) do 
+		if not meta.leave then 
+			meta.leave = time()
+		end 
+	end 
+end 
+
+-- Session management ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 function FarmLog:GetCurrentSessionTime()
 	local now = time()
@@ -489,6 +556,24 @@ end
 
 function FarmLog:RefreshMainWindow()
 	FarmLog_MainWindow:Refresh()
+end 
+
+-- Question dialog
+
+function FarmLog:AskQuestion(titleText, questionText, onYes, onNo, yesText, noText) 
+	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function () 
+		FarmLog_QuestionDialog:Hide()
+		onYes() 
+	end)
+	FarmLog_QuestionDialog_No:SetScript("OnClick", function () 
+		FarmLog_QuestionDialog:Hide()
+		if onNo then onNo() end 
+	end)
+	FarmLog_QuestionDialog_Title_Text:SetText(titleText)
+	FarmLog_QuestionDialog_Question:SetText(questionText)
+	FarmLog_QuestionDialog_Yes:SetText(yesText or L["Yes"])
+	FarmLog_QuestionDialog_No:SetText(noText or L["No"])
+	FarmLog_QuestionDialog:Show()
 end 
 
 -- Generic Rows Creation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -901,15 +986,12 @@ end
 function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName) 
 	return function(self, button)
 		if button == "RightButton" then 
-			FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+			FarmLog:AskQuestion(L["deletesession-title"], L["deletesession-question"], function() 
 				FarmLog:DeleteSession(sessionName)
 				FarmLog:RefreshMainWindow()
 				FarmLog_SessionsWindow:Refresh()
 				FarmLog_QuestionDialog:Hide()
 			end)
-			FarmLog_QuestionDialog_Title_Text:SetText(L["deletesession-title"])
-			FarmLog_QuestionDialog_Question:SetText(L["deletesession-question"])
-			FarmLog_QuestionDialog:Show()
 		else 
 			if IsAltKeyDown() then
 				-- edit?
@@ -1259,6 +1341,7 @@ function FarmLog:OnAddonLoaded()
 
 	if not FLogGlobalVars.ahScan[REALM] then FLogGlobalVars.ahScan[REALM] = {} end 
 	if not FLogGlobalVars.ahPrice[REALM] then FLogGlobalVars.ahPrice[REALM] = {} end 
+	if not FLogGlobalVars.instances[REALM] then FLogGlobalVars.instances[REALM] = {} end 
 
 	if FLogGlobalVars.dismissLootWindowOnEsc then  
 		tinsert(UISpecialFrames, FarmLog_MainWindow:GetName())
@@ -1300,6 +1383,8 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortGoldButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_SortUseButton)
 	
+	self:UpdateInstanceCount()
+
 	-- init session
 	if FLogVars.enabled then 
 		self:ResumeSession()
@@ -1321,21 +1406,41 @@ end
 -- Entering World
 
 function FarmLog:OnEnteringWorld() 
-	local inInstance, _ = IsInInstance();
-	inInstance = tobool(inInstance);
-	local instanceName = GetInstanceInfo();		
-	if not FLogVars.inInstance and inInstance then
-		FLogVars.inInstance = true;
-		FLogVars.instanceName = instanceName;
-		if FLogGlobalVars.autoSwitchInstances then 
-			self:StartSession(instanceName, true, true)
-		end 
-	elseif FLogVars.inInstance and inInstance == false then
-		FLogVars.inInstance = false;
-		if FLogGlobalVars.autoSwitchInstances then 
+	if FLogGlobalVars.autoSwitchInstances then 
+		local inInstance, _ = IsInInstance()
+		inInstance = tobool(inInstance)
+		local instanceName = GetInstanceInfo()
+		local now = time()
+		debug("|cff999999FarmLog:OnEnteringWorld|r FLogVars.inInstance |cffff9900"..tostring(FLogVars.inInstance).."|r inInstance |cffff9900"..tostring(inInstance))
+
+		if FLogVars.inInstance and not inInstance then 
+			FLogVars.inInstance = false
+			FLogVars.instanceName = nil
+			self:CloseOpenInstances()
 			self:PauseSession()
-		end 
-	end
+		elseif inInstance then
+			local lastInstance, lastIndex = self:GetLastInstance(instanceName)
+			if lastInstance and lastInstance.leave and now - lastInstance.leave >= INSTANCE_RESET_SECONDS then 
+				-- after 1 hour of not being inside the instance, treat this instance as reset
+				lastInstance = nil 
+			end 
+			FLogVars.inInstance = true
+			FLogVars.instanceName = instanceName
+			self:StartSession(instanceName, true, true)
+			if not lastInstance then 
+				FarmLog:AddInstance(instanceName, now)
+			else 
+				self:AskQuestion(L["new-instance-title"], L["new-instance-question"], function () 
+					-- yes
+					FarmLog:AddInstance(instanceName, now)
+				end, function () 
+					-- no
+					lastInstance.leave = nil 
+					FarmLog:RepushInstance(lastIndex)
+				end)
+			end 
+		end
+	end 
 	self:RefreshMainWindow()
 end 
 
@@ -1468,6 +1573,7 @@ function FarmLog:OnEvent(event, ...)
 	elseif event == "ADDON_LOADED" and ... == APPNAME then		
 		self:OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
+		self:CloseOpenInstances()
 		self:PauseSession(true)
 	elseif event == "UPDATE_INSTANCE_INFO" then 
 		self:OnInstanceInfoEvent(...)
@@ -1667,13 +1773,10 @@ end
 
 function FarmLog_MainWindow_ClearButton:Clicked()
 	if self.disabled then return end 
-	FarmLog_QuestionDialog_Yes:SetScript("OnClick", function() 
+	FarmLog:AskQuestion(L["reset-title"], L["reset-question"], function() 
 		FarmLog:ResetSession()
 		FarmLog_QuestionDialog:Hide()
 	end)
-	FarmLog_QuestionDialog_Title_Text:SetText(L["reset-title"])
-	FarmLog_QuestionDialog_Question:SetText(L["reset-question"])
-	FarmLog_QuestionDialog:Show()
 end 
 
 -- sessions buttons

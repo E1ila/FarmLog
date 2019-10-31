@@ -656,6 +656,44 @@
             </Scripts>
           </Button>          <!--$parent_ToggleMobNameButton-->
 
+          <Frame name="$parent_Instances">
+            <Size>
+              <AbsDimension x="20" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="$parent_ToggleMobNameButton" relativePoint="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="3" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="I">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self:SetBackdropColor(0, 0, 0, 0.4)
+          			self:SetBackdropBorderColor(1, 1, 1, 0.1)
+			          FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(0.8, 0.8, 0.8, 1)
+              </OnLoad>
+            </Scripts>
+          </Frame>          <!--$parent_Instances-->
+
         </Frames>
       </Frame>      <!--$parent_Buttons-->
 

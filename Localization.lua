@@ -4,8 +4,8 @@ function FarmLog_BuildLocalization(context)
     L["All Sessions"] = "All Sessions"
     L["disabled"] = "disabled"
     L["enabled"] = "enabled"
-    L["yes"] = "Yes";
-    L["no"] = "No";
+    L["Yes"] = "Yes";
+    L["No"] = "No";
     L["reset-question"] = "Clear current session's data?";	
     L["report"] = "Report";
     L["Log-Options:"] = "Log-Options:";
@@ -65,6 +65,8 @@ function FarmLog_BuildLocalization(context)
     L["Pause"] = "Pause";
     L["deletesession-title"] = "Delete Session"
     L["deletesession-question"] = "Do you want to delete this session?"
+    L["new-instance-title"] = "Instance Count"
+    L["new-instance-question"] = "Is this a new instance ID?"
     if (GetLocale() == "enUS") then
     end
     return L
