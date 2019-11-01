@@ -692,6 +692,12 @@
           			self:SetBackdropBorderColor(1, 1, 1, 0.1)
 			          FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(0.8, 0.8, 0.8, 1)
               </OnLoad>
+              <OnEnter>
+                self:MouseEnter()
+              </OnEnter>
+              <OnLeave>
+                self:MouseLeave()
+              </OnLeave>
             </Scripts>
           </Frame>          <!--$parent_Instances-->
 

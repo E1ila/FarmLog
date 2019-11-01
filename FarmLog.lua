@@ -1882,6 +1882,17 @@ function FarmLog_MinimapButton:HideTooltip()
 	GameTooltip:Hide()
 end 
 
+-- instance count UI
+
+function FarmLog_MainWindow_Buttons_Instances:MouseEnter()
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:SetText(L["instance-count-help"])
+	GameTooltip:Show()
+end 
+
+function FarmLog_MainWindow_Buttons_Instances:MouseLeave()
+	GameTooltip_Hide();
+end 
 
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
