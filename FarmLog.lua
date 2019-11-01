@@ -1,5 +1,5 @@
-﻿local VERSION = "1.12"
-local VERSION_INT = 1.1203
+﻿local VERSION = "1.12.4"
+local VERSION_INT = 1.1204
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -414,6 +414,8 @@ function FarmLog:AddInstance(name, enterTime)
 		["player"] = GetUnitName("player"),
 	})
 	self:UpdateInstanceCount()
+	IncreaseSessionVar("resets", 1)
+	self:RefreshMainWindow()
 end 
 
 function FarmLog:PurgeInstances()
@@ -790,7 +792,10 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(L["Vendor"], GetShortCoinTextureString(GetSessionVar("vendor")), nil, TEXT_COLOR["money"]) 
 	end 
 	if GetSessionVar("xp") > 0 then 
-		self:AddRow(L["XP"], GetSessionVar("xp"), nil, TEXT_COLOR["xp"]) 
+		self:AddRow(GetSessionVar("xp").." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
+	end 
+	if GetSessionVar("resets") > 0 then 
+		self:AddRow(GetSessionVar("resets").." "..L["instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
 	for faction, rep in pairs(GetSessionVar("rep")) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 

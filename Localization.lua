@@ -68,6 +68,7 @@ function FarmLog_BuildLocalization(context)
     L["new-instance-title"] = "Instance Count"
     L["new-instance-question"] = "Is this a new instance ID?"
     L["instance-count-help"] = "The number of instances you've been to in the last hour"
+    L["Instances"] = "instances"
     if (GetLocale() == "enUS") then
     end
     return L
