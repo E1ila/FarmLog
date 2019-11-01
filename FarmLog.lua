@@ -1,5 +1,5 @@
-﻿local VERSION = "1.12.4"
-local VERSION_INT = 1.1204
+﻿local VERSION = "1.12.5"
+local VERSION_INT = 1.1205
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -368,6 +368,12 @@ function FarmLog:Migrate()
 	end 
 
 	if not FLogGlobalVars.instances then FLogGlobalVars.instances = {} end 
+
+	if FLogVars.ver < 1.1205 then 
+		for name, session in pairs(FLogVars.sessions) do 
+			if not session.resets then session.resets = 0 end 
+		end 
+	end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
