@@ -12,6 +12,7 @@ local REALM = GetRealmName()
 local MAX_INSTANCES_SECONDS = 3600
 local MAX_INSTANCES_COUNT = 5
 local INSTANCE_RESET_SECONDS = 3600
+local PURGE_LOOTED_MOBS_SECONDS = 5 * 60
 
 local DROP_META_INDEX_COUNT =  1
 local DROP_META_INDEX_VALUE =  2
@@ -128,6 +129,7 @@ local ahScanResultsShown = 0
 local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 local sessionSearchResult = nil 
+lastLootedMobs = {}
 
 local function out(text)
 	print(" |cffff8800<|cffffbb00FarmLog|cffff8800>|r "..text)
@@ -406,7 +408,6 @@ function FarmLog:UpdateInstanceCount()
 end 
 
 function FarmLog:AddInstance(name, enterTime)
-	self:PurgeInstances()
 	tinsert(FLogGlobalVars.instances[REALM], 1, {
 		["name"] = name,
 		["enter"] = enterTime or time(),
@@ -1128,6 +1129,7 @@ function FarmLog:OnCombatLogEvent()
 	local eventName = eventInfo[2]
 	if eventName == "PARTY_KILL" then 
 		local mobName = eventInfo[9]
+		local mobGuid = eventInfo[8]
 
 		-- count mob kill
 		local sessionKills = GetSessionVar("kills")
@@ -1149,13 +1151,16 @@ end
 function FarmLog:OnLootOpened(autoLoot)
 	local lootCount = GetNumLootItems()
 	local mobName = nil 
-	if not mobName and skillName then 
+	if skillName then 
 		mobName = skillName 
 		-- count gathering skill act in kills table
 		local sessionKills = GetSessionVar("kills")
 		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
 	end 
-	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") then mobName = UnitName("target") end 
+	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
+		lastLootedMobs[UnitGUID("target")] = time()
+		mobName = UnitName("target") 
+	end 
 	
 	debug("|cff999999FarmLog:OnLootOpened|r mobName |cffff9900"..tostring(mobName))
 	lastMobLoot = {}
@@ -1289,7 +1294,9 @@ function FarmLog:OnLootEvent(text)
 
 	if not mobName then 
 		-- loot window hasn't opened yet
-		if not UnitInParty("player") and not IsInRaid() and UnitIsEnemy("player", "target") and UnitIsDead("target") then 
+		if not UnitInParty("player") and not IsInRaid() and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
+			debug("Assuming targeted mob for loot source, GUID "..UnitGUID("target")) 
+			lastLootedMobs[UnitGUID("target")] = time()
 			-- with fast loot the loot window opens late and is empty, we assume that our dead target is the source
 			-- unless in party / raid where we can receive items from rolls / ML
 			mobName = UnitName("target")
@@ -1406,6 +1413,8 @@ end
 -- Entering World
 
 function FarmLog:OnEnteringWorld() 
+	self:PurgeInstances()
+	self:UpdateInstanceCount()
 	if FLogGlobalVars.autoSwitchInstances then 
 		local inInstance, _ = IsInInstance()
 		inInstance = tobool(inInstance)
@@ -1453,6 +1462,17 @@ function FarmLog:OnInstanceInfoEvent()
 	-- 	local instanceName, instanceID, instanceReset, instanceDifficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, maxBosses, defeatedBosses = GetSavedInstanceInfo(i)
 	-- 	debug("instanceName="..instanceName.." instanceID="..instanceID.." instanceReset="..tostring(instanceReset).." locked="..tostring(locked))
 	-- end 
+end 
+
+-- Enter combat 
+
+function FarmLog:OnEnterCombat()
+	local now = time()
+	for guid, t in pairs(lastLootedMobs) do
+		if now - t >= PURGE_LOOTED_MOBS_SECONDS then 
+			lastLootedMobs[guid] = nil
+		end 
+	end 
 end 
 
 -- Auction House Scan --------------------------------------------------------------------------
@@ -1579,6 +1599,8 @@ function FarmLog:OnEvent(event, ...)
 		self:OnInstanceInfoEvent(...)
 	elseif event == "AUCTION_ITEM_LIST_UPDATE" then
 		self:OnAuctionUpdate()
+	elseif event == "PLAYER_REGEN_DISABLED" then 
+		self:OnEnterCombat()
 	end
 end
 

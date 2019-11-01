@@ -32,6 +32,7 @@
         self:RegisterEvent("PLAYER_LOGOUT")
         self:RegisterEvent("UPDATE_INSTANCE_INFO")
         self:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
       </OnLoad>
       <OnEvent>
         self:OnEvent(event, ...)
