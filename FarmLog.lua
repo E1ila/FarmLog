@@ -1267,7 +1267,7 @@ function FarmLog:LogBlackLotus()
 	local now = time()
 	if not FLogVars.bls[zoneName] then FLogVars.bls[zoneName] = {} end 
 
-	FLogGlobalVars.blt[zoneName] = now
+	FLogGlobalVars.blt[REALM][zoneName] = now
 
 	local MapId = C_Map.GetBestMapForUnit("player")
 	if not MapId then 
@@ -1295,10 +1295,14 @@ end
 function FarmLog:ShowBlackLotusTimers()
 	local now = time()
 	if DBM then 
-		for zoneName, lastPick in pairs(FLogGlobalVars.blt) do 
-			local delta = now - lastPick
-			if delta < BL_SPAWN_TIME_SECONDS then 
-				DBM:CreatePizzaTimer(BL_SPAWN_TIME_SECONDS - delta, L["blacklotus-short"]..": "..zoneName)
+		for realmName, timers in pairs(FLogGlobalVars.blt) do 
+			if realmName == REALM then 
+				for zoneName, lastPick in pairs(timers) do 
+					local delta = now - lastPick
+					if delta < BL_SPAWN_TIME_SECONDS then 
+						DBM:CreatePizzaTimer(BL_SPAWN_TIME_SECONDS - delta, L["blacklotus-short"]..": "..zoneName)
+					end 
+				end 
 			end 
 		end 
 	end 
@@ -1361,8 +1365,15 @@ function FarmLog:OnLootEvent(text)
 	local now = time()
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	if not itemLink then return end 
-	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 
+	if extractItemID(itemLink) == FarmLog_BL_ITEMID then 
+		-- start timer even if not in session
+		self:LogBlackLotus()
+	end 
+
+	if not FLogVars.enabled then return end 
+
+	local _, _, itemRarity, _, _, itemType, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
 	mobName = lastMobLoot[itemLink]
 
 	if not mobName then 
@@ -1382,7 +1393,6 @@ function FarmLog:OnLootEvent(text)
 		end 
 	end 
 
-	local itemId = extractItemID(itemLink)
 	itemLink = normalizeLink(itemLink) -- removed player level from link
 
 	debug("|cff999999FarmLog:OnLootEvent|r itemLink |cffff9900"..itemLink.."|r, mobName |cffff9900"..tostring(mobName).."|r itemId |cffff9900"..tostring(itemId))
@@ -1411,10 +1421,6 @@ function FarmLog:OnLootEvent(text)
 		self:InsertLoot(mobName, itemLink, (quantity or 1), vendorPrice or 0);
 		self:RefreshMainWindow();
 	end
-
-	if itemId == FarmLog_BL_ITEMID then 
-		self:LogBlackLotus()
-	end 
 end
 
 -- Addon Loaded
@@ -1427,6 +1433,7 @@ function FarmLog:OnAddonLoaded()
 	if not FLogGlobalVars.ahScan[REALM] then FLogGlobalVars.ahScan[REALM] = {} end 
 	if not FLogGlobalVars.ahPrice[REALM] then FLogGlobalVars.ahPrice[REALM] = {} end 
 	if not FLogGlobalVars.instances[REALM] then FLogGlobalVars.instances[REALM] = {} end 
+	if not FLogGlobalVars.blt[REALM] then FLogGlobalVars.blt[REALM] = {} end 
 
 	if FLogGlobalVars.dismissLootWindowOnEsc then  
 		tinsert(UISpecialFrames, FarmLog_MainWindow:GetName())
@@ -1641,10 +1648,6 @@ function FarmLog:OnEvent(event, ...)
 		-- debug(event)
 		if event == "LOOT_OPENED" then
 			self:OnLootOpened(...)			
-		elseif event == "CHAT_MSG_LOOT" then
-			if (... and (strfind(..., L["loot"]))) then
-				self:OnLootEvent(...)		
-			end	
 		elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 			self:OnCombatHonorEvent(...);			
 		elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
@@ -1669,6 +1672,10 @@ function FarmLog:OnEvent(event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" then
 		self:OnEnteringWorld(...)
+	elseif event == "CHAT_MSG_LOOT" then
+		if (... and (strfind(..., L["loot"]))) then
+			self:OnLootEvent(...)		
+		end	
 	elseif event == "ADDON_LOADED" and ... == APPNAME then		
 		self:OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
