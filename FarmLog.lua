@@ -801,8 +801,10 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(GetSessionVar("xp").." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
 	if GetSessionVar("resets") > 0 then 
-		self:AddRow(GetSessionVar("resets").." "..L["instances"], nil, nil, TEXT_COLOR["xp"]) 
-	end 
+		if instances then
+			self:AddRow(GetSessionVar("resets").." "..L["instances"], nil, nil, TEXT_COLOR["xp"]) 
+		end
+	end
 	for faction, rep in pairs(GetSessionVar("rep")) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
 	end 
