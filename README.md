@@ -50,6 +50,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 
 ### Changes 
+* 1.13
+    * Black Lotus Timers! FarmLog now logs Black Lotus picks and if you have DBM addon, it'll show a timer until next spawn, per map.
 * 1.12.5
     * Fixed bug when loading a session without instance count
 * 1.12.4

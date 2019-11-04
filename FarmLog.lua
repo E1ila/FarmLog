@@ -65,6 +65,13 @@ local SPELL_SKINNING = {
 }
 local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
 
+local BL_TIMERS_DELAY = 5
+local BL_SPAWN_TIME_SECONDS = 3600
+FarmLog_BL_ITEMID = "13468"
+-- briarthorn FarmLog_BL_ITEMID="2450"
+-- peacebloom FarmLog_BL_ITEMID="2447"
+-- earthroot FarmLog_BL_ITEMID="2449"
+
 FLogGlobalVars = {
 	["debug"] = false,
 	["ahPrice"] = {},
@@ -77,6 +84,7 @@ FLogGlobalVars = {
 	["dismissLootWindowOnEsc"] = false,
 	["groupByMobName"] = true,
 	["instances"] = {},
+	["blt"] = {},
 	["sortBy"] = SORT_BY_TEXT,
 	["sortSessionBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
@@ -129,6 +137,7 @@ local ahScanResultsShown = 0
 local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 local sessionSearchResult = nil 
+local addonLoadedTime = nil
 lastLootedMobs = {}
 
 local function out(text)
@@ -213,6 +222,12 @@ local function normalizeLink(link)
 	return link 
 end 
 
+local function extractItemID(link)
+	-- remove player level from item link
+	local _, id = _G.string.split(":", link)
+	return id 
+end 
+
 
 -- Auction house access 
 
@@ -257,6 +272,7 @@ function FarmLog:Migrate()
 			["xp"] = FLogSVXP,
 			["honor"] = FLogSVHonor,
 			["seconds"] = FLogSVTotalSeconds,
+			["bls"] = {},
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
@@ -374,6 +390,9 @@ function FarmLog:Migrate()
 			if not session.resets then session.resets = 0 end 
 		end 
 	end 
+
+	if not FLogVars.bls then FLogVars.bls = {} end 
+	if not FLogGlobalVars.blt then FLogGlobalVars.blt = {} end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -502,6 +521,7 @@ function FarmLog:ResetSessionVars()
 		["honor"] = 0,
 		["seconds"] = 0,
 		["resets"] = 0,
+		["bls"] = {},
 	}
 end 
 
@@ -1242,6 +1262,48 @@ end
 
 -- Loot receive event
 
+function FarmLog:LogBlackLotus()
+	local zoneName = GetZoneText()
+	local now = time()
+	if not FLogVars.bls[zoneName] then FLogVars.bls[zoneName] = {} end 
+
+	FLogGlobalVars.blt[zoneName] = now
+
+	local MapId = C_Map.GetBestMapForUnit("player")
+	if not MapId then 
+		out("|cffff0000Failed logging Black Lotus loot - no map id")
+		return 
+	end
+	local map = C_Map.GetPlayerMapPosition(MapId, "player")
+	if not map then 
+		out("|cffff0000Failed logging Black Lotus loot - no map info")
+		return 
+	end
+	local x = format("%.1f", (map.x or 0) * 100)
+	local y = format("%.1f", (map.y or 0) * 100)
+	local pickMeta = {
+		["time"] = now,
+		["pos"] = {[x] = x, [y] = y},
+		["zone"] = GetMinimapZoneText(),
+	}
+	tinsert(FLogVars.bls[zoneName], pickMeta)
+	debug("|cff999999LogBlackLotus|r logged picked at |cffff9900"..pickMeta.zone.." @ "..x..","..y.."")
+
+	self:ShowBlackLotusTimers()
+end 
+
+function FarmLog:ShowBlackLotusTimers()
+	local now = time()
+	if DBM then 
+		for zoneName, lastPick in pairs(FLogGlobalVars.blt) do 
+			local delta = now - lastPick
+			if delta < BL_SPAWN_TIME_SECONDS then 
+				DBM:CreatePizzaTimer(BL_SPAWN_TIME_SECONDS - delta, L["blacklotus-short"]..": "..zoneName)
+			end 
+		end 
+	end 
+end 
+
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	if (mobName and itemLink and count) then		
 		local value = GetManualPrice(itemLink)
@@ -1320,9 +1382,10 @@ function FarmLog:OnLootEvent(text)
 		end 
 	end 
 
+	local itemId = extractItemID(itemLink)
 	itemLink = normalizeLink(itemLink) -- removed player level from link
 
-	debug("|cff999999FarmLog:OnLootEvent|r itemLink |cffff9900"..itemLink.."|r, mobName |cffff9900"..tostring(mobName))
+	debug("|cff999999FarmLog:OnLootEvent|r itemLink |cffff9900"..itemLink.."|r, mobName |cffff9900"..tostring(mobName).."|r itemId |cffff9900"..tostring(itemId))
 
 	local inRaid = IsInRaid();
 	local inParty = false;
@@ -1348,6 +1411,10 @@ function FarmLog:OnLootEvent(text)
 		self:InsertLoot(mobName, itemLink, (quantity or 1), vendorPrice or 0);
 		self:RefreshMainWindow();
 	end
+
+	if itemId == FarmLog_BL_ITEMID then 
+		self:LogBlackLotus()
+	end 
 end
 
 -- Addon Loaded
@@ -1419,6 +1486,7 @@ function FarmLog:OnAddonLoaded()
 	else 
 		FarmLog_MainWindow:Hide()
 	end 
+	addonLoadedTime = time()
 end 
 
 -- Entering World
@@ -1630,6 +1698,10 @@ function FarmLog:OnUpdate()
 	end 
 	if ahScanning then 
 		self:AnalyzeAuctionHouseResults()
+	end 
+	if addonLoadedTime and time() - addonLoadedTime > BL_TIMERS_DELAY then 
+		addonLoadedTime = nil 
+		self:ShowBlackLotusTimers()
 	end 
 end 
 
