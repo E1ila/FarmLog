@@ -65,6 +65,7 @@ local SPELL_SKINNING = {
 }
 local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
 
+local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
 FarmLog_BL_ITEMID = "13468"
@@ -138,6 +139,8 @@ local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 local sessionSearchResult = nil 
 local addonLoadedTime = nil
+local blSeenTime = nil
+local blSeenZone = nil
 lastLootedMobs = {}
 
 local function out(text)
@@ -1260,9 +1263,9 @@ function FarmLog:OnMoneyEvent(text)
 	self:RefreshMainWindow()
 end 
 
--- Loot receive event
+-- Black lotus tracking
 
-function FarmLog:LogBlackLotus()
+function FarmLog:LogBlackLotus(picked)
 	local zoneName = GetZoneText()
 	local now = time()
 	if not FLogVars.bls[zoneName] then FLogVars.bls[zoneName] = {} end 
@@ -1285,11 +1288,24 @@ function FarmLog:LogBlackLotus()
 		["time"] = now,
 		["pos"] = {[x] = x, [y] = y},
 		["zone"] = GetMinimapZoneText(),
+		["picked"] = picked,
 	}
+	if blSeenTime and blSeenZone == zoneName and now - blSeenTime <= BL_SEEN_TIMEOUT then 
+		pickMeta.seen = blSeenTime
+	end 
 	tinsert(FLogVars.bls[zoneName], pickMeta)
 	debug("|cff999999LogBlackLotus|r logged picked at |cffff9900"..pickMeta.zone.." @ "..x..","..y.."")
 
 	self:ShowBlackLotusTimers()
+end 
+
+function FarmLog:ParseMinimapTooltip()
+	local tooltip = GameTooltipTextLeft1:GetText()
+	if tooltip == L["Black Lotus"] then
+		blSeenTime = time()
+		blSeenZone = GetZoneText()
+		debug("|cff999999ParseMinimapTooltip|r blSeenTime |cffff9900"..blSeenTime.."|r blSeenZone |cffff9900"..blSeenZone)
+	end
 end 
 
 function FarmLog:ShowBlackLotusTimers()
@@ -1307,6 +1323,8 @@ function FarmLog:ShowBlackLotusTimers()
 		end 
 	end 
 end 
+
+-- Loot receive event
 
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	if (mobName and itemLink and count) then		
@@ -1368,7 +1386,7 @@ function FarmLog:OnLootEvent(text)
 
 	if extractItemID(itemLink) == FarmLog_BL_ITEMID then 
 		-- start timer even if not in session
-		self:LogBlackLotus()
+		self:LogBlackLotus(true)
 	end 
 
 	if not FLogVars.enabled then return end 
@@ -1710,6 +1728,9 @@ function FarmLog:OnUpdate()
 		addonLoadedTime = nil 
 		self:ShowBlackLotusTimers()
 	end 
+	if GameTooltip:IsOwned(Minimap) and GameTooltip:IsShown() then
+		self:ParseMinimapTooltip()
+	end
 end 
 
 
