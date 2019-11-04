@@ -1139,6 +1139,168 @@
     </Frames>
   </Frame>  <!--FarmLog_SessionsWindow-->
 
+
+  <Frame name="FarmLog_LogWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true">
+    <Size>
+      <AbsDimension x="200" y="200"/>
+    </Size>
+    <Anchors>
+      <Anchor point="CENTER" />
+    </Anchors>
+    <ResizeBounds>
+      <minResize x="200" y="200" />
+      <maxResize x="600" y="800" />
+    </ResizeBounds>
+    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+      <EdgeSize>
+        <AbsValue val="1"></AbsValue>
+      </EdgeSize>
+      <TileSize>
+        <AbsValue val="16" />
+      </TileSize>
+    </Backdrop>
+    <Scripts>
+      <OnLoad>
+   			self:SetBackdropColor (0, 0, 0, 0.8)
+    		self:SetBackdropBorderColor(0, 0, 0, 1)
+        self.rows = {}
+        tinsert(UISpecialFrames, self:GetName())
+      </OnLoad>
+    </Scripts>
+
+    <Frames>
+
+      <Button name="$parent_CloseButton" inherits="UIPanelCloseButton">
+        <Size>
+          <AbsDimension x="26" y="26"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="1" y="1"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            FarmLog_LogWindow:Hide()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_CloseButton-->
+
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+        <Size>
+          <AbsDimension x="120" y="20"/>
+        </Size>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT">
+            <Offset>
+              <AbsDimension x="2" y="-2"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Scripts>
+          <OnLoad>
+       			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
+        		self:SetBackdropBorderColor(0, 0, 0, 0)
+            self:RegisterForDrag("LeftButton")
+          </OnLoad>
+          <OnDragStart>
+            FarmLog_LogWindow:StartMoving()
+          </OnDragStart>
+          <OnDragStop>
+          	FarmLog_LogWindow:StopMovingOrSizing();
+          </OnDragStop>
+        </Scripts>
+        <Layers>
+          <Layer level="BACKGROUND">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogFont" text="Log">
+              <Color r="1" g="0" b="0"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+      </Frame>      <!--$parent_Title-->
+
+      <Button name="$parent_Resize">
+        <Size>
+          <AbsDimension x="16" y="16"/>
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="-2" y="-2"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <Scripts>
+          <OnMouseDown>
+            FarmLog_LogWindow:StartSizing("BOTTOMLEFT")
+          </OnMouseDown>
+          <OnMouseUp>
+            FarmLog_LogWindow:StopMovingOrSizing()
+          </OnMouseUp>
+        </Scripts>
+      </Button>
+
+      <ScrollFrame name="$parent_Scroll" inherits="UIPanelScrollFrameTemplate" enableMouse="true">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent_Title" relativePoint="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="5" y="-3"/>
+            </Offset>
+          </Anchor>
+          <Anchor point="BOTTOMRIGHT">
+            <Offset>
+              <AbsDimension x="-25" y="3"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnLoad>
+            self:SetHorizontalScroll(0)
+            self:SetVerticalScroll(0)
+            FarmLog_LogWindow.scroll = self
+          </OnLoad>
+        </Scripts>
+        <ScrollChild>
+          <Frame name="$parent_Content">
+            <Size>
+              <AbsDimension x="10" y="10"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPLEFT" />
+              <Anchor point="BOTTOMRIGHT" />
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                FarmLog_LogWindow.scrollContent = self
+              </OnLoad>
+            </Scripts>
+          </Frame>
+        </ScrollChild>
+      </ScrollFrame>      <!--$parent_Scroll-->
+
+    </Frames>
+  </Frame>  <!--FarmLog_LogWindow-->
+
   <Frame name="FarmLogFrame_Options">
   </Frame>  <!---->
 

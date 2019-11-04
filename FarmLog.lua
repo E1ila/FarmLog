@@ -139,8 +139,7 @@ local ahScanResultsTotal = 0
 local ahScanPauseTime = 0
 local sessionSearchResult = nil 
 local addonLoadedTime = nil
-local blSeenTime = nil
-local blSeenZone = nil
+local blSeen = nil
 lastLootedMobs = {}
 
 local function out(text)
@@ -792,6 +791,11 @@ function FarmLog_MainWindow:GetOnLogItemClick(itemLink)
 			FarmLog_MainWindow:PlaceLinkInChatEditBox(itemLink) -- paste in chat box
 		elseif IsControlKeyDown() then
 			DressUpItemLink(itemLink) -- preview
+		else 
+			if extractItemID(itemLink) == FarmLog_BL_ITEMID then 
+				FarmLog_LogWindow:Refresh()
+				FarmLog_LogWindow:Show()
+			end 
 		end
 	end 
 end
@@ -975,7 +979,6 @@ function FarmLog_SessionsWindow:CreateRow(text, valueText)
 	return row
 end
 
-
 function FarmLog_SessionsWindow:AddRow(text, valueText, quantity, color) 
 	self.visibleRows = self.visibleRows + 1
 	text = "|cff"..(color or "dddddd")..text.."|r"
@@ -1038,6 +1041,51 @@ function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName)
 		end 
 	end 
 end
+
+-- Log window ------------------------------------
+
+function FarmLog_LogWindow:CreateRow(text, valueText)
+	local row = CreateRow_Text(self.rows[self.visibleRows], text, self)
+
+	if not row.valueLabel then 
+		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
+		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
+		row.valueLabel:SetPoint("RIGHT", 0, 0)
+		row.valueLabel:SetFont(FONT_NAME, 12)
+	end 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
+	row.valueLabel:SetText(valueText or "");
+	row.valueLabel:Show()
+
+	return row
+end
+
+function FarmLog_LogWindow:AddPickRow(map, coords, picked, time) 
+	self.visibleRows = self.visibleRows + 1
+	local text = "  |cff66aa33"..map.." |cff777777@|r "..coords.x.."|cff777777,|r"..coords.y
+	if picked then text = text.." |cff888888("..L["picked"]..")|r" end 
+	return self:CreateRow(text, time)
+end 
+
+function FarmLog_LogWindow:AddMapRow(map, count) 
+	self.visibleRows = self.visibleRows + 1
+	return self:CreateRow("|cff99ff00"..map.."|r |cff777777x|r"..count)
+end 
+
+function FarmLog_LogWindow:Refresh()
+	self.visibleRows = 0
+
+	for mapName, mapData in pairs(FLogVars.bls) do 
+		self:AddMapRow(mapName, #mapData)
+		for _, pickData in ipairs(mapData) do 
+			local row = self:AddPickRow(pickData.zone, pickData.pos, pickData.picked, "|cffffffff"..pickData.time.."|r  "..pickData.date)
+			-- SetItemTooltip(row)
+			-- SetItemActions(row, self:GetOnLogItemClick(name))
+		end 
+	end 
+	HideRowsBeyond(self.visibleRows + 1, self)
+end
+
+
 
 -- EVENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1285,13 +1333,15 @@ function FarmLog:LogBlackLotus(picked)
 	local x = format("%.1f", (map.x or 0) * 100)
 	local y = format("%.1f", (map.y or 0) * 100)
 	local pickMeta = {
-		["time"] = now,
-		["pos"] = {[x] = x, [y] = y},
+		["ts"] = now,
+		["time"] = date ("%H:%M"),
+		["date"] = date ("%m-%d"),
+		["pos"] = {["x"] = x, ["y"] = y},
 		["zone"] = GetMinimapZoneText(),
 		["picked"] = picked,
 	}
-	if blSeenTime and blSeenZone == zoneName and now - blSeenTime <= BL_SEEN_TIMEOUT then 
-		pickMeta.seen = blSeenTime
+	if blSeen and blSeen.zone == zoneName and now - blSeen.ts <= BL_SEEN_TIMEOUT then 
+		pickMeta.seen = blSeen
 	end 
 	tinsert(FLogVars.bls[zoneName], pickMeta)
 	debug("|cff999999LogBlackLotus|r logged picked at |cffff9900"..pickMeta.zone.." @ "..x..","..y.."")
@@ -1302,9 +1352,13 @@ end
 function FarmLog:ParseMinimapTooltip()
 	local tooltip = GameTooltipTextLeft1:GetText()
 	if tooltip == L["Black Lotus"] then
-		blSeenTime = time()
-		blSeenZone = GetZoneText()
-		debug("|cff999999ParseMinimapTooltip|r blSeenTime |cffff9900"..blSeenTime.."|r blSeenZone |cffff9900"..blSeenZone)
+		blSeen = {
+			["ts"] = time(),
+			["time"] = date ("%H:%M:%S"),
+			["date"] = date ("%Y-%m-%d"),
+			["zone"] = GetZoneText(),
+		}
+		debug("|cff999999ParseMinimapTooltip|r blSeenTime |cffff9900"..blSeen.ts.."|r blSeenZone |cffff9900"..blSeen.zone)
 	end
 end 
 
