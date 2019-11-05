@@ -1,5 +1,7 @@
-﻿local VERSION = "1.13"
-local VERSION_INT = 1.1300
+﻿-- SPELL_FAILED_TRY_AGAIN
+
+local VERSION = "1.13.1"
+local VERSION_INT = 1.1301
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -57,6 +59,9 @@ local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
 local SPELL_FISHING = 7620
+local SPELL_OPEN = 3365
+local SPELL_OPEN_NOTEXT = 22810
+local SPELL_LOCKPICK = 1804
 local SPELL_SKINNING = {
 	["10768"] = 1,
 	["8617"] = 1,
@@ -1095,11 +1100,16 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	if spellId == SPELL_HERBING then 
 		skillName = L["Herbalism"]
 		skillNameTime = time()
+		skillTooltip1 = GameTooltipTextLeft1:GetText()
+		skillTooltip2 = GameTooltipTextLeft2:GetText()		
 	elseif spellId == SPELL_MINING then 
 		skillName = L["Mining"]
 		skillNameTime = time()
 	elseif spellId == SPELL_FISHING then 
 		skillName = L["Fishing"]
+		skillNameTime = time()
+	elseif spellId == SPELL_OPEN or spellId == SPELL_OPEN_NOTEXT then 
+		skillName = L["Treasure"]
 		skillNameTime = time()
 	elseif SPELL_SKINNING[tostring(spellId)] == 1 then 
 		skillName = L["Skinning"]

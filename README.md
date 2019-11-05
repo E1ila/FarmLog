@@ -4,6 +4,8 @@ World of Warcraft Classic addon that logs loot, monster kills, honor and instanc
 ### What it is for
 You can track your farming session and know how much gold/hour you make. Good for general grinding, instance item farming, rep farm, tradeskill work, honor farm, know how many you killed in a rare BoE farm, etc etc.
 
+FarmLog now tracks Black Lotus picking and shows respawn timers! (need DBM addon for timer bars)
+
 ### What it does
 * Tracks 
     * Shows Gold/Hour of active farming session
@@ -17,10 +19,13 @@ You can track your farming session and know how much gold/hour you make. Good fo
     * XP gained
     * Skill levels
     * Honor gain (not tested yet, will be available in phase 2)
+    * Black Lotus pick time and location
 * Allows reporting farm results
 * Display farm yield in a window with all looted items
 * Allows filtering item poor and common items
 * Save multiple farm sessions, you can switch to a different session and continue from where you left off. Read more about Sessions below.
+* When a Black Lotus is picked, it will log the time, zone and coords. You can see it by clicking the BL in your session log
+* If you have DBM installed, it'll start a timer for next spawn. It persists through logout / playing alts.
 
 ### How to install
 * Download, extract (if zipped)
@@ -51,6 +56,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.13.1
+    * Supporting chest treasures! Loot from chests will be attributed to Treasure category
 * 1.13
     * Black Lotus Timers! FarmLog now logs Black Lotus picks and if you have DBM addon, it'll show a timer until next spawn, per map.
 * 1.12.5
