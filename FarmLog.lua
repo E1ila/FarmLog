@@ -1630,41 +1630,44 @@ end
 function FarmLog:OnEnteringWorld() 
 	self:PurgeInstances()
 	self:UpdateInstanceCount()
-	if FLogGlobalVars.autoSwitchInstances then 
-		local inInstance, _ = IsInInstance()
-		inInstance = tobool(inInstance)
-		local instanceName = GetInstanceInfo()
-		local now = time()
-		debug("|cff999999FarmLog:OnEnteringWorld|r FLogVars.inInstance |cffff9900"..tostring(FLogVars.inInstance).."|r inInstance |cffff9900"..tostring(inInstance))
 
-		if FLogVars.inInstance and not inInstance then 
-			FLogVars.inInstance = false
-			FLogVars.instanceName = nil
-			self:CloseOpenInstances()
+	local inInstance, _ = IsInInstance()
+	inInstance = tobool(inInstance)
+	local instanceName = GetInstanceInfo()
+	local now = time()
+	debug("|cff999999FarmLog:OnEnteringWorld|r FLogVars.inInstance |cffff9900"..tostring(FLogVars.inInstance).."|r inInstance |cffff9900"..tostring(inInstance))
+
+	if FLogVars.inInstance and not inInstance then 
+		FLogVars.inInstance = false
+		FLogVars.instanceName = nil
+		self:CloseOpenInstances()
+		if FLogGlobalVars.autoSwitchInstances then 
 			self:PauseSession()
-		elseif inInstance then
-			local lastInstance, lastIndex = self:GetLastInstance(instanceName)
-			if lastInstance and lastInstance.leave and now - lastInstance.leave >= INSTANCE_RESET_SECONDS then 
-				-- after 1 hour of not being inside the instance, treat this instance as reset
-				lastInstance = nil 
-			end 
-			FLogVars.inInstance = true
-			FLogVars.instanceName = instanceName
+		end 
+	elseif inInstance then
+		local lastInstance, lastIndex = self:GetLastInstance(instanceName)
+		if lastInstance and lastInstance.leave and now - lastInstance.leave >= INSTANCE_RESET_SECONDS then 
+			-- after 1 hour of not being inside the instance, treat this instance as reset
+			lastInstance = nil 
+		end 
+		FLogVars.inInstance = true
+		FLogVars.instanceName = instanceName
+		if FLogGlobalVars.autoSwitchInstances then 
 			self:StartSession(instanceName, true, true)
-			if not lastInstance then 
+		end 
+		if not lastInstance then 
+			FarmLog:AddInstance(instanceName, now)
+		else 
+			self:AskQuestion(L["new-instance-title"], L["new-instance-question"], function () 
+				-- yes
 				FarmLog:AddInstance(instanceName, now)
-			else 
-				self:AskQuestion(L["new-instance-title"], L["new-instance-question"], function () 
-					-- yes
-					FarmLog:AddInstance(instanceName, now)
-				end, function () 
-					-- no
-					lastInstance.leave = nil 
-					FarmLog:RepushInstance(lastIndex)
-				end)
-			end 
-		end
-	end 
+			end, function () 
+				-- no
+				lastInstance.leave = nil 
+				FarmLog:RepushInstance(lastIndex)
+			end)
+		end 
+	end
 	self:RefreshMainWindow()
 end 
 
