@@ -73,8 +73,8 @@ local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
-local BL_ITEM_NAME = GetItemInfo(13468)
-local BL_ITEMID = "13468"
+local BL_ITEMID = 13468
+local BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
 -- briarthorn FarmLog:SetBlackLotusItemId(2450)
 -- peacebloom FarmLog:SetBlackLotusItemId(2447)
 -- earthroot FarmLog:SetBlackLotusItemId(2449)
@@ -803,7 +803,7 @@ function FarmLog_MainWindow:GetOnLogItemClick(itemLink)
 		elseif IsControlKeyDown() then
 			DressUpItemLink(itemLink) -- preview
 		else 
-			if extractItemID(itemLink) == BL_ITEMID then 
+			if extractItemID(itemLink) == tostring(BL_ITEMID) then 
 				FarmLog:ShowBlackLotusLog()
 			end 
 		end
@@ -1338,7 +1338,7 @@ end
 
 function FarmLog:SetBlackLotusItemId(itemId) 
 	BL_ITEM_NAME = GetItemInfo(itemId)
-	BL_ITEMID = tostring(itemId)
+	BL_ITEMID = itemId
 	debug("|cff999999SetBlackLotusItemId|r BL_ITEM_NAME |cffff9900"..tostring(BL_ITEM_NAME).."|r BL_ITEMID |cffff9900"..tostring(BL_ITEMID))
 end 
 
@@ -1494,7 +1494,7 @@ function FarmLog:OnLootEvent(text)
 
 	local itemId = extractItemID(itemLink)
 	debug("|cff999999OnLootEvent|r itemId |cffff9900"..tostring(itemId))
-	if itemId == BL_ITEMID then 
+	if itemId == tostring(BL_ITEMID) then 
 		-- start timer even if not in session
 		self:LogBlackLotusCurrentLocation(true)
 		self:IncreaseBlackLotusPickStat("success")
