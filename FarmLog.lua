@@ -1,6 +1,4 @@
-﻿-- SPELL_FAILED_TRY_AGAIN
-
-local VERSION = "1.13.1"
+﻿local VERSION = "1.13.1"
 local VERSION_INT = 1.1301
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -70,13 +68,19 @@ local SPELL_SKINNING = {
 }
 local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
 
+local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
+
 local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
-FarmLog_BL_ITEMID = "13468"
--- briarthorn FarmLog_BL_ITEMID="2450"
--- peacebloom FarmLog_BL_ITEMID="2447"
--- earthroot FarmLog_BL_ITEMID="2449"
+local BL_ITEM_NAME = GetItemInfo(13468)
+local BL_ITEMID = "13468"
+-- briarthorn FarmLog:SetBlackLotusItemId(2450)
+-- peacebloom FarmLog:SetBlackLotusItemId(2447)
+-- earthroot FarmLog:SetBlackLotusItemId(2449)
+-- silverleaf FarmLog:SetBlackLotusItemId(765)
+-- mageroyal FarmLog:SetBlackLotusItemId(785)
+-- Stranglekelp FarmLog:SetBlackLotusItemId(3820)
 
 FLogGlobalVars = {
 	["debug"] = false,
@@ -90,7 +94,8 @@ FLogGlobalVars = {
 	["dismissLootWindowOnEsc"] = false,
 	["groupByMobName"] = true,
 	["instances"] = {},
-	["blt"] = {},
+	["blt"] = {}, -- BL timers
+	["blp"] = {}, -- BL pick/fail counters
 	["sortBy"] = SORT_BY_TEXT,
 	["sortSessionBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
@@ -134,6 +139,8 @@ local lastUnknownLoot = {}
 local lastUnknownLootTime = 0
 local skillName = nil 
 local skillNameTime = nil 
+local skillTooltip1 = nil 
+local skillTooltip2 = nil 
 local ahScanRequested = false
 local ahScanIndex = 0
 local ahScanItems = 0
@@ -400,6 +407,7 @@ function FarmLog:Migrate()
 
 	if not FLogVars.bls then FLogVars.bls = {} end 
 	if not FLogGlobalVars.blt then FLogGlobalVars.blt = {} end 
+	if not FLogGlobalVars.blp then FLogGlobalVars.blp = {} end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -528,7 +536,7 @@ function FarmLog:ResetSessionVars()
 		["honor"] = 0,
 		["seconds"] = 0,
 		["resets"] = 0,
-		["bls"] = {},
+		["bls"] = {}, -- BL spawn log
 	}
 end 
 
@@ -797,9 +805,8 @@ function FarmLog_MainWindow:GetOnLogItemClick(itemLink)
 		elseif IsControlKeyDown() then
 			DressUpItemLink(itemLink) -- preview
 		else 
-			if extractItemID(itemLink) == FarmLog_BL_ITEMID then 
-				FarmLog_LogWindow:Refresh()
-				FarmLog_LogWindow:Show()
+			if extractItemID(itemLink) == BL_ITEMID then 
+				FarmLog:ShowBlackLotusLog()
 			end 
 		end
 	end 
@@ -1076,7 +1083,7 @@ function FarmLog_LogWindow:AddMapRow(map, count)
 	return self:CreateRow("|cff99ff00"..map.."|r |cff777777x|r"..count)
 end 
 
-function FarmLog_LogWindow:Refresh()
+function FarmLog_LogWindow:RefreshBlackLotusLog()
 	self.visibleRows = 0
 
 	for mapName, mapData in pairs(FLogVars.bls) do 
@@ -1090,6 +1097,10 @@ function FarmLog_LogWindow:Refresh()
 	HideRowsBeyond(self.visibleRows + 1, self)
 end
 
+function FarmLog:ShowBlackLotusLog()
+	FarmLog_LogWindow:RefreshBlackLotusLog()
+	FarmLog_LogWindow:Show()
+end 
 
 
 -- EVENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1097,6 +1108,8 @@ end
 -- Spell cast 
 
 function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
+	debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
+
 	if spellId == SPELL_HERBING then 
 		skillName = L["Herbalism"]
 		skillNameTime = time()
@@ -1323,13 +1336,14 @@ end
 
 -- Black lotus tracking
 
-function FarmLog:LogBlackLotus(picked)
-	local zoneName = GetZoneText()
-	local now = time()
-	if not FLogVars.bls[zoneName] then FLogVars.bls[zoneName] = {} end 
+function FarmLog:SetBlackLotusItemId(itemId) 
+	BL_ITEM_NAME = GetItemInfo(itemId)
+	BL_ITEMID = tostring(itemId)
+	debug("|cff999999SetBlackLotusItemId|r BL_ITEM_NAME |cffff9900"..tostring(BL_ITEM_NAME).."|r BL_ITEMID |cffff9900"..tostring(BL_ITEMID))
+end 
 
-	FLogGlobalVars.blt[REALM][zoneName] = now
-
+function FarmLog:LogBlackLotusCurrentLocation(byPlayer)
+	-- log spawn
 	local MapId = C_Map.GetBestMapForUnit("player")
 	if not MapId then 
 		out("|cffff0000Failed logging Black Lotus loot - no map id")
@@ -1342,26 +1356,63 @@ function FarmLog:LogBlackLotus(picked)
 	end
 	local x = format("%.1f", (map.x or 0) * 100)
 	local y = format("%.1f", (map.y or 0) * 100)
+
+	local mapName = GetZoneText()
+	local now = time()
 	local pickMeta = {
 		["ts"] = now,
-		["time"] = date ("%H:%M"),
-		["date"] = date ("%m-%d"),
+		["time"] = date("%H:%M"),
+		["date"] = date("%m-%d"),
 		["pos"] = {["x"] = x, ["y"] = y},
 		["zone"] = GetMinimapZoneText(),
-		["picked"] = picked,
+		["picked"] = byPlayer,
 	}
-	if blSeen and blSeen.zone == zoneName and now - blSeen.ts <= BL_SEEN_TIMEOUT then 
+	if blSeen and blSeen.zone == mapName and now - blSeen.ts <= BL_SEEN_TIMEOUT then 
 		pickMeta.seen = blSeen
 	end 
-	tinsert(FLogVars.bls[zoneName], pickMeta)
-	debug("|cff999999LogBlackLotus|r logged picked at |cffff9900"..pickMeta.zone.." @ "..x..","..y.."")
+	blSeen = nil 
+	self:LogBlackLotus(mapName, pickMeta)
+end 
 
+function FarmLog:LogBlackLotus(mapName, pickMeta)
+	if not FLogVars.bls[mapName] then FLogVars.bls[mapName] = {} end 
+	tinsert(FLogVars.bls[mapName], pickMeta)
+	debug("|cff999999LogBlackLotus|r logged Black Lotus pick at |cffff9900"..mapName)
+
+	-- save time for timer
+	FLogGlobalVars.blt[REALM][mapName] = pickMeta.ts
 	self:ShowBlackLotusTimers()
+end 
+
+function FarmLog:LogBlackLotusPick(success)
+	for skillIndex=1,50 do 
+		local skillName, _, _, skillRank = GetSkillLineInfo(skillIndex)
+		if skillName == SKILL_HERB_TEXT then 
+			debug("|cff999999LogBlackLotusPick|r found |cffff9900"..tostring(skillName).."|r index |cffff9900"..skillIndex.."|r rank |cffff9900"..skillRank)
+			local rankMeta = FLogGlobalVars.blp[tostring(skillRank)]
+			if not rankMeta then 
+				if success then 
+					FLogGlobalVars.blp[tostring(skillRank)] = {["success"] = 1, ["fail"] = 0}
+				else 
+					FLogGlobalVars.blp[tostring(skillRank)] = {["success"] = 0, ["fail"] = 1}
+				end 
+			else 
+				if success then 
+					rankMeta.success = rankMeta.success + 1
+				else 
+					rankMeta.fail = rankMeta.fail + 1
+				end 
+			end 
+			return true 
+		end 
+	end 
+	out("|cffff0000Could not find Herbalism skill, failed logging pick")
+	debug("|cff999999LogBlackLotusPick|r skillTooltip2 |cffff9900"..tostring(skillTooltip2))
 end 
 
 function FarmLog:ParseMinimapTooltip()
 	local tooltip = GameTooltipTextLeft1:GetText()
-	if tooltip == L["Black Lotus"] then
+	if tooltip == BL_ITEM_NAME and (not blSeen or blSeen.zone ~= GetZoneText() or time() - blSeen.ts > BL_SEEN_TIMEOUT) then
 		blSeen = {
 			["ts"] = time(),
 			["time"] = date ("%H:%M:%S"),
@@ -1448,9 +1499,12 @@ function FarmLog:OnLootEvent(text)
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	if not itemLink then return end 
 
-	if extractItemID(itemLink) == FarmLog_BL_ITEMID then 
+	local itemId = extractItemID(itemLink)
+	debug("|cff999999OnLootEvent|r itemId |cffff9900"..tostring(itemId))
+	if itemId == BL_ITEMID then 
 		-- start timer even if not in session
-		self:LogBlackLotus(true)
+		self:LogBlackLotusCurrentLocation(true)
+		self:LogBlackLotusPick(true)
 	end 
 
 	if not FLogVars.enabled then return end 
@@ -1769,6 +1823,8 @@ function FarmLog:OnEvent(event, ...)
 		self:OnAuctionUpdate()
 	elseif event == "PLAYER_REGEN_DISABLED" then 
 		self:OnEnterCombat()
+	elseif event == "UI_ERROR_MESSAGE" then 
+		self:UIError(...)
 	end
 end
 
@@ -1792,8 +1848,10 @@ function FarmLog:OnUpdate()
 		addonLoadedTime = nil 
 		self:ShowBlackLotusTimers()
 	end 
-	if GameTooltip:IsOwned(Minimap) and GameTooltip:IsShown() then
-		self:ParseMinimapTooltip()
+	if GameTooltip:IsShown() then
+		if GameTooltip:IsOwned(Minimap) then 
+			self:ParseMinimapTooltip()
+		end 
 	end
 end 
 
@@ -2070,6 +2128,33 @@ function FarmLog_MainWindow_Buttons_Instances:MouseLeave()
 end 
 
 
+-- UI errors
+
+function FarmLog:UIError(event,msg)
+	if skillNameTime and msg == _G.SPELL_FAILED_TRY_AGAIN then 
+		-- Failed attempt
+		local now = time()
+		debug("|cff999999UIError|r msg |cffff9900"..tostring(msg).."|r skillTooltip1 |cffff9900"..tostring(skillTooltip1).."|r time delta |cffff9900"..tostring(now - skillNameTime))
+		if now - skillNameTime < SKILL_LOOTWINDOW_OPEN_TIMEOUT and skillTooltip1 == BL_ITEM_NAME then 
+			-- failed picking BL
+			self:LogBlackLotusPick(false)
+		end 
+	end 
+
+	-- local what = tooltipLeftText1:GetText();
+	-- if not what then return end
+	-- if strfind(msg, miningSpell) or (miningSpell2 and strfind(msg, miningSpell2)) then
+	-- 	self:addItem(miningSpell,what)
+	-- elseif strfind(msg, herbSkill) then
+	-- 	self:addItem(herbSpell,what)
+	-- elseif strfind(msg, pickSpell) or strfind(msg, openSpell) then -- locked box or failed pick
+	-- 	self:addItem(openSpell, what)
+	-- elseif strfind(msg, NL["Lumber Mill"]) then -- timber requires lumber mill
+	-- 	self:addItem(loggingSpell, what)
+	-- end
+end
+
+
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SLASH_LH1 = "/farmlog";
@@ -2106,6 +2191,7 @@ SlashCmdList.LH = function(msg)
 			out(" |cff00ff00/fl rmw|r resets main window position")
 			out(" |cff00ff00/fl inc|r increase kill count of selected target")
 			out(" |cff00ff00/fl dec|r decrease kill count of selected target")
+			out(" |cff00ff00/fl bl|r show black lotus log")
 			out(" |cff00ff00/fl ah|r scan AH for current prices, must have AH window open")
 		elseif "SET" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
@@ -2208,6 +2294,8 @@ SlashCmdList.LH = function(msg)
 			end 
 		elseif "AH" == cmd then 
 			FarmLog:ScanAuctionHouse()
+		elseif "BL" == cmd then 
+			FarmLog:ShowBlackLotusLog()
 		else 
 			out("Unknown command "..cmd)
 		end 
