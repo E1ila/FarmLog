@@ -139,8 +139,6 @@ local lastUnknownLoot = {}
 local lastUnknownLootTime = 0
 local skillName = nil 
 local skillNameTime = nil 
-local skillTooltip1 = nil 
-local skillTooltip2 = nil 
 local ahScanRequested = false
 local ahScanIndex = 0
 local ahScanItems = 0
@@ -1114,7 +1112,9 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 		skillName = L["Herbalism"]
 		skillNameTime = time()
 		skillTooltip1 = GameTooltipTextLeft1:GetText()
-		skillTooltip2 = GameTooltipTextLeft2:GetText()		
+		if skillTooltip1 == BL_ITEM_NAME then 
+			self:IncreaseBlackLotusPickStat("attempt")
+		end 
 	elseif spellId == SPELL_MINING then 
 		skillName = L["Mining"]
 		skillNameTime = time()
@@ -1384,30 +1384,23 @@ function FarmLog:LogBlackLotus(mapName, pickMeta)
 	self:ShowBlackLotusTimers()
 end 
 
-function FarmLog:LogBlackLotusPick(success)
+function FarmLog:IncreaseBlackLotusPickStat(statName)
 	for skillIndex=1,50 do 
 		local skillName, _, _, skillRank = GetSkillLineInfo(skillIndex)
 		if skillName == SKILL_HERB_TEXT then 
-			debug("|cff999999LogBlackLotusPick|r found |cffff9900"..tostring(skillName).."|r index |cffff9900"..skillIndex.."|r rank |cffff9900"..skillRank)
+			-- debug("|cff999999IncreaseBlackLotusPickStat|r found |cffff9900"..tostring(skillName).."|r index |cffff9900"..skillIndex.."|r rank |cffff9900"..skillRank)
 			local rankMeta = FLogGlobalVars.blp[tostring(skillRank)]
 			if not rankMeta then 
-				if success then 
-					FLogGlobalVars.blp[tostring(skillRank)] = {["success"] = 1, ["fail"] = 0}
-				else 
-					FLogGlobalVars.blp[tostring(skillRank)] = {["success"] = 0, ["fail"] = 1}
-				end 
+				rankMeta = {[statName] = 1}
+				FLogGlobalVars.blp[tostring(skillRank)] = rankMeta
 			else 
-				if success then 
-					rankMeta.success = rankMeta.success + 1
-				else 
-					rankMeta.fail = rankMeta.fail + 1
-				end 
+				rankMeta[statName] = (rankMeta[statName] or 0) + 1
 			end 
+			debug("|cff999999IncreaseBlackLotusPickStat|r increased |cffff9900"..BL_ITEM_NAME.."|r stat |cffff9900"..statName.."|r to |cffff9900"..tostring(rankMeta[statName]))
 			return true 
 		end 
 	end 
 	out("|cffff0000Could not find Herbalism skill, failed logging pick")
-	debug("|cff999999LogBlackLotusPick|r skillTooltip2 |cffff9900"..tostring(skillTooltip2))
 end 
 
 function FarmLog:ParseMinimapTooltip()
@@ -1504,7 +1497,7 @@ function FarmLog:OnLootEvent(text)
 	if itemId == BL_ITEMID then 
 		-- start timer even if not in session
 		self:LogBlackLotusCurrentLocation(true)
-		self:LogBlackLotusPick(true)
+		self:IncreaseBlackLotusPickStat("success")
 	end 
 
 	if not FLogVars.enabled then return end 
@@ -2137,7 +2130,7 @@ function FarmLog:UIError(event,msg)
 		debug("|cff999999UIError|r msg |cffff9900"..tostring(msg).."|r skillTooltip1 |cffff9900"..tostring(skillTooltip1).."|r time delta |cffff9900"..tostring(now - skillNameTime))
 		if now - skillNameTime < SKILL_LOOTWINDOW_OPEN_TIMEOUT and skillTooltip1 == BL_ITEM_NAME then 
 			-- failed picking BL
-			self:LogBlackLotusPick(false)
+			self:IncreaseBlackLotusPickStat("fail")
 		end 
 	end 
 
