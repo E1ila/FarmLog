@@ -89,7 +89,7 @@ FLogGlobalVars = {
 	["ahScan"] = {},
 	["ahMinQuality"] = 1,
 	["ignoredItems"] = {},
-	["autoSwitchInstances"] = true,
+	["autoSwitchInstances"] = false,
 	["resumeSessionOnSwitch"] = true,
 	["reportTo"] = {},
 	["dismissLootWindowOnEsc"] = false,
@@ -529,7 +529,7 @@ function FarmLog:PauseSession(temporary)
 end 
 
 function FarmLog:ResetSessionVars()
-	FLogVars.sessions[FLogVars.currentSession] = {
+	local session = {
 		["drops"] = {},
 		["kills"] = {},
 		["skill"] = {},
@@ -545,6 +545,11 @@ function FarmLog:ResetSessionVars()
 		["resets"] = 0,
 		["bls"] = {}, -- BL spawn log
 	}
+	if FLogVars.inInstance then 
+		session.resets = 1
+		session.instanceName = FLogVars.instanceName
+	end 
+	FLogVars.sessions[FLogVars.currentSession] = session 
 end 
 
 function FarmLog:StartSession(sessionName, pause, resume) 
@@ -1118,6 +1123,8 @@ function FarmLog_LogWindow:RefreshBlackLotusLog()
 end
 
 function FarmLog:ShowBlackLotusLog()
+	FarmLog_LogWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
+	FarmLog_LogWindow_Title_Text:SetText(L["bl-log-title"])
 	FarmLog_LogWindow:RefreshBlackLotusLog()
 	FarmLog_LogWindow:Show()
 end 

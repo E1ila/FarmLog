@@ -74,6 +74,7 @@ function FarmLog_BuildLocalization(context)
     L["blacklotus-short"] = "BL"
     L["picked"] = "picked"
     L["Treasure"] = "Treasure"
+    L["bl-log-title"] = "Black Lotus Log"
     if (GetLocale() == "enUS") then
     end
     return L

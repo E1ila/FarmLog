@@ -57,12 +57,13 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.13.2
+    * Supporting player death count
+    * Updated section colors
+* 1.13.1
     * Supporting chest treasures! Loot from chests will be attributed to Treasure category
     * Measuring Black Lotus failed pick attempts & success for each Herbalism skill level
     * Fixed error shown when entering an instance
     * Counting instance IDs now even if Auto Switch Instance is disabled
-    * Supporting player death count
-    * Updated section colors
 * 1.13
     * Black Lotus Timers! FarmLog now logs Black Lotus picks and if you have DBM addon, it'll show a timer until next spawn, per map.
 * 1.12.5
