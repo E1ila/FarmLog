@@ -34,6 +34,7 @@
         self:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         self:RegisterEvent("UI_ERROR_MESSAGE")
+        self:RegisterEvent("PLAYER_DEAD")
       </OnLoad>
       <OnEvent>
         self:OnEvent(event, ...)

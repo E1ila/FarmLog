@@ -1,5 +1,5 @@
-﻿local VERSION = "1.13.2"
-local VERSION_INT = 1.1302
+﻿local VERSION = "1.13.3"
+local VERSION_INT = 1.1303
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -41,11 +41,12 @@ local TEXT_COLOR = {
 	["xp"] = "6a78f9",
 	["skill"] = "4e62f8",
 	["rep"] = "7d87f9",
-	["mob"] = "ff000b",
+	["mob"] = "f29244",
 	["money"] = "fffb49",
 	["honor"] = "e1c73b",
-	["gathering"] = "4cb4ff",
-	["unknown"] = "eeeeee",
+	["deaths"] = "ee3333",
+	["gathering"] = "38c98d",
+	["unknown"] = "888888",
 }
 
 TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
@@ -285,6 +286,7 @@ function FarmLog:Migrate()
 			["honor"] = FLogSVHonor,
 			["seconds"] = FLogSVTotalSeconds,
 			["bls"] = {},
+			["deaths"] = 0,
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
@@ -406,6 +408,12 @@ function FarmLog:Migrate()
 	if not FLogVars.bls then FLogVars.bls = {} end 
 	if not FLogGlobalVars.blt then FLogGlobalVars.blt = {} end 
 	if not FLogGlobalVars.blp then FLogGlobalVars.blp = {} end 
+
+	if FLogVars.ver < 1.1303 then 
+		for _, session in pairs(FLogVars.sessions) do 
+			if not session.deaths then session.deaths = 0 end 
+		end 
+	end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -532,6 +540,7 @@ function FarmLog:ResetSessionVars()
 		["ah"] = 0,
 		["xp"] = 0,
 		["honor"] = 0,
+		["deaths"] = 0,
 		["seconds"] = 0,
 		["resets"] = 0,
 		["bls"] = {}, -- BL spawn log
@@ -848,7 +857,10 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(GetSessionVar("xp").." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
 	if GetSessionVar("resets") > 0 then 
-		self:AddRow(GetSessionVar("resets").." "..L["instances"], nil, nil, TEXT_COLOR["xp"]) 
+		self:AddRow(GetSessionVar("resets").." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+	end 
+	if GetSessionVar("deaths") > 0 then 
+		self:AddRow(GetSessionVar("deaths").." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
 	for faction, rep in pairs(GetSessionVar("rep")) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
@@ -906,7 +918,7 @@ function FarmLog_MainWindow:Refresh()
 		-- add mob rows
 
 		for _, mobName in ipairs(sortedNames) do	
-			self:AddRow(mobName, nil, sessionKills[mobName], TEXT_COLOR["mob"])
+			self:AddRow(mobName, nil, sessionKills[mobName], TEXT_COLOR[mobName] or TEXT_COLOR["mob"])
 			addDropRows(sessionDrops[mobName] or {}, true)
 		end
 	else 
@@ -1146,6 +1158,12 @@ end
 
 function FarmLog:OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
 	-- debug("FarmLog:OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+end 
+
+function FarmLog:OnPlayerDead()
+	debug("|cff999999OnPlayerDead|r")
+	IncreaseSessionVar("deaths", 1)
+	self:RefreshMainWindow()
 end 
 
 -- Trade skills event
@@ -1809,6 +1827,8 @@ function FarmLog:OnEvent(event, ...)
 			self:OnSpellCastEvent(...)
 		elseif event == "CHAT_MSG_COMBAT_FACTION_CHANGE" then 
 			self:OnCombatFactionChange(...)
+		elseif event == "PLAYER_DEAD" then 
+			self:OnPlayerDead(...)
 		end 
 	end 
 
