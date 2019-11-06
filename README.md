@@ -59,6 +59,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.13.2
     * Supporting player death count
     * Updated section colors
+    * Fixed tracking of BL skill attempts, will take gear +herbalism into account
 * 1.13.1
     * Supporting chest treasures! Loot from chests will be attributed to Treasure category
     * Measuring Black Lotus failed pick attempts & success for each Herbalism skill level

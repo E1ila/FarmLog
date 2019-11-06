@@ -1421,13 +1421,14 @@ end
 
 function FarmLog:IncreaseBlackLotusPickStat(statName)
 	for skillIndex=1,50 do 
-		local skillName, _, _, skillRank = GetSkillLineInfo(skillIndex)
+		local skillName, _, _, skillRank, _, skillGear = GetSkillLineInfo(skillIndex)
 		if skillName == SKILL_HERB_TEXT then 
+			local rank = tostring(skillRank + skillGear)
 			-- debug("|cff999999IncreaseBlackLotusPickStat|r found |cffff9900"..tostring(skillName).."|r index |cffff9900"..skillIndex.."|r rank |cffff9900"..skillRank)
-			local rankMeta = FLogGlobalVars.blp[tostring(skillRank)]
+			local rankMeta = FLogGlobalVars.blp[rank]
 			if not rankMeta then 
 				rankMeta = {[statName] = 1}
-				FLogGlobalVars.blp[tostring(skillRank)] = rankMeta
+				FLogGlobalVars.blp[rank] = rankMeta
 			else 
 				rankMeta[statName] = (rankMeta[statName] or 0) + 1
 			end 
