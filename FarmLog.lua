@@ -557,10 +557,14 @@ function FarmLog:StartSession(sessionName, pause, resume)
 	end 
 
 	local session = FLogVars.sessions[sessionName]
-	if FLogVars.inInstance and not session.instanceName then 
-		session.instanceName = FLogVars.instanceName
+	if FLogVars.inInstance then 
+		if not session.instanceName then 
+			session.instanceName = FLogVars.instanceName
+		elseif session.instanceName ~= FLogVars.instanceName then 
+			session.instanceName = '*'
+		end 
 	end 
-	
+
 	self:RefreshMainWindow()
 end 
 
