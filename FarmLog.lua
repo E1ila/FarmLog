@@ -1,5 +1,5 @@
-﻿local VERSION = "1.13.1"
-local VERSION_INT = 1.1301
+﻿local VERSION = "1.13.2"
+local VERSION_INT = 1.1302
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -555,6 +555,12 @@ function FarmLog:StartSession(sessionName, pause, resume)
 		FarmLog_MainWindow:RecalcTotals()
 		FarmLog_MainWindow:UpdateTitle() -- done by resume, update text color
 	end 
+
+	local session = FLogVars.sessions[sessionName]
+	if FLogVars.inInstance and not session.instanceName then 
+		session.instanceName = FLogVars.instanceName
+	end 
+	
 	self:RefreshMainWindow()
 end 
 
