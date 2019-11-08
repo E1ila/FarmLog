@@ -97,6 +97,7 @@ FLogGlobalVars = {
 	["instances"] = {},
 	["blt"] = {}, -- BL timers
 	["blp"] = {}, -- BL pick/fail counters
+	["bls"] = {}, -- BL pick log
 	["sortBy"] = SORT_BY_TEXT,
 	["sortSessionBy"] = SORT_BY_TEXT,
 	["ver"] = VERSION,
@@ -285,7 +286,6 @@ function FarmLog:Migrate()
 			["xp"] = FLogSVXP,
 			["honor"] = FLogSVHonor,
 			["seconds"] = FLogSVTotalSeconds,
-			["bls"] = {},
 			["deaths"] = 0,
 		}
 		FLogSVTotalSeconds = nil 
@@ -405,9 +405,14 @@ function FarmLog:Migrate()
 		end 
 	end 
 
-	if not FLogVars.bls then FLogVars.bls = {} end 
 	if not FLogGlobalVars.blt then FLogGlobalVars.blt = {} end 
 	if not FLogGlobalVars.blp then FLogGlobalVars.blp = {} end 
+
+	if FLogVars.bls then 
+		FLogGlobalVars.bls = {[REALM] = FLogVars.bls}
+		FLogVars.bls = nil 
+	end 
+	if not FLogGlobalVars.bls then FLogGlobalVars.bls = {} end 
 
 	if FLogVars.ver < 1.1303 then 
 		for _, session in pairs(FLogVars.sessions) do 
@@ -1111,12 +1116,16 @@ end
 function FarmLog_LogWindow:RefreshBlackLotusLog()
 	self.visibleRows = 0
 
-	for mapName, mapData in pairs(FLogVars.bls) do 
-		self:AddMapRow(mapName, #mapData)
-		for _, pickData in ipairs(mapData) do 
-			local row = self:AddPickRow(pickData.zone, pickData.pos, pickData.picked, "|cffffffff"..pickData.time.."|r  "..pickData.date)
-			-- SetItemTooltip(row)
-			-- SetItemActions(row, self:GetOnLogItemClick(name))
+	for realmName, realmData in pairs(FLogGlobalVars.bls) do 
+		if realmName == REALM then 
+			for mapName, mapData in pairs(realmData) do 
+				self:AddMapRow(mapName, #mapData)
+				for _, pickData in ipairs(mapData) do 
+					local row = self:AddPickRow(pickData.zone, pickData.pos, pickData.picked, "|cffffffff"..pickData.time.."|r  "..pickData.date)
+					-- SetItemTooltip(row)
+					-- SetItemActions(row, self:GetOnLogItemClick(name))
+				end 
+			end 
 		end 
 	end 
 	HideRowsBeyond(self.visibleRows + 1, self)
@@ -1410,8 +1419,9 @@ function FarmLog:LogBlackLotusCurrentLocation(byPlayer)
 end 
 
 function FarmLog:LogBlackLotus(mapName, pickMeta)
-	if not FLogVars.bls[mapName] then FLogVars.bls[mapName] = {} end 
-	tinsert(FLogVars.bls[mapName], pickMeta)
+	local realmBls = FLogGlobalVars.bls[REALM]
+	if not realmBls[mapName] then realmBls[mapName] = {} end 
+	tinsert(realmBls[mapName], pickMeta)
 	debug("|cff999999LogBlackLotus|r logged Black Lotus pick at |cffff9900"..mapName)
 
 	-- save time for timer
@@ -1599,6 +1609,7 @@ function FarmLog:OnAddonLoaded()
 	if not FLogGlobalVars.ahPrice[REALM] then FLogGlobalVars.ahPrice[REALM] = {} end 
 	if not FLogGlobalVars.instances[REALM] then FLogGlobalVars.instances[REALM] = {} end 
 	if not FLogGlobalVars.blt[REALM] then FLogGlobalVars.blt[REALM] = {} end 
+	if not FLogGlobalVars.bls[REALM] then FLogGlobalVars.bls[REALM] = {} end 
 
 	if FLogGlobalVars.dismissLootWindowOnEsc then  
 		tinsert(UISpecialFrames, FarmLog_MainWindow:GetName())
