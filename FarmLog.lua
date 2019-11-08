@@ -140,7 +140,6 @@ local function emptySession()
 		["rep"] = {},
 		["gold"] = 0,
 		["vendor"] = 0,
-		["goldPerHour"] = 0,
 		["ah"] = 0,
 		["xp"] = 0,
 		["honor"] = 0,
@@ -488,6 +487,7 @@ function FarmLog:Migrate()
 				["past"] = session,
 				["current"] = emptySession(),
 				["goldPerHour"] = session.goldPerHour,
+				["goldPerHourTotal"] = session.goldPerHour,
 				["lastUse"] = session.lastUse,
 			}
 			session.goldPerHour = nil 
@@ -959,7 +959,11 @@ function FarmLog_MainWindow:Refresh()
 	if sessionTime > 0 then 
 		goldPerHour = (ahProfit + vendorProfit + goldProfit) / (sessionTime / 3600)
 	end 
-	SetFarmVar("goldPerHour", goldPerHour)
+	if FLogVars.viewTotal then 
+		SetFarmVar("goldPerHourTotal", goldPerHour)
+	else 
+		SetFarmVar("goldPerHour", goldPerHour)
+	end 
 	
 	-- add special rows
 	if isPositive(goldPerHour) then 
@@ -1156,7 +1160,7 @@ function FarmLog_SessionsWindow:Refresh()
 	if FLogGlobalVars.sortSessionBy == SORT_BY_TEXT then 
 		sortedKeys = SortMapKeys(FLogVars.farms, nil, nil, nil, nil, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_GOLD then 
-		local gphExtract = function (farm) return farm.goldPerHour or 0 end
+		local gphExtract = function (farm) return farm.goldPerHourTotal or 0 end
 		sortedKeys = SortMapKeys(FLogVars.farms, true, true, nil, gphExtract, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_USE then 
 		local useExtract = function (farm) return farm.lastUse or 0 end
@@ -1167,7 +1171,7 @@ function FarmLog_SessionsWindow:Refresh()
 
 	for _, name in ipairs(sortedKeys) do 
 		local farm = FLogVars.farms[name]
-		local gph = farm.goldPerHour or 0 
+		local gph = farm.goldPerHourTotal or 0 
 		local text = name
 		local valueText = nil 
 		if isPositive(gph) then 
@@ -2292,7 +2296,12 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local goldPerHour = GetFarmVar("goldPerHour") or 0
+	local goldPerHour
+	if FLogVars.viewTotal then 
+		goldPerHour = GetFarmVar("goldPerHourTotal") or 0
+	else 
+		goldPerHour = GetFarmVar("goldPerHour") or 0
+	end 
 	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
