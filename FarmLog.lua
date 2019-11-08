@@ -106,7 +106,7 @@ FLogGlobalVars = {
 FLogVars = {
 	["enabled"] = false,
 	["sessions"] = {},
-	["currentSession"] = "default",
+	["currentFarm"] = "default",
 	["inInstance"] = false,
 	["lockFrames"] = false,
 	["lockMinimapButton"] = false,
@@ -125,8 +125,27 @@ FLogVars = {
 	},
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
+	["viewTotal"] = false,
 	["ver"] = VERSION,
 }
+
+local function emptySession() 
+	return {
+		["drops"] = {},
+		["kills"] = {},
+		["skill"] = {},
+		["rep"] = {},
+		["gold"] = 0,
+		["vendor"] = 0,
+		["goldPerHour"] = 0,
+		["ah"] = 0,
+		["xp"] = 0,
+		["honor"] = 0,
+		["deaths"] = 0,
+		["seconds"] = 0,
+		["resets"] = 0,
+	}
+end 
 
 local editName = "";
 local editItem = "";
@@ -167,6 +186,11 @@ end
 local function tobool(arg1)
 	return arg1 == 1 or arg1 == true
 end
+
+local function isPositive(n)
+	local st = tostring(n)
+	return n and n > 0 and st ~= "nan" and st ~= "inf"
+end 
 
 local function secondsToClock(seconds)
 	local seconds = tonumber(seconds)
@@ -272,10 +296,15 @@ local function migrateItemLinkTable(t)
 end 
 
 function FarmLog:Migrate() 
+	if FLogVars.currentSession then 
+		FLogVars.currentFarm = FLogVars.currentSession
+		FLogVars.currentSession = nil 
+	end 
+
 	-- migration
 	if FLogSVTotalSeconds and FLogSVTotalSeconds > 0 then 
 		-- migrate 1 session into multi session DB
-		FLogVars.sessions[FLogVars.currentSession] = {
+		FLogVars.sessions[FLogVars.currentFarm] = {
 			["drops"] = FLogSVDrops,
 			["kills"] = FLogSVKills,
 			["skill"] = FLogSVSkill,
@@ -290,7 +319,7 @@ function FarmLog:Migrate()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars.sessions[FLogVars.currentSession] then 
+	elseif not FLogVars.sessions[FLogVars.currentFarm] then 
 		self:ResetSessionVars()
 	end 
 
@@ -306,7 +335,7 @@ function FarmLog:Migrate()
 	if FLogSVSessions then 
 		FLogVars.sessions = FLogSVSessions
 		FLogVars.enabled = FLogSVEnabled
-		FLogVars.currentSession = FLogSVCurrentSession
+		FLogVars.currentFarm = FLogSVCurrentSession
 		FLogVars.instanceName = FLogSVLastInstance
 		FLogVars.inInstance = FLogSVInInstance
 
@@ -420,25 +449,66 @@ function FarmLog:Migrate()
 		end 
 	end 
 
+	if FLogVars.sessions then 
+		FLogVars.viewTotal = false -- old users would want this off by default
+		FLogVars.farms = {}
+		for name, session in FLogVars.sessions do 
+			if session.bls then session.bls = nil end 
+			FLogVars.farms[name] = {
+				["past"] = session,
+				["current"] = emptySession(),
+			}
+		end 
+		FLogVars.sessions = nil 
+	end 
+
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
 end 
 
-local function GetSessionVar(varName, sessionName)
-	return (FLogVars.sessions[sessionName or FLogVars.currentSession] or {})[varName]
+local function GetSessionVar(varName, total, sessionName, mergeFunc)
+	local name = sessionName or FLogVars.currentFarm
+	local farm = FLogVars.farms[name]
+	if not farm then 
+		farm = {["past"] = emptySession(), ["current"] = emptySession()}
+	end 
+	if total then 
+		if type(farm.past[varName]) == "table" then 
+			if not mergeFunc then mergeFunc = function (a, b) return (a or 0) + (b or 0) end
+			local summed = {}
+			for key, val in pairs(farm.past[varName]) do 
+				summed[key] = mergeFunc(val, farm.current[varName][key])
+			end 
+			for key, val in pairs(farm.current[varName]) do 
+				if summed[key] == nil then 
+					summed[key] = mergeFunc(val, nil)
+				end 
+			end 
+			return summed 
+		else 
+			return (farm.past[varName] or 0) + (farm.current[varName] or 0)
+		end 
+	end 
+	return farm.current[varName]
 end 
 
-local function SetSessionVar(varName, value)
-	FLogVars.sessions[FLogVars.currentSession][varName] = value 
+local function GetFarmVar(varName)
+	return FLogVars.farms[FLogVars.currentFarm][varName]
+end 
+
+local function SetFarmVar(varName, value)
+	FLogVars.farms[FLogVars.currentFarm][varName] = value 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
-	debug("|cff999999IncreaseSessionVar|r currentSession |cffff9900"..FLogVars.currentSession.."|r, varName |cffff9900"..varName.."|r, incValue |cffff9900"..tostring(incValue))
-	FLogVars.sessions[FLogVars.currentSession][varName] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName] or 0) + incValue 
+	debug("|cff999999IncreaseSessionVar|r currentFarm |cffff9900"..FLogVars.currentFarm.."|r, varName |cffff9900"..varName.."|r, incValue |cffff9900"..tostring(incValue))
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	farm.current[varName] = (farm.current[varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
-	FLogVars.sessions[FLogVars.currentSession][varName][entry] = ((FLogVars.sessions[FLogVars.currentSession] or {})[varName][entry] or 0) + incValue 
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	farm.current[varName][entry] = (farm.current[varName][entry] or 0) + incValue 
 end 
 
 -- Auction house access 
@@ -466,7 +536,7 @@ function FarmLog:AddInstance(name, enterTime)
 	})
 	self:UpdateInstanceCount()
 	IncreaseSessionVar("resets", 1)
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
 function FarmLog:PurgeInstances()
@@ -505,14 +575,14 @@ end
 
 function FarmLog:GetCurrentSessionTime()
 	local now = time()
-	return GetSessionVar("seconds") + now - (sessionStartTime or now)
+	return GetSessionVar("seconds", FLogVars.viewTotal) + now - (sessionStartTime or now)
 end 
 
 function FarmLog:ResumeSession() 
 	sessionStartTime = time()
-	SetSessionVar("lastUse", sessionStartTime)
-
+	SetFarmVar("lastUse", sessionStartTime)
 	FLogVars.enabled = true  
+
 	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
 	FarmLog_MainWindow:RecalcTotals()
 	FarmLog_MainWindow:Refresh()
@@ -534,38 +604,27 @@ function FarmLog:PauseSession(temporary)
 end 
 
 function FarmLog:ResetSessionVars()
-	local session = {
-		["drops"] = {},
-		["kills"] = {},
-		["skill"] = {},
-		["rep"] = {},
-		["gold"] = 0,
-		["vendor"] = 0,
-		["goldPerHour"] = 0,
-		["ah"] = 0,
-		["xp"] = 0,
-		["honor"] = 0,
-		["deaths"] = 0,
-		["seconds"] = 0,
-		["resets"] = 0,
-		["bls"] = {}, -- BL spawn log
-	}
+	local session = emptySession()
 	if FLogVars.inInstance then 
 		session.resets = 1
-		session.instanceName = FLogVars.instanceName
 	end 
-	FLogVars.sessions[FLogVars.currentSession] = session 
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	if farm then 
+		farm.current = session 
+	else 
+		FLogVars.farms[FLogVars.currentFarm] = {["past"] = emptySession(), ["current"] = session}
+	end 
 end 
 
-function FarmLog:StartSession(sessionName, pause, resume) 
+function FarmLog:SwitchFarm(farmName, pause, resume) 
 	if FLogVars.enabled then 
 		if pause then 
 			self:PauseSession(true) 
 		end 
 	end 
 
-	FLogVars.currentSession = sessionName
-	if not FLogVars.sessions[FLogVars.currentSession] then 
+	FLogVars.currentFarm = farmName
+	if not FLogVars.farms[FLogVars.currentFarm] then 
 		self:ResetSessionVars()
 	end 
 	if FLogVars.enabled or resume then 
@@ -575,59 +634,59 @@ function FarmLog:StartSession(sessionName, pause, resume)
 		FarmLog_MainWindow:UpdateTitle() -- done by resume, update text color
 	end 
 
-	local session = FLogVars.sessions[sessionName]
+	local farm = FLogVars.farms[farmName]
 	if FLogVars.inInstance then 
-		if not session.instanceName then 
-			session.instanceName = FLogVars.instanceName
-		elseif session.instanceName ~= FLogVars.instanceName then 
-			session.instanceName = '*'
+		if not farm.instanceName then 
+			farm.instanceName = FLogVars.instanceName
+		elseif farm.instanceName ~= FLogVars.instanceName then 
+			farm.instanceName = '*'
 		end 
 	end 
 
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
-function FarmLog:DeleteSession(name) 
-	FLogVars.sessions[name] = nil 
-	if FLogVars.currentSession == name then 
-		self:StartSession("default", false, FLogVars.enabled)
-		self:RefreshMainWindow()
-		out("Switched to farm session |cff99ff00default|r")
+function FarmLog:DeleteFarm(name) 
+	FLogVars.farms[name] = nil 
+	if FLogVars.currentFarm == name then 
+		self:SwitchFarm("default", false, FLogVars.enabled)
+		FarmLog_MainWindow:Refresh()
+		out("Switched to |cff99ff00default|r farm")
 	end 
-	if FLogVars.currentSession == name and name == "default" then 
-		out("Reset the |cff99ff00"..name.."|r session")
+	if FLogVars.currentFarm == name and name == "default" then 
+		out("Reset the |cff99ff00"..name.."|r farm")
 	else 
-		out("Deleted session |cff99ff00"..name)
+		out("Deleted |cff99ff00"..name.."|r farm")
 	end 
 end 
 
-function FarmLog:ResetSession()
+function FarmLog:ClearFarm(all)
 	self:PauseSession(true)
+	if all then 
+		FLogVars.farms[FLogVars.currentFarm] = nil 
+	end 
 	self:ResetSessionVars()
 	if FLogVars.enabled then 
 		self:ResumeSession()
 	end 
-	out("Reset session |cff99ff00"..FLogVars.currentSession)
-	self:RefreshMainWindow()
+	out("Cleared |cff99ff00"..FLogVars.currentFarm.."|r farm")
+	FarmLog_MainWindow:Refresh()
 end
 
 function FarmLog:ToggleLogging() 
 	if FLogVars.enabled then 
 		self:PauseSession()
-		out("Farm session |cff99ff00"..FLogVars.currentSession.."|r paused|r")
+		out("Session for |cff99ff00"..FLogVars.currentFarm.."|r farm |cffffff00paused|r")
 	else 
-		self:StartSession(FLogVars.currentSession or "default", false, true)
+		self:SwitchFarm(FLogVars.currentFarm or "default", false, true)
 		if GetSessionVar("seconds") == 0 then 
-			out("Farm session |cff99ff00"..FLogVars.currentSession.."|r started")
+			out("Session for |cff99ff00"..FLogVars.currentFarm.."|r farm |cff00ff00started")
 		else 
-			out("Farm session |cff99ff00"..FLogVars.currentSession.."|r resumed")
+			out("Session for |cff99ff00"..FLogVars.currentFarm.."|r farm |cff00ff00resumed")
 		end 	
 	end 
 end 
 
-function FarmLog:RefreshMainWindow()
-	FarmLog_MainWindow:Refresh()
-end 
 
 -- Question dialog
 
@@ -780,7 +839,7 @@ function FarmLog_MainWindow:AddRow(text, valueText, quantity, color, valueColor)
 end 
 
 function FarmLog_MainWindow:GetTitleText()
-	local text = FLogVars.currentSession or ""
+	local text = FLogVars.currentFarm or ""
 	local time = FarmLog:GetCurrentSessionTime() or 0
 	if time > 0 then 
 		text = text .. "  --  " .. secondsToClock(time) 
@@ -845,41 +904,69 @@ function FarmLog_MainWindow:Refresh()
 	-- calculate GPH
 	local sessionTime = FarmLog:GetCurrentSessionTime()
 	local goldPerHour = 0
+	local ahProfit = GetSessionVar("ah", FLogVars.viewTotal)
+	local vendorProfit = GetSessionVar("vendor", FLogVars.viewTotal)
+	local goldProfit = GetSessionVar("gold", FLogVars.viewTotal)
 	if sessionTime > 0 then 
-		goldPerHour = (GetSessionVar("ah") + GetSessionVar("vendor") + GetSessionVar("gold")) / (sessionTime / 3600)
+		goldPerHour = (ahProfit + vendorProfit + goldProfit) / (sessionTime / 3600)
 	end 
-	SetSessionVar("goldPerHour", goldPerHour)
+	SetFarmVar("goldPerHour", goldPerHour)
 	
 	-- add special rows
-	if goldPerHour and goldPerHour > 0 and tostring(goldPerHour) ~= "nan" and tostring(goldPerHour) ~= "inf" then 
+	if isPositive(goldPerHour) then 
 		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
 	end 
-	if GetSessionVar("ah") > 0 then 
-		self:AddRow(L["Auction House"], GetShortCoinTextureString(GetSessionVar("ah")), nil, TEXT_COLOR["money"]) 
+	if ahProfit > 0 then 
+		self:AddRow(L["Auction House"], GetShortCoinTextureString(ahProfit), nil, TEXT_COLOR["money"]) 
 	end 
-	if GetSessionVar("gold") > 0 then 
-		self:AddRow(L["Money"], GetShortCoinTextureString(GetSessionVar("gold")), nil, TEXT_COLOR["money"])
+	if goldProfit > 0 then 
+		self:AddRow(L["Money"], GetShortCoinTextureString(goldProfit), nil, TEXT_COLOR["money"])
 	end 
-	if GetSessionVar("vendor") > 0 then 
-		self:AddRow(L["Vendor"], GetShortCoinTextureString(GetSessionVar("vendor")), nil, TEXT_COLOR["money"]) 
+	if vendorProfit > 0 then 
+		self:AddRow(L["Vendor"], GetShortCoinTextureString(vendorProfit), nil, TEXT_COLOR["money"]) 
 	end 
-	if GetSessionVar("xp") > 0 then 
-		self:AddRow(GetSessionVar("xp").." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
+	if GetSessionVar("xp", FLogVars.viewTotal) > 0 then 
+		self:AddRow(GetSessionVar("xp", FLogVars.viewTotal).." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if GetSessionVar("resets") > 0 then 
-		self:AddRow(GetSessionVar("resets").." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+	if GetSessionVar("resets", FLogVars.viewTotal) > 0 then 
+		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if GetSessionVar("deaths") > 0 then 
-		self:AddRow(GetSessionVar("deaths").." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
+	if GetSessionVar("deaths", FLogVars.viewTotal) > 0 then 
+		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
-	for faction, rep in pairs(GetSessionVar("rep")) do 
+	for faction, rep in pairs(GetSessionVar("rep", FLogVars.viewTotal)) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
 	end 
-	for skillName, levels in pairs(GetSessionVar("skill")) do 
+	for skillName, levels in pairs(GetSessionVar("skill", FLogVars.viewTotal)) do 
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 	end 
 
-	local sessionDrops = GetSessionVar("drops")
+	local mergeDrops = function (a, b) 
+		local merged = {}
+		for link, meta in pairs(a) do 
+			local newmeta = {
+				meta[DROP_META_INDEX_COUNT] or 0,
+				meta[DROP_META_INDEX_VALUE] or 0,
+				meta[DROP_META_INDEX_VALUE_EACH] or 0,
+				meta[DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR,
+			}
+			if b[link] then 
+				newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
+				newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
+				newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
+				newmeta[DROP_META_INDEX_VALUE_TYPE] = newmeta[DROP_META_INDEX_VALUE_TYPE] + (b[link][DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR)
+			end 
+			merged[link] = newmeta 
+		end 
+		-- add missing items from b that doesn't exist on a
+		for link, meta in pairs(b) do 
+			if not a[link] then 
+				merged[link] = meta
+			end 
+		end 
+	end 
+
+	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
 	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
 	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
 	local extractLink = function (link) return GetItemInfo(link) or link end  
@@ -905,7 +992,7 @@ function FarmLog_MainWindow:Refresh()
 	end 
 
 	if FLogGlobalVars.groupByMobName then 
-		local sessionKills = GetSessionVar("kills")
+		local sessionKills = GetSessionVar("kills", FLogVars.viewTotal)
 		local sortedNames
 		if FLogGlobalVars.sortBy == SORT_BY_GOLD then 
 			local mobGold = {}
@@ -961,38 +1048,43 @@ function FarmLog_MainWindow:Refresh()
 end
 
 function FarmLog_MainWindow:RecalcTotals()
-	-- debug("|cff999999FarmLog_MainWindow:RecalcTotals()")
-	local sessionVendor = 0
-	local sessionAH = 0
-	local sessionDrops = GetSessionVar("drops")
-	for mobName, drops in pairs(sessionDrops) do	
-		for itemLink, meta in pairs(drops) do 
-			if not FLogGlobalVars.ignoredItems[itemLink] then 
-				local ahPrice = GetManualPrice(itemLink)
-				local priceType = VALUE_TYPE_MANUAL
-				if not ahPrice then 
-					ahPrice = GetAHScanPrice(itemLink)
-					priceType = VALUE_TYPE_SCAN
-				end 
-				local count = meta[DROP_META_INDEX_COUNT]
-				if ahPrice and ahPrice > 0 then 
-					local value = ahPrice * count
-					sessionAH = sessionAH + value 
-					meta[DROP_META_INDEX_VALUE] = value
-					meta[DROP_META_INDEX_VALUE_EACH] = ahPrice					
-					meta[DROP_META_INDEX_VALUE_TYPE] = priceType
-				else 
-					local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-					sessionVendor = sessionVendor + (vendorPrice or 0) * count
-					meta[DROP_META_INDEX_VALUE] = (vendorPrice or 0) * count
-					meta[DROP_META_INDEX_VALUE_EACH] = (vendorPrice or 0)					
-					meta[DROP_META_INDEX_VALUE_TYPE] = VALUE_TYPE_VENDOR
+	local recalcMeta = function (farm) 
+		local sessionVendor = 0
+		local sessionAH = 0
+		local sessionDrops = farm["drops"]
+		for mobName, drops in pairs(sessionDrops) do	
+			for itemLink, meta in pairs(drops) do 
+				if not FLogGlobalVars.ignoredItems[itemLink] then 
+					local ahPrice = GetManualPrice(itemLink)
+					local priceType = VALUE_TYPE_MANUAL
+					if not ahPrice then 
+						ahPrice = GetAHScanPrice(itemLink)
+						priceType = VALUE_TYPE_SCAN
+					end 
+					local count = meta[DROP_META_INDEX_COUNT]
+					if ahPrice and ahPrice > 0 then 
+						local value = ahPrice * count
+						sessionAH = sessionAH + value 
+						meta[DROP_META_INDEX_VALUE] = value
+						meta[DROP_META_INDEX_VALUE_EACH] = ahPrice					
+						meta[DROP_META_INDEX_VALUE_TYPE] = priceType
+					else 
+						local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+						sessionVendor = sessionVendor + (vendorPrice or 0) * count
+						meta[DROP_META_INDEX_VALUE] = (vendorPrice or 0) * count
+						meta[DROP_META_INDEX_VALUE_EACH] = (vendorPrice or 0)					
+						meta[DROP_META_INDEX_VALUE_TYPE] = VALUE_TYPE_VENDOR
+					end 
 				end 
 			end 
 		end 
+		farm["vendor"] = sessionVendor
+		farm["ah"] = sessionAH
 	end 
-	SetSessionVar("vendor", sessionVendor)
-	SetSessionVar("ah", sessionAH)
+
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	recalcMeta(farm.past)
+	recalcMeta(farm.current)
 end 
 
 function FarmLog_MainWindow:UpdateTime()
@@ -1037,23 +1129,23 @@ function FarmLog_SessionsWindow:Refresh()
 
 	local sortedKeys
 	if FLogGlobalVars.sortSessionBy == SORT_BY_TEXT then 
-		sortedKeys = SortMapKeys(FLogVars.sessions, nil, nil, nil, nil, searchText)
+		sortedKeys = SortMapKeys(FLogVars.farms, nil, nil, nil, nil, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_GOLD then 
-		local gphExtract = function (session) return session.goldPerHour or 0 end
-		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, gphExtract, searchText)
+		local gphExtract = function (farm) return farm.goldPerHour or 0 end
+		sortedKeys = SortMapKeys(FLogVars.farms, true, true, nil, gphExtract, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_USE then 
-		local useExtract = function (session) return session.lastUse or 0 end
-		sortedKeys = SortMapKeys(FLogVars.sessions, true, true, nil, useExtract, searchText)
+		local useExtract = function (farm) return farm.lastUse or 0 end
+		sortedKeys = SortMapKeys(FLogVars.farms, true, true, nil, useExtract, searchText)
 	end 
 
 	if #sortedKeys == 1 then sessionSearchResult = sortedKeys[1] else sessionSearchResult = nil end 
 
 	for _, name in ipairs(sortedKeys) do 
-		local session = FLogVars.sessions[name]
-		local gph = session.goldPerHour or 0 -- (GetSessionVar("ah", name) + GetSessionVar("vendor", name) + GetSessionVar("gold", name)) / (GetSessionVar("seconds", name) / 3600)
+		local farm = FLogVars.farms[name]
+		local gph = farm.goldPerHour or 0 
 		local text = name
 		local valueText = nil 
-		if gph and gph > 0 and tostring(gph) ~= "nan" and tostring(gph) ~= "inf" then 
+		if isPositive(gph) then 
 			valueText = GetShortCoinTextureString(gph) .. " " .. L["g/h"]
 		end 
 		local row = self:AddRow(text, valueText)
@@ -1067,8 +1159,8 @@ function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName)
 	return function(self, button)
 		if button == "RightButton" then 
 			FarmLog:AskQuestion(L["deletesession-title"], L["deletesession-question"], function() 
-				FarmLog:DeleteSession(sessionName)
-				FarmLog:RefreshMainWindow()
+				FarmLog:DeleteFarm(sessionName)
+				FarmLog_MainWindow:Refresh()
 				FarmLog_SessionsWindow:Refresh()
 				FarmLog_QuestionDialog:Hide()
 			end)
@@ -1077,7 +1169,7 @@ function FarmLog_SessionsWindow:GetOnLogItemClick(sessionName)
 				-- edit?
 			else 
 				out("Switched to farm session |cff99ff00"..sessionName.."|r")
-				FarmLog:StartSession(sessionName, true, FLogGlobalVars.resumeSessionOnSwitch)
+				FarmLog:SwitchFarm(sessionName, true, FLogGlobalVars.resumeSessionOnSwitch)
 				FarmLog_SessionsWindow:Hide()
 			end
 		end 
@@ -1179,7 +1271,7 @@ end
 function FarmLog:OnPlayerDead()
 	debug("|cff999999OnPlayerDead|r")
 	IncreaseSessionVar("deaths", 1)
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
 -- Trade skills event
@@ -1202,7 +1294,7 @@ function FarmLog:OnSkillsEvent(text)
 	local skillName, level = self:ParseSkillEvent(text)
 	if level then 
 		IncreaseSessionDictVar("skill", skillName, 1)
-		self:RefreshMainWindow()
+		FarmLog_MainWindow:Refresh()
 	end 
 end 
 
@@ -1243,7 +1335,7 @@ function FarmLog:OnCombatXPEvent(text)
 	local xp = self:ParseXPEvent(text)
 	-- debug("FarmLog:OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
 	IncreaseSessionVar("xp", xp)
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
 -- Faction change 
@@ -1267,7 +1359,7 @@ function FarmLog:OnCombatFactionChange(text)
 	local faction, rep = self:ParseRepEvent(text)
 	if rep then 
 		IncreaseSessionDictVar("rep", faction, rep)
-		self:RefreshMainWindow()
+		FarmLog_MainWindow:Refresh()
 	end 
 end 
 
@@ -1281,17 +1373,17 @@ function FarmLog:OnCombatLogEvent()
 		local mobGuid = eventInfo[8]
 
 		-- count mob kill
-		local sessionKills = GetSessionVar("kills")
+		local sessionKills = GetSessionVar("kills", false)
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 
 		-- make sure this mob has a drops entry, even if it won't drop anything
-		local sessionDrops = GetSessionVar("drops")
+		local sessionDrops = GetSessionVar("drops", false)
 		if not sessionDrops[mobName] then 
 			sessionDrops[mobName] = {}
 		end 
 
 		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
-		self:RefreshMainWindow()
+		FarmLog_MainWindow:Refresh()
 	end 
 end 
 
@@ -1303,7 +1395,7 @@ function FarmLog:OnLootOpened(autoLoot)
 	if skillName then 
 		mobName = skillName 
 		-- count gathering skill act in kills table
-		local sessionKills = GetSessionVar("kills")
+		local sessionKills = GetSessionVar("kills", false)
 		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
 	end 
 	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
@@ -1325,7 +1417,7 @@ function FarmLog:OnLootOpened(autoLoot)
 			-- 	-- sometimes when "Fast auto loot" is enabled, OnLootEvent will be called before OnLootOpened
 			-- 	-- so reattribute this loot now that we know from which mob it dropped
 			-- 	debug("|cff999999FarmLog:OnLootOpened|r reattributing loot")
-			-- 	local drops = GetSessionVar("drops")
+			-- 	local drops = GetSessionVar("drops", false)
 			-- 	drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] = drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] - 1
 			-- 	if drops[UNKNOWN_MOBNAME][DROP_META_INDEX_COUNT] == 0 then 
 			-- 		drops[UNKNOWN_MOBNAME] = nil 
@@ -1375,7 +1467,7 @@ end
 function FarmLog:OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
 	IncreaseSessionVar("gold", money)
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
 -- Black lotus tracking
@@ -1497,7 +1589,7 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 		end 
 		debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
 
-		local sessionDrops = GetSessionVar("drops")
+		local sessionDrops = GetSessionVar("drops", false)
 		if not sessionDrops[mobName] then		
 			sessionDrops[mobName] = {}
 		end 
@@ -1564,7 +1656,7 @@ function FarmLog:OnLootEvent(text)
 			if now - lastUnknownLootTime > LOOT_AUTOFIX_TIMEOUT_SEC then lastUnknownLoot = {} end 
 			lastUnknownLootTime = now 
 			lastUnknownLoot[itemLink] = true 
-			GetSessionVar("kills")[UNKNOWN_MOBNAME] = 1
+			GetSessionVar("kills", false)[UNKNOWN_MOBNAME] = 1
 		end 
 	end 
 
@@ -1594,7 +1686,7 @@ function FarmLog:OnLootEvent(text)
 		) 
 	then	
 		self:InsertLoot(mobName, itemLink, (quantity or 1), vendorPrice or 0);
-		self:RefreshMainWindow();
+		FarmLog_MainWindow:Refresh();
 	end
 end
 
@@ -1660,7 +1752,7 @@ function FarmLog:OnAddonLoaded()
 		self:PauseSession()
 		FarmLog_MainWindow:RecalcTotals()
 	end 
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 
 	-- init window visibility
 	FarmLog_MainWindow:LoadPosition()
@@ -1700,7 +1792,7 @@ function FarmLog:OnEnteringWorld()
 		FLogVars.inInstance = true
 		FLogVars.instanceName = instanceName
 		if FLogGlobalVars.autoSwitchInstances then 
-			self:StartSession(instanceName, true, true)
+			self:SwitchFarm(instanceName, true, true)
 		end 
 		if not lastInstance then 
 			FarmLog:AddInstance(instanceName, now)
@@ -1715,7 +1807,7 @@ function FarmLog:OnEnteringWorld()
 			end)
 		end 
 	end
-	self:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 end 
 
 -- Instance info
@@ -2010,7 +2102,7 @@ function FarmLog_MainWindow_Buttons_SortAbcButton:Clicked()
 	end 
 	self.selected = true
 	FLogGlobalVars.sortBy = SORT_BY_TEXT
-	FarmLog:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
@@ -2026,7 +2118,7 @@ function FarmLog_MainWindow_Buttons_SortGoldButton:Clicked()
 	end 
 	self.selected = true
 	FLogGlobalVars.sortBy = SORT_BY_GOLD
-	FarmLog:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
@@ -2042,7 +2134,7 @@ function FarmLog_MainWindow_Buttons_SortKillsButton:Clicked()
 	end 
 	self.selected = true
 	FLogGlobalVars.sortBy = SORT_BY_KILLS
-	FarmLog:RefreshMainWindow()
+	FarmLog_MainWindow:Refresh()
 	FarmLog_SetTextButtonBackdropColor(self, false)
 end 
 
@@ -2054,7 +2146,7 @@ function FarmLog_MainWindow_Buttons_ToggleMobNameButton:Clicked()
 	if not self.selected and FarmLog_MainWindow_Buttons_SortKillsButton.selected then 
 		FarmLog_MainWindow_Buttons_SortAbcButton:Clicked()
 	else 
-		FarmLog:RefreshMainWindow()
+		FarmLog_MainWindow:Refresh()
 	end 
 	FarmLog_SetTextButtonBackdropColor(self, false)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
@@ -2074,7 +2166,7 @@ end
 function FarmLog_MainWindow_ClearButton:Clicked()
 	if self.disabled then return end 
 	FarmLog:AskQuestion(L["reset-title"], L["reset-question"], function() 
-		FarmLog:ResetSession()
+		FarmLog:ClearFarm()
 		FarmLog_QuestionDialog:Hide()
 	end)
 end 
@@ -2133,7 +2225,7 @@ end
 function FarmLog_SessionsWindow_Buttons_SearchBox:EnterPressed() 
 	if sessionSearchResult then 
 		out("Switching session to |cff99ff00"..sessionSearchResult)
-		FarmLog:StartSession(sessionSearchResult, true, FLogGlobalVars.resumeSessionOnSwitch)
+		FarmLog:SwitchFarm(sessionSearchResult, true, FLogGlobalVars.resumeSessionOnSwitch)
 		FarmLog_SessionsWindow:Hide()
 	end 
 end 
@@ -2150,8 +2242,8 @@ end
 function FarmLog_MinimapButton:UpdateTooltipText() 
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
-	local goldPerHour = GetSessionVar("goldPerHour") or 0
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentSession .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
+	local goldPerHour = GetFarmVar("goldPerHour") or 0
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -2285,34 +2377,29 @@ SlashCmdList.LH = function(msg)
 			else 
 				out("Incorrect usage of command write |cff00ff00/fl i [ITEM_LINK]|r")
 			end 
-		elseif  "LIST" == cmd or "L" == cmd then
-			out("Recorded sessions:")
-			for sessionName, _ in pairs(FLogVars.sessions) do 
-				out(" - |cff99ff00"..sessionName)
-			end 
 		elseif  "DELETE" == cmd then
-			FarmLog:DeleteSession(arg1)
+			FarmLog:DeleteFarm(arg1)
 		elseif  "SWITCH" == cmd or "W" == cmd then
 			if not arg1 or #arg1 == 0 then arg1 = GetMinimapZoneText() end 
 			out("Switching session to |cff99ff00"..arg1)
-			FarmLog:StartSession(arg1, true, true)
-			FarmLog:RefreshMainWindow() 
+			FarmLog:SwitchFarm(arg1, true, true)
+			FarmLog_MainWindow:Refresh() 
 		elseif  "REN" == cmd then
-			out("Renaming session from |cff99ff00"..FLogVars.currentSession.."|r to |cff99ff00"..arg1)
-			FLogVars.sessions[arg1] = FLogVars.sessions[FLogVars.currentSession]
-			FLogVars.sessions[FLogVars.currentSession] = nil 
-			FLogVars.currentSession = arg1 
-			FarmLog:RefreshMainWindow() 
+			out("Renaming session from |cff99ff00"..FLogVars.currentFarm.."|r to |cff99ff00"..arg1)
+			FLogVars.farms[arg1] = FLogVars.farms[FLogVars.currentFarm]
+			FLogVars.farms[FLogVars.currentFarm] = nil 
+			FLogVars.currentFarm = arg1 
+			FarmLog_MainWindow:Refresh() 
 		elseif  "INC" == cmd then
 			local mobName = GetUnitName("target")
 			out("Increasing kill count of |cff00ff99"..mobName)
 			IncreaseSessionDictVar("kills", mobName, 1)
-			FarmLog:RefreshMainWindow() 
+			FarmLog_MainWindow:Refresh() 
 		elseif  "DEC" == cmd then
 			local mobName = GetUnitName("target")
 			out("Increasing kill count of |cff00ff99"..mobName)
 			IncreaseSessionDictVar("kills", mobName, -1)
-			FarmLog:RefreshMainWindow() 
+			FarmLog_MainWindow:Refresh() 
 		elseif "ASI" == cmd then 
 			FLogGlobalVars.autoSwitchInstances = not FLogGlobalVars.autoSwitchInstances 
 			if not FLogGlobalVars.autoSwitchInstances then 
@@ -2321,7 +2408,7 @@ SlashCmdList.LH = function(msg)
 				out("Auto switching in instances |cff44ff44"..L["enabled"])
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
-			FarmLog:ResetSession()
+			FarmLog:ClearFarm()
 		elseif  "RMI" == cmd then
 			FLogVars.minimapButtonPosition.x = -165
 			FLogVars.minimapButtonPosition.y = -127
