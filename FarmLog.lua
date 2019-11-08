@@ -1,4 +1,6 @@
-﻿local VERSION = "1.13.3"
+﻿lastFarm = nil
+
+local VERSION = "1.13.3"
 local VERSION_INT = 1.1303
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -319,7 +321,7 @@ function FarmLog:Migrate()
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
-	elseif not FLogVars.sessions[FLogVars.currentFarm] then 
+	elseif FLogVars.sessions and not FLogVars.sessions[FLogVars.currentFarm] then 
 		self:ResetSessionVars()
 	end 
 
@@ -450,14 +452,18 @@ function FarmLog:Migrate()
 	end 
 
 	if FLogVars.sessions then 
-		FLogVars.viewTotal = false -- old users would want this off by default
+		FLogVars.viewTotal = true -- old users would want this off by default
 		FLogVars.farms = {}
-		for name, session in FLogVars.sessions do 
+		for name, session in pairs(FLogVars.sessions) do 
 			if session.bls then session.bls = nil end 
 			FLogVars.farms[name] = {
 				["past"] = session,
 				["current"] = emptySession(),
+				["goldPerHour"] = session.goldPerHour,
+				["lastUse"] = session.lastUse,
 			}
+			session.goldPerHour = nil 
+			session.lastUse = nil 
 		end 
 		FLogVars.sessions = nil 
 	end 
@@ -474,7 +480,7 @@ local function GetSessionVar(varName, total, sessionName, mergeFunc)
 	end 
 	if total then 
 		if type(farm.past[varName]) == "table" then 
-			if not mergeFunc then mergeFunc = function (a, b) return (a or 0) + (b or 0) end
+			if not mergeFunc then mergeFunc = function (a, b) return (a or 0) + (b or 0) end end
 			local summed = {}
 			for key, val in pairs(farm.past[varName]) do 
 				summed[key] = mergeFunc(val, farm.current[varName][key])
@@ -950,7 +956,7 @@ function FarmLog_MainWindow:Refresh()
 				meta[DROP_META_INDEX_VALUE_EACH] or 0,
 				meta[DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR,
 			}
-			if b[link] then 
+			if b and b[link] then 
 				newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
 				newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
 				newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
@@ -959,14 +965,18 @@ function FarmLog_MainWindow:Refresh()
 			merged[link] = newmeta 
 		end 
 		-- add missing items from b that doesn't exist on a
-		for link, meta in pairs(b) do 
-			if not a[link] then 
-				merged[link] = meta
+		if b then 
+			for link, meta in pairs(b) do 
+				if not a[link] then 
+					merged[link] = meta
+				end 
 			end 
 		end 
+		return merged
 	end 
 
 	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
+	lastFarm = sessionDrops
 	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
 	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
 	local extractLink = function (link) return GetItemInfo(link) or link end  
@@ -1855,7 +1865,7 @@ function FarmLog:OnAuctionUpdate()
 end
 
 function FarmLog:PrepareAuctionHouseResults()
-	ahScanResultsShown, ahScanResultsTotal = GetNumAuctionItems("list");
+	ahScanResultsShown, ahScanResultsTotal = GetNumAuctionItems("list")
 	ahScanRequested = false 
 	ahScanning = true 
 	ahScanIndex = 1
