@@ -960,7 +960,6 @@ function FarmLog_MainWindow:Refresh()
 				newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
 				newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
 				newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
-				newmeta[DROP_META_INDEX_VALUE_TYPE] = newmeta[DROP_META_INDEX_VALUE_TYPE] + (b[link][DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR)
 			end 
 			merged[link] = newmeta 
 		end 
