@@ -659,6 +659,53 @@
             </Scripts>
           </Button>          <!--$parent_ToggleMobNameButton-->
 
+          <Button name="$parent_ToggleCurrentButton">
+            <Size>
+              <AbsDimension x="38" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="$parent_ToggleMobNameButton" relativePoint="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="3" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="Current">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_ToggleCurrentButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+                self:MouseEnter()
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+                self:MouseLeave()
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_ToggleCurrentButton-->
+
           <Frame name="$parent_Instances">
             <Size>
               <AbsDimension x="20" y="14"/>
@@ -672,7 +719,7 @@
               </TileSize>
             </Backdrop>
             <Anchors>
-              <Anchor point="TOPLEFT" relativeTo="$parent_ToggleMobNameButton" relativePoint="TOPRIGHT">
+              <Anchor point="TOPLEFT" relativeTo="$parent_ToggleCurrentButton" relativePoint="TOPRIGHT">
                 <Offset>
                   <AbsDimension x="3" y="0"/>
                 </Offset>

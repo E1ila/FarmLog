@@ -1,12 +1,11 @@
 
 function FarmLog_BuildLocalization(context)
     local L = {};
-    L["All Sessions"] = "All Sessions"
+    L["farms-title"] = "All Farms"
     L["disabled"] = "disabled"
     L["enabled"] = "enabled"
     L["Yes"] = "Yes";
     L["No"] = "No";
-    L["reset-question"] = "Clear current session's data?";	
     L["report"] = "Report";
     L["Log-Options:"] = "Log-Options:";
     L["poor"] = "Poor Items";
@@ -43,7 +42,8 @@ function FarmLog_BuildLocalization(context)
     L["tooltip"] = "Show Item-Tolltip";
     L["loaded-welcome"] = "type |cff00ff00/fl|r or |cff00ff00/farmlog|r to start/end a farm session, |cff00ff00/fl help|r for more options";
     L["window-title"] = "Session Yield";
-    L["reset-title"] = "Clear Session"
+    L["clear-session-title"] = "Clear Session"
+    L["clear-session-question"] = "Clear current session's data?";	
     L["Auction House"] = "Auction House"
     L["Session"] = "Session"
     L["reputation"] = "reputation"
@@ -75,6 +75,7 @@ function FarmLog_BuildLocalization(context)
     L["picked"] = "picked"
     L["Treasure"] = "Treasure"
     L["bl-log-title"] = "Black Lotus Log"
+    L["toggle-current-help"] = "Show current session/total yield"
     if (GetLocale() == "enUS") then
     end
     return L

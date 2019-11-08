@@ -1,7 +1,7 @@
 ﻿lastFarm = nil
 
-local VERSION = "1.13.3"
-local VERSION_INT = 1.1303
+local VERSION = "1.14"
+local VERSION_INT = 1.1400
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -1722,7 +1722,7 @@ function FarmLog:OnAddonLoaded()
 	end
 
 	FarmLog_SessionsWindow_Title_Text:SetTextColor(0.3, 0.7, 1, 1)
-	FarmLog_SessionsWindow_Title_Text:SetText(L["All Sessions"])
+	FarmLog_SessionsWindow_Title_Text:SetText(L["farms-title"])
 
 	-- loot window buttons
 	if FLogGlobalVars.sortBy == SORT_BY_TEXT then 
@@ -1734,10 +1734,12 @@ function FarmLog:OnAddonLoaded()
 	end 
 	FarmLog_MainWindow_Buttons_ToggleMobNameButton.selected = FLogGlobalVars.groupByMobName
 	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
+	FarmLog_MainWindow_Buttons_ToggleCurrentButton.selected = not FLogVars.viewTotal
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_ToggleMobNameButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_ToggleCurrentButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_SessionsButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ClearButton)
 
@@ -2162,6 +2164,23 @@ function FarmLog_MainWindow_Buttons_ToggleMobNameButton:Clicked()
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton, false)
 end 
 
+function FarmLog_MainWindow_Buttons_ToggleCurrentButton:Clicked() 
+	FLogVars.viewTotal = not FLogVars.viewTotal
+	self.selected = not FLogVars.viewTotal
+	FarmLog_MainWindow:Refresh()
+	FarmLog_MainWindow:UpdateTitle()
+end 
+
+function FarmLog_MainWindow_Buttons_ToggleCurrentButton:MouseEnter()
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:SetText(L["toggle-current-help"])
+	GameTooltip:Show()
+end 
+
+function FarmLog_MainWindow_Buttons_ToggleCurrentButton:MouseLeave()
+	GameTooltip_Hide();
+end 
+
 function FarmLog_MainWindow_SessionsButton:Clicked() 
 	if FarmLog_SessionsWindow:IsShown() then 
 		FarmLog_SessionsWindow:Hide()
@@ -2175,7 +2194,7 @@ end
 
 function FarmLog_MainWindow_ClearButton:Clicked()
 	if self.disabled then return end 
-	FarmLog:AskQuestion(L["reset-title"], L["reset-question"], function() 
+	FarmLog:AskQuestion(L["clear-session-title"], L["clear-session-question"], function() 
 		FarmLog:ClearFarm()
 		FarmLog_QuestionDialog:Hide()
 	end)
