@@ -1160,7 +1160,7 @@ function FarmLog_SessionsWindow:Refresh()
 	if FLogGlobalVars.sortSessionBy == SORT_BY_TEXT then 
 		sortedKeys = SortMapKeys(FLogVars.farms, nil, nil, nil, nil, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_GOLD then 
-		local gphExtract = function (farm) return farm.goldPerHourTotal or 0 end
+		local gphExtract = function (farm) return farm.goldPerHourTotal or farm.goldPerHour or 0 end
 		sortedKeys = SortMapKeys(FLogVars.farms, true, true, nil, gphExtract, searchText)
 	elseif FLogGlobalVars.sortSessionBy == SORT_BY_USE then 
 		local useExtract = function (farm) return farm.lastUse or 0 end
@@ -1171,7 +1171,7 @@ function FarmLog_SessionsWindow:Refresh()
 
 	for _, name in ipairs(sortedKeys) do 
 		local farm = FLogVars.farms[name]
-		local gph = farm.goldPerHourTotal or 0 
+		local gph = farm.goldPerHourTotal or farm.goldPerHour or 0 
 		local text = name
 		local valueText = nil 
 		if isPositive(gph) then 
@@ -2449,6 +2449,7 @@ SlashCmdList.LH = function(msg)
 			FLogVars.farms[FLogVars.currentFarm] = nil 
 			FLogVars.currentFarm = arg1 
 			FarmLog_MainWindow:Refresh() 
+			FarmLog_MainWindow:UpdateTitle()
 		elseif  "INC" == cmd then
 			local mobName = GetUnitName("target")
 			out("Increasing kill count of |cff00ff99"..mobName)
