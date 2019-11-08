@@ -76,6 +76,12 @@ function FarmLog_BuildLocalization(context)
     L["Treasure"] = "Treasure"
     L["bl-log-title"] = "Black Lotus Log"
     L["toggle-current-help"] = "Show current session/total yield"
+    L["clear-session-help"] = "Clear current session (past sessions untouched)"
+    L["new-session-help"] = "Save current session and start a new one"
+    L["farms-button-help"] = "Show farm sessions"
+    L["sort-gold-help"] = "Sort by gold yield"
+    L["sort-abc-help"] = "Sort alphabetically"
+    L["sort-kills-help"] = "Sort by mob kills"
     if (GetLocale() == "enUS") then
     end
     return L

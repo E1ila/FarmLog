@@ -329,7 +329,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="S">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="F">
               <Color r="1" g="1" b="1"/>
               <Anchors>
                 <Anchor point="CENTER" />
@@ -343,9 +343,13 @@
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	          GameTooltip:SetText(FarmLog.L["farms-button-help"])
+	          GameTooltip:Show()
           </OnEnter>
           <OnLeave>
             FarmLog_SetTextButtonBackdropColor(self, false)
+          	GameTooltip_Hide();
           </OnLeave>
           <OnClick>
             self:Clicked()
@@ -388,15 +392,69 @@
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	          GameTooltip:SetText(FarmLog.L["clear-session-help"])
+	          GameTooltip:Show()
           </OnEnter>
           <OnLeave>
             FarmLog_SetTextButtonBackdropColor(self, false)
+          	GameTooltip_Hide();
           </OnLeave>
           <OnClick>
             self:Clicked()
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_ClearButton-->
+
+
+      <Button name="$parent_NewSessionButton">
+        <Size>
+          <AbsDimension x="14" y="14"/>
+        </Size>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent_ClearButton" relativePoint="TOPRIGHT">
+            <Offset>
+              <AbsDimension x="4" y="0"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="+">
+              <Color r="1" g="1" b="1"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnLoad>
+            self.label = FarmLog_MainWindow_NewSessionButton_Text
+          </OnLoad>
+          <OnEnter>
+            FarmLog_SetTextButtonBackdropColor(self, true)
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	          GameTooltip:SetText(FarmLog.L["new-session-help"])
+	          GameTooltip:Show()
+          </OnEnter>
+          <OnLeave>
+            FarmLog_SetTextButtonBackdropColor(self, false)
+          	GameTooltip_Hide();
+          </OnLeave>
+          <OnClick>
+            self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>      <!--$parent_NewSessionButton-->
 
       <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
         <Size>
@@ -514,9 +572,13 @@
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	              GameTooltip:SetText(FarmLog.L["sort-gold-help"])
+    	          GameTooltip:Show()
               </OnEnter>
               <OnLeave>
                 FarmLog_SetTextButtonBackdropColor(self, false)
+          			GameTooltip_Hide();
               </OnLeave>
               <OnClick>
                 self:Clicked()
@@ -559,9 +621,13 @@
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	              GameTooltip:SetText(FarmLog.L["sort-kills-help"])
+    	          GameTooltip:Show()
               </OnEnter>
               <OnLeave>
                 FarmLog_SetTextButtonBackdropColor(self, false)
+    	          GameTooltip_Hide()
               </OnLeave>
               <OnClick>
                 self:Clicked()
@@ -604,9 +670,13 @@
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	              GameTooltip:SetText(FarmLog.L["sort-abc-help"])
+    	          GameTooltip:Show()
               </OnEnter>
               <OnLeave>
                 FarmLog_SetTextButtonBackdropColor(self, false)
+    	          GameTooltip_Hide()
               </OnLeave>
               <OnClick>
                 self:Clicked()

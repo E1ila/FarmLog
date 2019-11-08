@@ -8,6 +8,7 @@ local FONT_NAME = "Fonts\\FRIZQT__.TTF"
 local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
+FarmLog.L = L 
 local UNKNOWN_MOBNAME = L["Unknown"]
 local REALM = GetRealmName()
 
@@ -266,6 +267,33 @@ local function extractItemID(link)
 	-- remove player level from item link
 	local _, id = _G.string.split(":", link)
 	return id 
+end 
+
+function mergeDrops(a, b) 
+	local merged = {}
+	for link, meta in pairs(a) do 
+		local newmeta = {
+			meta[DROP_META_INDEX_COUNT] or 0,
+			meta[DROP_META_INDEX_VALUE] or 0,
+			meta[DROP_META_INDEX_VALUE_EACH] or 0,
+			meta[DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR,
+		}
+		if b and b[link] then 
+			newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
+			newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
+			newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
+		end 
+		merged[link] = newmeta 
+	end 
+	-- add missing items from b that doesn't exist on a
+	if b then 
+		for link, meta in pairs(b) do 
+			if not a[link] then 
+				merged[link] = meta
+			end 
+		end 
+	end 
+	return merged
 end 
 
 
@@ -666,7 +694,7 @@ function FarmLog:DeleteFarm(name)
 	end 
 end 
 
-function FarmLog:ClearFarm(all)
+function FarmLog:ClearSession(all)
 	self:PauseSession(true)
 	if all then 
 		FLogVars.farms[FLogVars.currentFarm] = nil 
@@ -678,6 +706,21 @@ function FarmLog:ClearFarm(all)
 	out("Cleared |cff99ff00"..FLogVars.currentFarm.."|r farm")
 	FarmLog_MainWindow:Refresh()
 end
+
+function FarmLog:NewSession()
+	local newSession = emptySession()
+	local mergedSessions = {}
+	for key, _ in pairs(newSession) do 
+		local mergeFunc = nil 
+		if key == "drops" then mergeFunc = mergeDrops end 
+		mergedSessions[key] = GetSessionVar(key, true, nil, mergeFunc)
+	end 	
+	SetFarmVar("past", mergedSessions)
+	SetFarmVar("current", newSession)
+	FarmLog_MainWindow:Refresh()
+	FarmLog_MainWindow:UpdateTitle()
+	out("Started a new session")
+end 
 
 function FarmLog:ToggleLogging() 
 	if FLogVars.enabled then 
@@ -945,33 +988,6 @@ function FarmLog_MainWindow:Refresh()
 	end 
 	for skillName, levels in pairs(GetSessionVar("skill", FLogVars.viewTotal)) do 
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
-	end 
-
-	local mergeDrops = function (a, b) 
-		local merged = {}
-		for link, meta in pairs(a) do 
-			local newmeta = {
-				meta[DROP_META_INDEX_COUNT] or 0,
-				meta[DROP_META_INDEX_VALUE] or 0,
-				meta[DROP_META_INDEX_VALUE_EACH] or 0,
-				meta[DROP_META_INDEX_VALUE_TYPE] or VALUE_TYPE_VENDOR,
-			}
-			if b and b[link] then 
-				newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
-				newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
-				newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
-			end 
-			merged[link] = newmeta 
-		end 
-		-- add missing items from b that doesn't exist on a
-		if b then 
-			for link, meta in pairs(b) do 
-				if not a[link] then 
-					merged[link] = meta
-				end 
-			end 
-		end 
-		return merged
 	end 
 
 	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
@@ -1741,6 +1757,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_ToggleCurrentButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_SessionsButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ClearButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_NewSessionButton)
 
 	-- sessions window buttons
 	if FLogGlobalVars.sortSessionsBy == SORT_BY_TEXT then 
@@ -2194,9 +2211,14 @@ end
 function FarmLog_MainWindow_ClearButton:Clicked()
 	if self.disabled then return end 
 	FarmLog:AskQuestion(L["clear-session-title"], L["clear-session-question"], function() 
-		FarmLog:ClearFarm()
+		FarmLog:ClearSession()
 		FarmLog_QuestionDialog:Hide()
 	end)
+end 
+
+function FarmLog_MainWindow_NewSessionButton:Clicked()
+	if self.disabled then return end 
+	FarmLog:NewSession()
 end 
 
 -- sessions buttons
@@ -2436,7 +2458,7 @@ SlashCmdList.LH = function(msg)
 				out("Auto switching in instances |cff44ff44"..L["enabled"])
 			end 
 		elseif  "RESET" == cmd or "R" == cmd then
-			FarmLog:ClearFarm()
+			FarmLog:ClearSession()
 		elseif  "RMI" == cmd then
 			FLogVars.minimapButtonPosition.x = -165
 			FLogVars.minimapButtonPosition.y = -127
