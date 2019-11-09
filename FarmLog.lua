@@ -74,6 +74,7 @@ local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, afte
 
 local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 
+local HERB_WARN_COOLDOWN = 60
 local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
@@ -160,6 +161,7 @@ local sessionStartTime = nil
 local lastMobLoot = {}
 local lastUnknownLoot = {}
 local lastUnknownLootTime = 0
+local lastPlayerChecked = nil
 local skillName = nil 
 local skillNameTime = nil 
 local ahScanRequested = false
@@ -1259,6 +1261,15 @@ function FarmLog:ShowBlackLotusLog()
 	FarmLog_LogWindow:Show()
 end 
 
+function FarmLog:ParseCSV(csv)
+	arg = {_G.string.split(",", csv)}
+	local map = {}
+	for _, v in ipairs(arg) do
+        map[v] = 1
+	end
+	return map 
+end 
+
 
 -- EVENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1794,6 +1805,10 @@ function FarmLog:OnAddonLoaded()
 		FarmLog_MainWindow:Hide()
 	end 
 	addonLoadedTime = time()
+
+	if FLogHerbalists and type(FLogHerbalists) == "string" then 
+		FLogHerbalists = self:ParseCSV(FLogHerbalists)
+	end 
 end 
 
 -- Entering World
@@ -2022,6 +2037,17 @@ function FarmLog:OnUpdate()
 			self:ParseMinimapTooltip()
 		end 
 	end
+	if FLogHerbalists and UnitPlayerControlled("mouseover") then 
+		local name = UnitName("mouseover") 
+		if name ~= lastPlayerChecked then 
+			lastPlayerChecked = name 
+			local t = FLogHerbalists[name]
+			if t and time() - t > HERB_WARN_COOLDOWN then 
+				out("|cffc350f9Unit "..name.." is a herbalist!")
+				FLogHerbalists[name] = time()
+			end 
+		end 
+	end 
 end 
 
 

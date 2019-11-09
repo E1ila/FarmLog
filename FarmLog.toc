@@ -3,6 +3,6 @@
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 ## Author: Kof @Shazzrah
 ## Version: v1.6
-## SavedVariables: FLogGlobalVars, FLogSVDebugMode, FLogSVItemRarity, FLogSVOptionReportTo, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
+## SavedVariables: FLogGlobalVars, FLogHerbalists, FLogSVDebugMode, FLogSVItemRarity, FLogSVOptionReportTo, FLogSVLockFrames, FLogSVLockMinimapButton, FLogSVFrame, FLogSVMinimapButtonPosition, FLogSVEnableMinimapButton, FLogSVTooltip, FLogSVAHValue
 ## SavedVariablesPerCharacter: FLogVars, FLogSVEnabled, FLogSVSessions, FLogSVCurrentSession, FLogSVLastInstance, FLogSVInInstance, FLogSVAutoSwitchOnInstances
 FarmLog.xml
