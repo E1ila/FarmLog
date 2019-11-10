@@ -74,7 +74,7 @@ local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, afte
 
 local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 
-local HERB_WARN_COOLDOWN = 60
+local PLAYER_WARN_COOLDOWN = 60
 local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
@@ -468,11 +468,11 @@ function FarmLog:Migrate()
 	if not FLogGlobalVars.blt then FLogGlobalVars.blt = {} end 
 	if not FLogGlobalVars.blp then FLogGlobalVars.blp = {} end 
 
-	if FLogVars.bls then 
-		FLogGlobalVars.bls = {[REALM] = FLogVars.bls}
+	if not FLogGlobalVars.bls then FLogGlobalVars.bls = {} end 
+	if FLogVars.bls and not FLogGlobalVars.bls then 
+		FLogGlobalVars.bls[REALM] = FLogVars.bls
 		FLogVars.bls = nil 
 	end 
-	if not FLogGlobalVars.bls then FLogGlobalVars.bls = {} end 
 
 	if FLogVars.ver < 1.1303 then 
 		for _, session in pairs(FLogVars.sessions) do 
@@ -1806,8 +1806,12 @@ function FarmLog:OnAddonLoaded()
 	end 
 	addonLoadedTime = time()
 
-	if FLogHerbalists and type(FLogHerbalists) == "string" then 
-		FLogHerbalists = self:ParseCSV(FLogHerbalists)
+	if FLogPlayerAlert then 
+		for alertName, db in pairs(FLogPlayerAlert) do
+			if type(db) == "string" then 
+				FLogPlayerAlert[alertName] = self:ParseCSV(db)
+			end 
+		end 
 	end 
 end 
 
@@ -2037,14 +2041,16 @@ function FarmLog:OnUpdate()
 			self:ParseMinimapTooltip()
 		end 
 	end
-	if FLogHerbalists and UnitPlayerControlled("mouseover") then 
+	if FLogPlayerAlert and UnitPlayerControlled("mouseover") then 
 		local name = UnitName("mouseover") 
 		if name ~= lastPlayerChecked then 
 			lastPlayerChecked = name 
-			local t = FLogHerbalists[name]
-			if t and time() - t > HERB_WARN_COOLDOWN then 
-				out("|cffc350f9Unit "..name.." is a herbalist!")
-				FLogHerbalists[name] = time()
+			for alertName, db in pairs(FLogPlayerAlert) do 
+				local t = db[name]
+				if t and time() - t > PLAYER_WARN_COOLDOWN then 
+					out("|cffc350f9Unit |r"..name.."|cffc350f9 is a "..alertName.."!")
+					db[name] = time()
+				end 
 			end 
 		end 
 	end 
