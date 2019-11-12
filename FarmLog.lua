@@ -1,7 +1,7 @@
 ﻿lastFarm = nil
 
-local VERSION = "1.14"
-local VERSION_INT = 1.1400
+local VERSION = "1.14.1"
+local VERSION_INT = 1.1401
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -79,7 +79,7 @@ local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
 local BL_ITEMID = 13468
-local BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
+local BL_ITEM_NAME = "Black Lotus"
 -- briarthorn FarmLog:SetBlackLotusItemId(2450)
 -- peacebloom FarmLog:SetBlackLotusItemId(2447)
 -- earthroot FarmLog:SetBlackLotusItemId(2449)
@@ -1518,6 +1518,10 @@ function FarmLog:SetBlackLotusItemId(itemId)
 	debug("|cff999999SetBlackLotusItemId|r BL_ITEM_NAME |cffff9900"..tostring(BL_ITEM_NAME).."|r BL_ITEMID |cffff9900"..tostring(BL_ITEMID))
 end 
 
+function FarmLog:GetBlackLotusItemName() 
+	return BL_ITEM_NAME
+end 
+
 function FarmLog:LogBlackLotusCurrentLocation(byPlayer)
 	-- log spawn
 	local MapId = C_Map.GetBestMapForUnit("player")
@@ -1734,6 +1738,8 @@ end
 
 function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
+
+	BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
 
 	FarmLog:Migrate()	
 
