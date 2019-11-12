@@ -1,7 +1,7 @@
 ﻿lastFarm = nil
 
-local VERSION = "1.14.1"
-local VERSION_INT = 1.1401
+local VERSION = "1.14.3"
+local VERSION_INT = 1.1403
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -79,7 +79,7 @@ local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
 local BL_SPAWN_TIME_SECONDS = 3600
 local BL_ITEMID = 13468
-local BL_ITEM_NAME = "Black Lotus"
+local BL_ITEM_NAME = ""
 -- briarthorn FarmLog:SetBlackLotusItemId(2450)
 -- peacebloom FarmLog:SetBlackLotusItemId(2447)
 -- earthroot FarmLog:SetBlackLotusItemId(2449)
@@ -282,7 +282,6 @@ function mergeDrops(a, b)
 		if b and b[link] then 
 			newmeta[DROP_META_INDEX_COUNT] = newmeta[DROP_META_INDEX_COUNT] + (b[link][DROP_META_INDEX_COUNT] or 0)
 			newmeta[DROP_META_INDEX_VALUE] = newmeta[DROP_META_INDEX_VALUE] + (b[link][DROP_META_INDEX_VALUE] or 0)
-			newmeta[DROP_META_INDEX_VALUE_EACH] = newmeta[DROP_META_INDEX_VALUE_EACH] + (b[link][DROP_META_INDEX_VALUE_EACH] or 0)
 		end 
 		merged[link] = newmeta 
 	end 
@@ -1578,7 +1577,7 @@ function FarmLog:IncreaseBlackLotusPickStat(statName)
 			else 
 				rankMeta[statName] = (rankMeta[statName] or 0) + 1
 			end 
-			debug("|cff999999IncreaseBlackLotusPickStat|r increased |cffff9900"..BL_ITEM_NAME.."|r stat |cffff9900"..statName.."|r to |cffff9900"..tostring(rankMeta[statName]))
+			debug("|cff999999IncreaseBlackLotusPickStat|r increased BL stat |cffff9900"..statName.."|r to |cffff9900"..tostring(rankMeta[statName]))
 			return true 
 		end 
 	end 

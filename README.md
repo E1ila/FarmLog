@@ -56,6 +56,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.14.3 
+    * Fixed bug when holding shift on an item in loot log, it would show wrong "each" price
+* 1.14.2
+    * Fixed error showing up sometimes when picking BL
 * 1.14
     * Multi-session farms! You can now see current session yield, or change to total view. Now you can tell if your current session has been better than past ones or clear current session without affecting past metrics.
 * 1.13.2
