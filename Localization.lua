@@ -82,6 +82,7 @@ function FarmLog_BuildLocalization(context)
     L["sort-gold-help"] = "Sort by gold yield"
     L["sort-abc-help"] = "Sort alphabetically"
     L["sort-kills-help"] = "Sort by mob kills"
+    L["picked-by"] = "picked by"
     if (GetLocale() == "enUS") then
     end
     return L

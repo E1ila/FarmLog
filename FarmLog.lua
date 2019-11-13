@@ -130,6 +130,7 @@ FLogVars = {
 	["enableMinimapButton"] = true, 
 	["itemTooltip"] = true,
 	["viewTotal"] = false,
+	["farms"] = {},
 	["ver"] = VERSION,
 }
 
@@ -528,21 +529,30 @@ local function GetSessionVar(varName, total, sessionName, mergeFunc)
 end 
 
 local function GetFarmVar(varName)
-	return FLogVars.farms[FLogVars.currentFarm][varName]
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	if not farm then return nil end 
+	return farm[varName]
 end 
 
 local function SetFarmVar(varName, value)
-	FLogVars.farms[FLogVars.currentFarm][varName] = value 
+	local farm = FLogVars.farms[FLogVars.currentFarm]
+	if not farm then 
+		farm = {["past"] = emptySession(), ["current"] = emptySession()}
+		FLogVars.farms[FLogVars.currentFarm] = farm 
+	end 
+	farm[varName] = value 
 end 
 
 local function IncreaseSessionVar(varName, incValue)
 	debug("|cff999999IncreaseSessionVar|r currentFarm |cffff9900"..FLogVars.currentFarm.."|r, varName |cffff9900"..varName.."|r, incValue |cffff9900"..tostring(incValue))
 	local farm = FLogVars.farms[FLogVars.currentFarm]
+	if not farm then return nil end 
 	farm.current[varName] = (farm.current[varName] or 0) + incValue 
 end 
 
 local function IncreaseSessionDictVar(varName, entry, incValue)
 	local farm = FLogVars.farms[FLogVars.currentFarm]
+	if not farm then return nil end 
 	farm.current[varName][entry] = (farm.current[varName][entry] or 0) + incValue 
 end 
 
@@ -950,6 +960,7 @@ end
 
 function FarmLog_MainWindow:Refresh()
 	self.visibleRows = 0
+	-- if not FLogVars.farms[FLogVars.currentFarm] then return end 
 
 	-- calculate GPH
 	local sessionTime = FarmLog:GetCurrentSessionTime()
@@ -1113,8 +1124,10 @@ function FarmLog_MainWindow:RecalcTotals()
 	end 
 
 	local farm = FLogVars.farms[FLogVars.currentFarm]
-	recalcMeta(farm.past)
-	recalcMeta(farm.current)
+	if farm then 
+		recalcMeta(farm.past)
+		recalcMeta(farm.current)
+	end 
 end 
 
 function FarmLog_MainWindow:UpdateTime()
@@ -1223,10 +1236,17 @@ function FarmLog_LogWindow:CreateRow(text, valueText)
 	return row
 end
 
-function FarmLog_LogWindow:AddPickRow(map, coords, picked, time) 
+function FarmLog_LogWindow:AddPickRow(map, coords, picked, pickedBy, time) 
 	self.visibleRows = self.visibleRows + 1
-	local text = "  |cff66aa33"..map.." |cff777777@|r "..coords.x.."|cff777777,|r"..coords.y
-	if picked then text = text.." |cff888888("..L["picked"]..")|r" end 
+	text = "  |cff66aa33"..(map or "??").." "
+	if coords then 
+		text = text.."|cff777777@|r "..coords.x.."|cff777777,|r"..coords.y
+	end 
+	if picked then 
+		text = text.." |cff1fd149"..L["picked"].."|r" 
+	elseif pickedBy then  
+		text = text.." |cffd65420"..L["picked-by"].." "..pickedBy.."|r" 
+	end 
 	return self:CreateRow(text, time)
 end 
 
@@ -1243,7 +1263,7 @@ function FarmLog_LogWindow:RefreshBlackLotusLog()
 			for mapName, mapData in pairs(realmData) do 
 				self:AddMapRow(mapName, #mapData)
 				for _, pickData in ipairs(mapData) do 
-					local row = self:AddPickRow(pickData.zone, pickData.pos, pickData.picked, "|cffffffff"..pickData.time.."|r  "..pickData.date)
+					local row = self:AddPickRow(pickData.zone, pickData.pos, pickData.picked, pickData.pickedBy, "|cffffffff"..pickData.time.."|r  "..pickData.date)
 					-- SetItemTooltip(row)
 					-- SetItemActions(row, self:GetOnLogItemClick(name))
 				end 
@@ -2525,6 +2545,14 @@ SlashCmdList.LH = function(msg)
 			FarmLog:ScanAuctionHouse()
 		elseif "BL" == cmd then 
 			FarmLog:ShowBlackLotusLog()
+		elseif "BLP" == cmd then 
+			local pickMeta = {
+				["ts"] = time(),
+				["time"] = date("%H:%M"),
+				["date"] = date("%m-%d"),
+				["pickedBy"] = arg1 or "??",
+			}
+			FarmLog:LogBlackLotus(GetZoneText(), pickMeta)
 		else 
 			out("Unknown command "..cmd)
 		end 

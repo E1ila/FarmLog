@@ -58,6 +58,8 @@ Another thing is that the more time & data you have per session, the more accura
 ### Changes 
 * 1.14.3 
     * Fixed bug when holding shift on an item in loot log, it would show wrong "each" price
+    * Added `/fl blp NAME` command to log a BL picked by another player
+    * Fixed loading errors for new users
 * 1.14.2
     * Fixed error showing up sometimes when picking BL
 * 1.14
