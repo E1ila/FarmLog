@@ -56,6 +56,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.15
+    * Supporting honor farm! Have a pleasant ranking.
 * 1.14.3 
     * Fixed bug when holding shift on an item in loot log, it would show wrong "each" price
     * Added `/fl blp NAME` command to log a BL picked by another player

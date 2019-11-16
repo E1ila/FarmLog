@@ -1,7 +1,7 @@
 ﻿lastFarm = nil
 
-local VERSION = "1.14.3"
-local VERSION_INT = 1.1403
+local VERSION = "1.15"
+local VERSION_INT = 1.1500
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -145,6 +145,8 @@ local function emptySession()
 		["ah"] = 0,
 		["xp"] = 0,
 		["honor"] = 0,
+		["hks"] = 0,
+		["dks"] = 0,
 		["deaths"] = 0,
 		["seconds"] = 0,
 		["resets"] = 0,
@@ -347,6 +349,8 @@ function FarmLog:Migrate()
 			["honor"] = FLogSVHonor,
 			["seconds"] = FLogSVTotalSeconds,
 			["deaths"] = 0,
+			["hks"] = 0,
+			["dks"] = 0,
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
@@ -964,6 +968,7 @@ function FarmLog_MainWindow:Refresh()
 
 	-- calculate GPH
 	local sessionTime = FarmLog:GetCurrentSessionTime()
+
 	local goldPerHour = 0
 	local ahProfit = GetSessionVar("ah", FLogVars.viewTotal)
 	local vendorProfit = GetSessionVar("vendor", FLogVars.viewTotal)
@@ -976,28 +981,43 @@ function FarmLog_MainWindow:Refresh()
 	else 
 		SetFarmVar("goldPerHour", goldPerHour)
 	end 
-	
-	-- add special rows
 	if isPositive(goldPerHour) then 
 		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
 	end 
-	if ahProfit > 0 then 
+
+	if isPositive(ahProfit) then 
 		self:AddRow(L["Auction House"], GetShortCoinTextureString(ahProfit), nil, TEXT_COLOR["money"]) 
 	end 
-	if goldProfit > 0 then 
+	if isPositive(goldProfit) then 
 		self:AddRow(L["Money"], GetShortCoinTextureString(goldProfit), nil, TEXT_COLOR["money"])
 	end 
-	if vendorProfit > 0 then 
+	if isPositive(vendorProfit) then 
 		self:AddRow(L["Vendor"], GetShortCoinTextureString(vendorProfit), nil, TEXT_COLOR["money"]) 
 	end 
-	if GetSessionVar("xp", FLogVars.viewTotal) > 0 then 
+	if isPositive(GetSessionVar("xp", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("xp", FLogVars.viewTotal).." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if GetSessionVar("resets", FLogVars.viewTotal) > 0 then 
+	if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if GetSessionVar("deaths", FLogVars.viewTotal) > 0 then 
+	if isPositive(GetSessionVar("deaths", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
+	end 
+	local honor = GetSessionVar("honor", FLogVars.viewTotal)
+	if isPositive(honor) then 
+		local text = honor.." "..L["Honor"]
+		if sessionTime > 0 then 
+			local honorPerHour = honor / (sessionTime / 3600)
+			text = text .. ", " .. tostring(math.floor(honorPerHour)) .. " " .. L["per hour"]
+		end 
+
+		self:AddRow(text, nil, nil, TEXT_COLOR["honor"]) 
+	end 
+	if isPositive(GetSessionVar("hks", FLogVars.viewTotal)) then 
+		self:AddRow(GetSessionVar("hks", FLogVars.viewTotal).." "..L["Honorable kills"], nil, nil, TEXT_COLOR["honor"]) 
+	end 
+	if isPositive(GetSessionVar("dks", FLogVars.viewTotal)) then 
+		self:AddRow(GetSessionVar("dks", FLogVars.viewTotal).." "..L["Dishonorable kills"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
 	for faction, rep in pairs(GetSessionVar("rep", FLogVars.viewTotal)) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
@@ -1323,8 +1343,25 @@ end
 
 -- Honor event
 
-function FarmLog:OnCombatHonorEvent(text, playerName, languageName, channelName, playerName2, specialFlags)
-	-- debug("FarmLog:OnCombatHonorEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
+local HonorGainStrings = {
+	_G.COMBATLOG_DISHONORGAIN,
+	_G.COMBATLOG_HONORGAIN,
+}
+
+function FarmLog:OnCombatHonorEvent(text)
+	local name, rank, honor = FLogDeformat(text, HonorGainStrings[1])
+	if name then 
+		IncreaseSessionVar("dks", 1)
+	else 
+		name, rank, honor = FLogDeformat(text, HonorGainStrings[2])
+		if name then 
+			IncreaseSessionVar("hks", 1)
+			if honor and honor > 0 then 
+				IncreaseSessionVar("honor", tonumber(honor))
+			end 
+		end 
+	end 
+	FarmLog_MainWindow:Refresh()
 end 
 
 function FarmLog:OnPlayerDead()

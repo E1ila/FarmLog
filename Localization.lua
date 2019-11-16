@@ -54,7 +54,8 @@ function FarmLog_BuildLocalization(context)
     L["Mining"] = "Mining"
     L["Skinning"] = "Skinning"
     L["Unknown"] = "Unknown"
-    L["Gold / Hour"] = "Gold / Hour"
+    L["Gold / Hour"] = "Gold / hour"
+    L["Honor / Hour"] = "Honor / hour"
     L["g/h"] = "g/h"
     L["need"] = "N: ";
     L["greed"] = "G: ";
@@ -83,6 +84,11 @@ function FarmLog_BuildLocalization(context)
     L["sort-abc-help"] = "Sort alphabetically"
     L["sort-kills-help"] = "Sort by mob kills"
     L["picked-by"] = "picked by"
+    L["Honorable kills"] = "Honorable kills"
+    L["Dishonorable kills"] = "Dishonorable kills"
+    L["Honor"] = "Honor"
+    L["honor"] = "honor"
+    L["per hour"] = "honor/hour"
     if (GetLocale() == "enUS") then
     end
     return L
