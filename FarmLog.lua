@@ -2054,7 +2054,6 @@ function FarmLog:OnEvent(event, ...)
 	
 	if event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 		local todayHKs = GetPVPSessionStats()
-		debug("CHAT_MSG_COMBAT_HONOR_GAIN HKs = "..tostring(todayHKs))
 		if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
 			-- new pvp day, reset diminishing returns 
 			FLogVars.todayKills = {}
