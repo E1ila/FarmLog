@@ -1318,7 +1318,7 @@ end
 -- Spell cast 
 
 function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
-	debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
+	-- debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
 
 	if spellId == SPELL_HERBING then 
 		skillName = L["Herbalism"]
@@ -2051,6 +2051,16 @@ end
 -- OnEvent
 
 function FarmLog:OnEvent(event, ...)
+	
+	if event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
+		local todayHKs = GetPVPSessionStats()
+		if todayHKs == 1 then -- and next(FLogVars.todayKills) ~= nil
+			-- new pvp day, reset diminishing returns 
+			FLogVars.todayKills = {}
+			out("Resetting PvP diminishing returns")
+		end 
+	end 
+
 	if FLogVars.enabled then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
