@@ -196,8 +196,9 @@ local function tobool(arg1)
 end
 
 local function isPositive(n)
+	if not n then return false end 
 	local st = tostring(n)
-	return n and n > 0 and st ~= "nan" and st ~= "inf"
+	return st ~= "nan" and st ~= "inf" and n > 0
 end 
 
 local function secondsToClock(seconds)
@@ -1360,16 +1361,19 @@ function FarmLog:OnCombatHonorEvent(text)
 		name, rank, honor = FLogDeformat(text, HonorGainStrings[2])
 		if name then 
 			IncreaseSessionVar("hks", 1)
-			
+
+			local sessionKills = GetSessionVar("kills", false)
+			sessionKills[name] = (sessionKills[name] or 0) + 1
+
 			-- count character kills for honor diminishing returns effect 
 			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
 			FLogVars.todayKills[name] = timesKilledToday
 
-			if honor and #honor then 
+			if isPositive(honor) then 
 				local honorDR = 1 - min(0.25 * (timesKilledToday - 1), 1)
 				local adjustedHonor = math.floor(tonumber(honor) * honorDR)
 				IncreaseSessionVar("honor", adjustedHonor)
-				debug("|cff999999OnCombatHonorEvent|r estimated honor|cffff9900"..tostring(honor).."|r DR |cffff9900"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
+				debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r estimated honor |cffff9900"..tostring(honor).."|r DR |cffff99ff"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
 			end 
 		else 
 			debug("|cff999999OnCombatHonorEvent|r unrecognized honor event |cffff9900"..tostring(text))
@@ -1483,15 +1487,14 @@ function FarmLog:OnCombatLogEvent()
 		local mobName = eventInfo[9]
 		local mobGuid = eventInfo[8]
 		local mobFlags = eventInfo[10]
-
-		-- count mob kill
-		local sessionKills = GetSessionVar("kills", false)
-		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
 		
 		if bit.band(mobFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) then 
 			-- pvp kill
-			debug("Player "..eventInfo[5].." killed player "..mobName)
 		else 
+			-- count mob kill
+			local sessionKills = GetSessionVar("kills", false)
+			sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
+
 			-- make sure this mob has a drops entry, even if it won't drop anything
 			local sessionDrops = GetSessionVar("drops", false)
 			if not sessionDrops[mobName] then 
