@@ -1004,9 +1004,6 @@ function FarmLog_MainWindow:Refresh()
 	if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if isPositive(GetSessionVar("deaths", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
-	end 
 	local honor = GetSessionVar("honor", FLogVars.viewTotal)
 	if isPositive(honor) then 
 		local text = honor.." "..L["Honor"]
@@ -1022,6 +1019,9 @@ function FarmLog_MainWindow:Refresh()
 	end 
 	if isPositive(GetSessionVar("dks", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("dks", FLogVars.viewTotal).." "..L["Dishonorable kills"], nil, nil, TEXT_COLOR["deaths"]) 
+	end 
+	if isPositive(GetSessionVar("deaths", FLogVars.viewTotal)) then 
+		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
 	for faction, rep in pairs(GetSessionVar("rep", FLogVars.viewTotal)) do 
 		self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
@@ -2054,7 +2054,8 @@ function FarmLog:OnEvent(event, ...)
 	
 	if event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 		local todayHKs = GetPVPSessionStats()
-		if todayHKs == 1 then -- and next(FLogVars.todayKills) ~= nil
+		debug("CHAT_MSG_COMBAT_HONOR_GAIN HKs = "..tostring(todayHKs))
+		if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
 			-- new pvp day, reset diminishing returns 
 			FLogVars.todayKills = {}
 			out("Resetting PvP diminishing returns")
