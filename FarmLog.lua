@@ -1,7 +1,7 @@
-﻿lastFarm = nil
+﻿FLogLastEventInfo = nil  
 
-local VERSION = "1.15"
-local VERSION_INT = 1.1500
+local VERSION = "1.15.1"
+local VERSION_INT = 1.1501
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -131,6 +131,7 @@ FLogVars = {
 	["itemTooltip"] = true,
 	["viewTotal"] = false,
 	["farms"] = {},
+	["todayKills"] = {},
 	["ver"] = VERSION,
 }
 
@@ -501,6 +502,8 @@ function FarmLog:Migrate()
 		end 
 		FLogVars.sessions = nil 
 	end 
+
+	if not FLogVars.todayKills then FLogVars.todayKills = {} end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -1027,7 +1030,6 @@ function FarmLog_MainWindow:Refresh()
 	end 
 
 	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
-	lastFarm = sessionDrops
 	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
 	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
 	local extractLink = function (link) return GetItemInfo(link) or link end  
@@ -1349,16 +1351,28 @@ local HonorGainStrings = {
 }
 
 function FarmLog:OnCombatHonorEvent(text)
-	local name, rank, honor = FLogDeformat(text, HonorGainStrings[1])
+	debug("|cff999999OnCombatHonorEvent|r "..tostring(text))
+	local name = FLogDeformat(text, HonorGainStrings[1])
 	if name then 
 		IncreaseSessionVar("dks", 1)
 	else 
+		local rank, honor
 		name, rank, honor = FLogDeformat(text, HonorGainStrings[2])
 		if name then 
 			IncreaseSessionVar("hks", 1)
-			if honor and honor > 0 then 
-				IncreaseSessionVar("honor", tonumber(honor))
+			
+			-- count character kills for honor diminishing returns effect 
+			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
+			FLogVars.todayKills[name] = timesKilledToday
+
+			if honor and #honor then 
+				local honorDR = 1 - min(0.25 * (timesKilledToday - 1), 1)
+				local adjustedHonor = math.floor(tonumber(honor) * honorDR)
+				IncreaseSessionVar("honor", adjustedHonor)
+				debug("|cff999999OnCombatHonorEvent|r estimated honor|cffff9900"..tostring(honor).."|r DR |cffff9900"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
 			end 
+		else 
+			debug("|cff999999OnCombatHonorEvent|r unrecognized honor event |cffff9900"..tostring(text))
 		end 
 	end 
 	FarmLog_MainWindow:Refresh()
@@ -1463,22 +1477,28 @@ end
 
 function FarmLog:OnCombatLogEvent()
 	local eventInfo = {CombatLogGetCurrentEventInfo()}
+	FLogLastEventInfo = eventInfo
 	local eventName = eventInfo[2]
 	if eventName == "PARTY_KILL" then 
 		local mobName = eventInfo[9]
 		local mobGuid = eventInfo[8]
+		local mobFlags = eventInfo[10]
 
 		-- count mob kill
 		local sessionKills = GetSessionVar("kills", false)
 		sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
-
-		-- make sure this mob has a drops entry, even if it won't drop anything
-		local sessionDrops = GetSessionVar("drops", false)
-		if not sessionDrops[mobName] then 
-			sessionDrops[mobName] = {}
+		
+		if bit.band(mobFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) then 
+			-- pvp kill
+			debug("Player "..eventInfo[5].." killed player "..mobName)
+		else 
+			-- make sure this mob has a drops entry, even if it won't drop anything
+			local sessionDrops = GetSessionVar("drops", false)
+			if not sessionDrops[mobName] then 
+				sessionDrops[mobName] = {}
+			end 
+			debug("Player "..eventInfo[5].." killed NPC "..mobName)
 		end 
-
-		-- debug("Player "..eventInfo[5].." killed "..eventInfo[9].." x "..tostring(sessionKills[mobName]))
 		FarmLog_MainWindow:Refresh()
 	end 
 end 
