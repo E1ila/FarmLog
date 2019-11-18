@@ -56,6 +56,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.15.2
+    * Counting rank kill count, instead of player names. This will reduce overload on the log and display more relevant information in later weeks, when we have higher ranks.
+* 1.15.1
+    * Fixed calculation of honor to support the diminishing return effect for honor
 * 1.15
     * Supporting honor farm! Have a pleasant ranking.
 * 1.14.3 

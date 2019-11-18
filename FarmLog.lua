@@ -1,7 +1,5 @@
-﻿FLogLastEventInfo = nil  
-
-local VERSION = "1.15.1"
-local VERSION_INT = 1.1501
+﻿local VERSION = "1.15.2"
+local VERSION_INT = 1.1502
 local APPNAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -47,6 +45,7 @@ local TEXT_COLOR = {
 	["mob"] = "f29244",
 	["money"] = "fffb49",
 	["honor"] = "e1c73b",
+	["rank"] = "f2c444",
 	["deaths"] = "ee3333",
 	["gathering"] = "38c98d",
 	["unknown"] = "888888",
@@ -139,6 +138,7 @@ local function emptySession()
 	return {
 		["drops"] = {},
 		["kills"] = {},
+		["ranks"] = {},
 		["skill"] = {},
 		["rep"] = {},
 		["gold"] = 0,
@@ -353,6 +353,7 @@ function FarmLog:Migrate()
 			["deaths"] = 0,
 			["hks"] = 0,
 			["dks"] = 0,
+			["ranks"] = {},
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
@@ -505,6 +506,13 @@ function FarmLog:Migrate()
 	end 
 
 	if not FLogVars.todayKills then FLogVars.todayKills = {} end 
+
+	if FLogVars.ver < 1.1502 then 
+		for _, farm in pairs(FLogVars.farms) do 
+			if not farm.current.ranks then farm.current.ranks = {} end 
+			if not farm.past.ranks then farm.past.ranks = {} end 
+		end 
+	end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -1030,6 +1038,12 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 	end 
 
+	local sessionRanks = GetSessionVar("ranks", FLogVars.viewTotal)
+	local sortedRanks = SortMapKeys(sessionRanks, true, true)
+	for _, playerName in ipairs(sortedRanks) do	
+		self:AddRow(playerName, nil, sessionRanks[playerName], TEXT_COLOR["rank"])
+	end
+
 	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
 	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
 	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
@@ -1359,11 +1373,8 @@ function FarmLog:OnCombatHonorEvent(text)
 	else 
 		local rank, honor
 		name, rank, honor = FLogDeformat(text, HonorGainStrings[2])
-		if name then 
+		if name and #name > 0 then 
 			IncreaseSessionVar("hks", 1)
-
-			local sessionKills = GetSessionVar("kills", false)
-			sessionKills[name] = (sessionKills[name] or 0) + 1
 
 			-- count character kills for honor diminishing returns effect 
 			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
@@ -1375,6 +1386,11 @@ function FarmLog:OnCombatHonorEvent(text)
 				IncreaseSessionVar("honor", adjustedHonor)
 				debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r estimated honor |cffff9900"..tostring(honor).."|r DR |cffff99ff"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
 			end 
+
+			if rank and #rank > 0 then 
+				local sessionRanks = GetSessionVar("ranks", false)
+				sessionRanks[rank] = (sessionRanks[rank] or 0) + 1
+			end 	
 		else 
 			debug("|cff999999OnCombatHonorEvent|r unrecognized honor event |cffff9900"..tostring(text))
 		end 
@@ -1481,7 +1497,6 @@ end
 
 function FarmLog:OnCombatLogEvent()
 	local eventInfo = {CombatLogGetCurrentEventInfo()}
-	FLogLastEventInfo = eventInfo
 	local eventName = eventInfo[2]
 	if eventName == "PARTY_KILL" then 
 		local mobName = eventInfo[9]
@@ -2057,7 +2072,7 @@ function FarmLog:OnEvent(event, ...)
 		if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
 			-- new pvp day, reset diminishing returns 
 			FLogVars.todayKills = {}
-			out("Resetting PvP diminishing returns")
+			out("PvP diminishing returns was reset.")
 		end 
 	end 
 
