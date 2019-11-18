@@ -58,6 +58,8 @@ Another thing is that the more time & data you have per session, the more accura
 ### Changes 
 * 1.15.2
     * Counting rank kill count, instead of player names. This will reduce overload on the log and display more relevant information in later weeks, when we have higher ranks.
+    * Starting  a new session now resets session time
+    * Fixed bug introduced in 1.15.1 causing mob kills to not be counted
 * 1.15.1
     * Fixed calculation of honor to support the diminishing return effect for honor
 * 1.15

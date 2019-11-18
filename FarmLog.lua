@@ -1503,9 +1503,7 @@ function FarmLog:OnCombatLogEvent()
 		local mobGuid = eventInfo[8]
 		local mobFlags = eventInfo[10]
 		
-		if bit.band(mobFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) then 
-			-- pvp kill
-		else 
+		if bit.band(mobFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) == 0 then 
 			-- count mob kill
 			local sessionKills = GetSessionVar("kills", false)
 			sessionKills[mobName] = (sessionKills[mobName] or 0) + 1
