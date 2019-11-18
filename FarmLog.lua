@@ -1,14 +1,17 @@
-﻿local VERSION = "1.15.2"
-local VERSION_INT = 1.1502
-local APPNAME = "FarmLog"
+﻿local VERSION = "1.16"
+local VERSION_INT = 1.16
+local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
 local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
-FarmLog.L = L 
 local UNKNOWN_MOBNAME = L["Unknown"]
 local REALM = GetRealmName()
+
+FarmLog.L = L 
+FarmLog.Version = VERSION
+FarmLog.AddonName = ADDON_NAME
 
 local MAX_INSTANCES_SECONDS = 3600
 local MAX_INSTANCES_COUNT = 5
@@ -45,7 +48,7 @@ local TEXT_COLOR = {
 	["mob"] = "f29244",
 	["money"] = "fffb49",
 	["honor"] = "e1c73b",
-	["rank"] = "f2c444",
+	["rank"] = "ffe499",
 	["deaths"] = "ee3333",
 	["gathering"] = "38c98d",
 	["unknown"] = "888888",
@@ -190,6 +193,7 @@ local function debug(text)
 		out(text)
 	end 
 end 
+FarmLog.debug = debug 
 
 local function tobool(arg1)
 	return arg1 == 1 or arg1 == true
@@ -644,7 +648,7 @@ function FarmLog:ResumeSession()
 	SetFarmVar("lastUse", sessionStartTime)
 	FLogVars.enabled = true  
 
-	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconON");
+	FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\assets\\FarmLogIconON");
 	FarmLog_MainWindow:RecalcTotals()
 	FarmLog_MainWindow:Refresh()
 	FarmLog_MainWindow:UpdateTitle()
@@ -659,7 +663,7 @@ function FarmLog:PauseSession(temporary)
 
 	if not temporary then 
 		FLogVars.enabled = false 
-		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\FarmLogIconOFF");
+		FarmLog_MinimapButtonIcon:SetTexture("Interface\\AddOns\\FarmLog\\assets\\FarmLogIconOFF");
 		FarmLog_MainWindow:UpdateTitle()
 	end 
 end 
@@ -1040,8 +1044,8 @@ function FarmLog_MainWindow:Refresh()
 
 	local sessionRanks = GetSessionVar("ranks", FLogVars.viewTotal)
 	local sortedRanks = SortMapKeys(sessionRanks, true, true)
-	for _, playerName in ipairs(sortedRanks) do	
-		self:AddRow(playerName, nil, sessionRanks[playerName], TEXT_COLOR["rank"])
+	for _, rank in ipairs(sortedRanks) do	
+		self:AddRow(L["HK"]..": "..rank, nil, sessionRanks[playerName], TEXT_COLOR["rank"])
 	end
 
 	local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
@@ -1911,6 +1915,11 @@ function FarmLog:OnAddonLoaded()
 			end 
 		end 
 	end 
+
+	-- Options UI
+	FarmLog.FarmLogInterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
+	FarmLog.FarmLogInterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
+
 end 
 
 -- Entering World
@@ -2108,7 +2117,7 @@ function FarmLog:OnEvent(event, ...)
 		if (... and (strfind(..., L["loot"]))) then
 			self:OnLootEvent(...)		
 		end	
-	elseif event == "ADDON_LOADED" and ... == APPNAME then		
+	elseif event == "ADDON_LOADED" and ... == ADDON_NAME then		
 		self:OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
 		self:CloseOpenInstances()
@@ -2442,7 +2451,7 @@ function FarmLog_MinimapButton:UpdateTooltipText()
 	else 
 		goldPerHour = GetFarmVar("goldPerHour") or 0
 	end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
+	local text = "|cff5CC4ff" .. ADDON_NAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -2476,20 +2485,20 @@ function FarmLog:UIError(event,msg)
 			self:IncreaseBlackLotusPickStat("fail")
 		end 
 	end 
-
-	-- local what = tooltipLeftText1:GetText();
-	-- if not what then return end
-	-- if strfind(msg, miningSpell) or (miningSpell2 and strfind(msg, miningSpell2)) then
-	-- 	self:addItem(miningSpell,what)
-	-- elseif strfind(msg, herbSkill) then
-	-- 	self:addItem(herbSpell,what)
-	-- elseif strfind(msg, pickSpell) or strfind(msg, openSpell) then -- locked box or failed pick
-	-- 	self:addItem(openSpell, what)
-	-- elseif strfind(msg, NL["Lumber Mill"]) then -- timber requires lumber mill
-	-- 	self:addItem(loggingSpell, what)
-	-- end
+--[[
+	local what = tooltipLeftText1:GetText();
+	if not what then return end
+	if strfind(msg, miningSpell) or (miningSpell2 and strfind(msg, miningSpell2)) then
+		self:addItem(miningSpell,what)
+	elseif strfind(msg, herbSkill) then
+		self:addItem(herbSpell,what)
+	elseif strfind(msg, pickSpell) or strfind(msg, openSpell) then -- locked box or failed pick
+		self:addItem(openSpell, what)
+	elseif strfind(msg, NL["Lumber Mill"]) then -- timber requires lumber mill
+		self:addItem(loggingSpell, what)
+	end
+--]]
 end
-
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2498,7 +2507,8 @@ SLASH_LH2 = "/fl";
 SlashCmdList.LH = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
 	if not cmd then
-		FarmLog:ToggleLogging()
+		-- FarmLog:ToggleLogging()
+		InterfaceOptionsFrame_OpenToCategory(FarmLog.FarmLogInterfacePanel)
 	else 
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then

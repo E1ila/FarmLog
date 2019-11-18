@@ -1,17 +1,41 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
 
-  <Font name="FarmLogFont" font="Fonts\FRIZQT__.TTF" virtual="true">
-    <FontHeight>
-      <AbsValue val="12"/>
-    </FontHeight>
-  </Font>
+  <FontFamily name="FarmLogFont" virtual="true">
+    <Member alphabet="roman">
+      <Font font="Fonts\FRIZQT__.TTF" height="10"/>
+    </Member>
+    <Member alphabet="korean">
+      <Font font="Fonts\2002.TTF" height="12" spacing="1"/>
+    </Member>
+    <Member alphabet="simplifiedchinese">
+      <Font font="Fonts\ARKai_T.ttf" height="12"/>
+    </Member>
+    <Member alphabet="traditionalchinese">
+      <Font font="Fonts\bKAI00M.TTF" height="12"/>
+    </Member>
+    <Member alphabet="russian">
+      <Font font="Fonts\FRIZQT___CYR.TTF" height="10"/>
+    </Member>
+  </FontFamily>
 
-  <Font name="FarmLogSmallFont" font="Fonts\FRIZQT__.TTF" virtual="true">
-    <FontHeight>
-      <AbsValue val="8"/>
-    </FontHeight>
-  </Font>
+  <FontFamily name="FarmLogSmallFont" virtual="true">
+    <Member alphabet="roman">
+      <Font font="Fonts\FRIZQT__.TTF" height="9"/>
+    </Member>
+    <Member alphabet="korean">
+      <Font font="Fonts\2002.TTF" height="10" spacing="1"/>
+    </Member>
+    <Member alphabet="simplifiedchinese">
+      <Font font="Fonts\ARKai_T.ttf" height="10"/>
+    </Member>
+    <Member alphabet="traditionalchinese">
+      <Font font="Fonts\bKAI00M.TTF" height="10"/>
+    </Member>
+    <Member alphabet="russian">
+      <Font font="Fonts\FRIZQT___CYR.TTF" height="9"/>
+    </Member>
+  </FontFamily>
 
   <Frame name="FarmLog">
     <Scripts>
@@ -45,6 +69,37 @@
     </Scripts>
   </Frame>
 
+  <!-- Templates -->
+
+  <CheckButton name="FarmLogCheckButtonTemplate" virtual="true" inherits="InterfaceOptionsBaseCheckButtonTemplate">
+    <Layers>
+      <Layer level="ARTWORK">
+        <FontString name="$parentText" inherits="GameFontHighlightLeft" parentKey="Text">
+          <Anchors>
+            <Anchor point="LEFT" relativePoint="RIGHT">
+              <Offset>
+                <AbsDimension x="2" y="1"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <OnEnter>
+        if self.tooltipText ~= nil then
+          GameTooltip_AddNewbieTip(self, self.tooltipText, 1.0, 1.0, 1.0, self.newbieText)
+        end
+      </OnEnter>
+      <OnLeave>
+        if self.tooltipText ~= nil then
+          GameTooltip:Hide()
+        end
+      </OnLeave>
+    </Scripts>
+  </CheckButton>
+
+
   <!-- Minimap Button -->
 
   <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
@@ -57,7 +112,7 @@
     </Anchors>
     <Layers>
       <Layer level="BACKGROUND">
-        <Texture name="FarmLog_MinimapButtonIcon" file="Interface\AddOns\FarmLog\FarmLogIconOFF">
+        <Texture name="FarmLog_MinimapButtonIcon" file="Interface\AddOns\FarmLog\assets\FarmLogIconOFF">
           <Anchors>
             <Anchor point="TOPLEFT">
               <Offset>
@@ -834,8 +889,8 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <NormalTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
             FarmLog_MainWindow:StartSizing("BOTTOMLEFT")
@@ -1205,8 +1260,8 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <NormalTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
             FarmLog_SessionsWindow:StartSizing("BOTTOMLEFT")
@@ -1367,8 +1422,8 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <NormalTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
-        <HighlightTexture file="Interface\AddOns\FarmLog\FarmLogResizeButton" />
+        <NormalTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
+        <HighlightTexture file="Interface\AddOns\FarmLog\assets\FarmLogResizeButton" />
         <Scripts>
           <OnMouseDown>
             FarmLog_LogWindow:StartSizing("BOTTOMLEFT")
@@ -1426,5 +1481,6 @@
   <Script file="Deformat.lua"/>
   <Script file="Localization.lua"/>
   <Script file="FarmLog.lua"/>
+  <Script file="FarmLogOptions.lua"/>
 
 </Ui>

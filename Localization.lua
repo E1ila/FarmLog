@@ -40,7 +40,7 @@ function FarmLog_BuildLocalization(context)
     L["LDBClick"] = "Left-Click to open FarmLog|nRight-Click to open Blizzard-FarmLog";
     L["Help"] = "O = Show Options|n? = Show Help|nX = Close Frame|n|n- Mouseover a row to highlight and to show Item-Tooltip|n- Shift-Click to copy the ItemLink into the Chatframe-EditBox|n- Alt-Click to to edit the owner of selected Item(s)|n|nReport = Report current FLogSVDrops|nReset = Reset the current FLogSVDrops";
     L["tooltip"] = "Show Item-Tolltip";
-    L["loaded-welcome"] = "type |cff00ff00/fl|r or |cff00ff00/farmlog|r to start/end a farm session, |cff00ff00/fl help|r for more options";
+    L["loaded-welcome"] = "type |cff00ff00/fl|r for options, right click minimap icon to resume/pause a farm session, |cff00ff00/fl help|r for more commands";
     L["window-title"] = "Session Yield";
     L["clear-session-title"] = "Clear Session"
     L["clear-session-question"] = "Clear current session's data?";	
@@ -89,6 +89,12 @@ function FarmLog_BuildLocalization(context)
     L["Honor"] = "Honor"
     L["honor"] = "honor"
     L["per hour"] = "honor/hour"
+    L["HK"] = "HK"
+    L["General"] = "General"
+    L["autoSwitchInstances"] = "Auto Switch Instances"
+    L["autoSwitchInstances-tooltip"] = "When entering an instance, automatic change and resume session; pause when leaving the instance"
+    L["resumeSessionOnSwitch"] = "Resume Session On Selection"
+    L["resumeSessionOnSwitch-tooltip"] = "Auto resume a farm session when chosen from All Farms list"
     if (GetLocale() == "enUS") then
     end
     return L
