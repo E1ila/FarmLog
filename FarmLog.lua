@@ -2455,12 +2455,24 @@ function FarmLog_MinimapButton:UpdateTooltipText()
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
 	local goldPerHour
+	local xpPerHour
 	if FLogVars.viewTotal then 
 		goldPerHour = GetFarmVar("goldPerHourTotal") or 0
+		xpPerHour = GetFarmVar("xpPerHourTotal") or 0
 	else 
 		goldPerHour = GetFarmVar("goldPerHour") or 0
+		xpPerHour = GetFarmVar("xpPerHour") or 0
 	end 
-	local text = "|cff5CC4ff" .. APPNAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
+	local text = "|cff5CC4ff" .. APPNAME .. "|r|n"
+	text = text .. "Session: " .. sessionColor .. FLogVars.currentFarm .. "|r|n"
+	text = text .. "Time: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|n"
+	text = text .. "g/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|n"
+	if UnitLevel("player") < MAX_PLAYER_LEVEL then
+		text = text .. "xp/h: |cff6a78f9" .. math.floor(xpPerHour) .. "|r|n"
+	end
+	text = text .. "Left click: |cffeeeeeeopen main window|r|n"
+	text = text .. "Right click: |cffeeeeeepause/resume session|r|n"
+	text = text .. "Ctrl click: |cffeeeeeeopen session list|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
