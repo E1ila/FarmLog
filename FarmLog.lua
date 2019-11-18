@@ -735,6 +735,7 @@ function FarmLog:ClearSession(all)
 end
 
 function FarmLog:NewSession()
+	self:PauseSession(true)
 	local newSession = emptySession()
 	local mergedSessions = {}
 	for key, _ in pairs(newSession) do 
@@ -744,8 +745,7 @@ function FarmLog:NewSession()
 	end 	
 	SetFarmVar("past", mergedSessions)
 	SetFarmVar("current", newSession)
-	FarmLog_MainWindow:Refresh()
-	FarmLog_MainWindow:UpdateTitle()
+	self:ResumeSession()
 	out("Started a new session")
 end 
 
