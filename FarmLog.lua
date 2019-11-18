@@ -497,9 +497,11 @@ function FarmLog:Migrate()
 				["current"] = emptySession(),
 				["goldPerHour"] = session.goldPerHour,
 				["goldPerHourTotal"] = session.goldPerHour,
+				["xpPerHour"] = session.xpPerHour,
 				["lastUse"] = session.lastUse,
 			}
 			session.goldPerHour = nil 
+			session.xpPerHour = nil 
 			session.lastUse = nil 
 		end 
 		FLogVars.sessions = nil 
@@ -993,6 +995,18 @@ function FarmLog_MainWindow:Refresh()
 	else 
 		SetFarmVar("goldPerHour", goldPerHour)
 	end 
+
+	-- calculate XPH
+	local xpPerHour = 0
+	if sessionTime > 0 then 
+		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
+	end 
+	if FLogVars.viewTotal then 
+		SetFarmVar("xpPerHourTotal", xpPerHour)
+	else 
+		SetFarmVar("xpPerHour", xpPerHour)
+	end 
+	-- add special rows
 	if isPositive(goldPerHour) then 
 		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
 	end 
@@ -1008,6 +1022,10 @@ function FarmLog_MainWindow:Refresh()
 	end 
 	if isPositive(GetSessionVar("xp", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("xp", FLogVars.viewTotal).." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
+	end 
+	-- Show XP/hour only for non-max level chars
+	if isPositive(xpPerHour) and UnitLevel("player") < MAX_PLAYER_LEVEL then 
+		self:AddRow(L["XP / Hour"], math.floor(xpPerHour), nil, nil, TEXT_COLOR["xp"])
 	end 
 	if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
