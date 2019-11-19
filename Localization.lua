@@ -91,10 +91,15 @@ function FarmLog_BuildLocalization(context)
     L["per hour"] = "honor/hour"
     L["HK"] = "HK"
     L["General"] = "General"
+    L["Appearance"] = "Appearance"
     L["autoSwitchInstances"] = "Auto Switch Instances"
     L["autoSwitchInstances-tooltip"] = "When entering an instance, automatic change and resume session; pause when leaving the instance"
     L["resumeSessionOnSwitch"] = "Resume Session On Selection"
     L["resumeSessionOnSwitch-tooltip"] = "Auto resume a farm session when chosen from All Farms list"
+    L["dismissLootWindowOnEsc"] = "Dismiss Loot Window On Esc (requires reload)"
+    L["dismissLootWindowOnEsc-tooltip"] = "Should dismiss FarmLog loot window when pressing ESC"
+    L["Reset Loot Window Position"] = "Reset Loot Window Position"
+    L["Reset Minimap Icon Position"] = "Reset Minimap Icon Position"
     if (GetLocale() == "enUS") then
     end
     return L

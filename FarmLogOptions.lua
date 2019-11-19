@@ -19,11 +19,11 @@ local function CreateCheckButton(reference, parent, label)
 	return checkbutton
 end
 
-local FarmLogInterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog", nil)
-InterfaceOptions_AddCategory(FarmLogInterfacePanel);
-FarmLog.FarmLogInterfacePanel = FarmLogInterfacePanel
+local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog", nil)
+InterfaceOptions_AddCategory(InterfacePanel);
+FarmLog.InterfacePanel = InterfacePanel
 
-local panel = FarmLogInterfacePanel
+local panel = InterfacePanel
 local L = FarmLog.L 
 local font = "Fonts\\FRIZQT__.TTF"
 
@@ -86,14 +86,48 @@ mfpanel.GeneralCategoryTitle:SetFont(font, 16)
 mfpanel.GeneralCategoryTitle:SetText(L["General"])
 mfpanel.GeneralCategoryTitle:SetPoint("TOPLEFT", 20, -10)
 
--- Emulated Target Plate
 mfpanel.AutoSwitchInstances = CreateCheckButton("FarmLogOptions_AutoSwitchInstances", mfpanel, L["autoSwitchInstances"])
 mfpanel.AutoSwitchInstances:SetPoint("TOPLEFT", mfpanel.GeneralCategoryTitle, "BOTTOMLEFT", 0, -8)
 mfpanel.AutoSwitchInstances:SetScript("OnClick", function(self) FLogGlobalVars.autoSwitchInstances = self:GetChecked() end)
 mfpanel.AutoSwitchInstances.tooltipText = L["autoSwitchInstances-tooltip"]
 
--- Cast Bars
 mfpanel.ResumeSessionOnSwitch = CreateCheckButton("FarmLogOptions_ResumeSessionOnSwitch", mfpanel, L["resumeSessionOnSwitch"])
 mfpanel.ResumeSessionOnSwitch:SetPoint("TOPLEFT", mfpanel.AutoSwitchInstances, "TOPLEFT", 0, -25)
 mfpanel.ResumeSessionOnSwitch:SetScript("OnClick", function(self) FLogGlobalVars.resumeSessionOnSwitch = self:GetChecked() end)
 mfpanel.ResumeSessionOnSwitch.tooltipText = L["resumeSessionOnSwitch-tooltip"]
+
+mfpanel.DismissLootWindowOnEsc = CreateCheckButton("FarmLogOptions_DismissLootWindowOnEsc", mfpanel, L["dismissLootWindowOnEsc"])
+mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.ResumeSessionOnSwitch, "TOPLEFT", 0, -25)
+mfpanel.DismissLootWindowOnEsc:SetScript("OnClick", function(self) FLogGlobalVars.dismissLootWindowOnEsc = self:GetChecked() end)
+mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
+
+----------------------------------------------
+-- Appearance
+----------------------------------------------
+mfpanel.AppearanceCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.AppearanceCategoryTitle:SetFont(font, 16)
+mfpanel.AppearanceCategoryTitle:SetText(L["Appearance"])
+mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, "BOTTOMLEFT", 0, -20)
+
+mfpanel.ResetMinimapPositionButton = CreateFrame("Button", "FarmLogOptions_ResetMinimapPositionButton", panel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetMinimapPositionButton:SetPoint("TOPLEFT", mfpanel.AppearanceCategoryTitle, "BOTTOMLEFT", -0, -10)
+mfpanel.ResetMinimapPositionButton:SetWidth(200)
+mfpanel.ResetMinimapPositionButton:SetText(L["Reset Minimap Icon Position"])
+mfpanel.ResetMinimapPositionButton:SetScript("OnClick", function(self) FarmLog_MinimapButton:ResetPosition() end)
+
+mfpanel.ResetLootWindowPositionButton = CreateFrame("Button", "FarmLogOptions_ResetButton", panel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetLootWindowPositionButton:SetPoint("TOPLEFT", mfpanel.ResetMinimapPositionButton, "TOPRIGHT", 10, 0)
+mfpanel.ResetLootWindowPositionButton:SetWidth(200)
+mfpanel.ResetLootWindowPositionButton:SetText(L["Reset Loot Window Position"])
+mfpanel.ResetLootWindowPositionButton:SetScript("OnClick", function(self) FarmLog_MainWindow:ResetPosition() end)
+
+
+----------------------------------------------
+-- Init
+----------------------------------------------
+
+function InterfacePanel:AddonLoaded() 
+	InterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
+	InterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
+	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
+end 

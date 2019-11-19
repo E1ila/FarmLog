@@ -1917,9 +1917,7 @@ function FarmLog:OnAddonLoaded()
 	end 
 
 	-- Options UI
-	FarmLog.FarmLogInterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
-	FarmLog.FarmLogInterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
-
+	FarmLog.InterfacePanel:AddonLoaded()
 end 
 
 -- Entering World
@@ -2206,6 +2204,14 @@ function FarmLog_MinimapButton:Init(reload)
 	end
 end 
 
+function FarmLog_MinimapButton:ResetPosition()
+	FLogVars.minimapButtonPosition.x = -165
+	FLogVars.minimapButtonPosition.y = -127
+	FLogVars.minimapButtonPosition.point = "TOPRIGHT"
+	FLogVars.enableMinimapButton = true 
+	FarmLog_MinimapButton:Init(true)
+end 
+
 function FarmLog_MinimapButton:DragStopped() 
 	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
 	FLogVars.minimapButtonPosition.point = point;													
@@ -2218,8 +2224,7 @@ function FarmLog_MinimapButton:Clicked(button)
 		FarmLog:ToggleLogging()
 	else
 		if IsShiftKeyDown() then 
-			FarmLog_MainWindow:ResetPosition()
-			FarmLog_MainWindow:Show()
+			InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
 		elseif IsControlKeyDown() then 
 			FarmLog_MainWindow_SessionsButton:Clicked() 
 		else  
@@ -2451,7 +2456,7 @@ function FarmLog_MinimapButton:UpdateTooltipText()
 	else 
 		goldPerHour = GetFarmVar("goldPerHour") or 0
 	end 
-	local text = "|cff5CC4ff" .. ADDON_NAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r"
+	local text = "|cff5CC4ff" .. ADDON_NAME .. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm .. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) .. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) .. "|r|nLeft click: |cffeeeeeeopen main window|r|nRight click: |cffeeeeeepause/resume session|r|nCtrl click: |cffeeeeeeopen session list|r|nShift click: |cffeeeeeeshow options|r"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -2508,7 +2513,7 @@ SlashCmdList.LH = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
 	if not cmd then
 		-- FarmLog:ToggleLogging()
-		InterfaceOptionsFrame_OpenToCategory(FarmLog.FarmLogInterfacePanel)
+		InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
 	else 
 		cmd = string.upper(cmd)
 		if  "SHOW" == cmd or "S" == cmd then
@@ -2620,11 +2625,7 @@ SlashCmdList.LH = function(msg)
 		elseif  "RESET" == cmd or "R" == cmd then
 			FarmLog:ClearSession()
 		elseif  "RMI" == cmd then
-			FLogVars.minimapButtonPosition.x = -165
-			FLogVars.minimapButtonPosition.y = -127
-			FLogVars.minimapButtonPosition.point = "TOPRIGHT"
-			FLogVars.enableMinimapButton = true 
-			FarmLog_MinimapButton:Init(true)
+			FarmLog_MinimapButton:ResetPosition()
 		elseif  "RMW" == cmd then
 			FarmLog_MainWindow:ResetPosition()
 		elseif  "AR" == cmd then
