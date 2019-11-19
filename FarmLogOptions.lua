@@ -103,8 +103,12 @@ mfpanel.ResumeSessionOnSwitch:SetPoint("TOPLEFT", mfpanel.AutoSwitchInstances, "
 mfpanel.ResumeSessionOnSwitch:SetScript("OnClick", function(self) FLogGlobalVars.resumeSessionOnSwitch = self:GetChecked() end)
 mfpanel.ResumeSessionOnSwitch.tooltipText = L["resumeSessionOnSwitch-tooltip"]
 
+mfpanel.PauseOnLogin = CreateCheckButton("FarmLogOptions_PauseOnLogin", mfpanel, L["pauseOnLogin"])
+mfpanel.PauseOnLogin:SetPoint("TOPLEFT", mfpanel.ResumeSessionOnSwitch, "TOPLEFT", 0, -25)
+mfpanel.PauseOnLogin:SetScript("OnClick", function(self) FLogGlobalVars.pauseOnLogin = self:GetChecked() end)
+
 mfpanel.DismissLootWindowOnEsc = CreateCheckButton("FarmLogOptions_DismissLootWindowOnEsc", mfpanel, L["dismissLootWindowOnEsc"])
-mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.ResumeSessionOnSwitch, "TOPLEFT", 0, -25)
+mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.PauseOnLogin, "TOPLEFT", 0, -25)
 mfpanel.DismissLootWindowOnEsc:SetScript("OnClick", function(self) FLogGlobalVars.dismissLootWindowOnEsc = self:GetChecked() end)
 mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
 

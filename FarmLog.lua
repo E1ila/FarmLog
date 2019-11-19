@@ -90,12 +90,12 @@ local BL_ITEM_NAME = ""
 -- Stranglekelp FarmLog:SetBlackLotusItemId(3820)
 
 FLogGlobalVars = {
-	["debug"] = false,
-	["ahPrice"] = {},
-	["ahScan"] = {},
-	["ahMinQuality"] = 1,
-	["ignoredItems"] = {},
-	["track"] = {
+	debug = false,
+	ahPrice = {},
+	ahScan = {},
+	ahMinQuality = 1,
+	ignoredItems = {},
+	track = {
 		drops = true,
 		kills = true,
 		honor = true,
@@ -110,65 +110,66 @@ FLogGlobalVars = {
 		deaths = true,
 		resets = true,
 	},
-	["autoSwitchInstances"] = false,
-	["resumeSessionOnSwitch"] = true,
-	["reportTo"] = {},
-	["dismissLootWindowOnEsc"] = false,
-	["groupByMobName"] = true,
-	["instances"] = {},
-	["blt"] = {}, -- BL timers
-	["blp"] = {}, -- BL pick/fail counters
-	["bls"] = {}, -- BL pick log
-	["sortBy"] = SORT_BY_TEXT,
-	["sortSessionBy"] = SORT_BY_TEXT,
-	["ver"] = VERSION,
+	autoSwitchInstances = false,
+	resumeSessionOnSwitch = true,
+	reportTo = {},
+	dismissLootWindowOnEsc = false,
+	groupByMobName = true,
+	pauseOnLogin = true,
+	instances = {},
+	blt = {}, -- BL timers
+	blp = {}, -- BL pick/fail counters
+	bls = {}, -- BL pick log
+	sortBy = SORT_BY_TEXT,
+	sortSessionBy = SORT_BY_TEXT,
+	ver = VERSION,
 }
 
 FLogVars = {
-	["enabled"] = false,
-	["sessions"] = {},
-	["currentFarm"] = "default",
-	["inInstance"] = false,
-	["lockFrames"] = false,
-	["lockMinimapButton"] = false,
-	["frameRect"] = {
-		["width"] = 250,
-		["height"] = 200,
-		["point"] = "CENTER",
-		["x"] = 0,
-		["y"] = 0,
-		["visible"] = false,
+	enabled = false,
+	sessions = {},
+	currentFarm = "default",
+	inInstance = false,
+	lockFrames = false,
+	lockMinimapButton = false,
+	frameRect = {
+		width = 250,
+		height = 200,
+		point = "CENTER",
+		x = 0,
+		y = 0,
+		visible = false,
 	},
-	["minimapButtonPosition"] = {
-		["point"] = "TOPRIGHT",
-		["x"] = -165,
-		["y"] = -127,
+	minimapButtonPosition = {
+		point = "TOPRIGHT",
+		x = -165,
+		y = -127,
 	},
-	["enableMinimapButton"] = true, 
-	["itemTooltip"] = true,
-	["viewTotal"] = false,
-	["farms"] = {},
-	["todayKills"] = {},
-	["ver"] = VERSION,
+	enableMinimapButton = true, 
+	itemTooltip = true,
+	viewTotal = false,
+	farms = {},
+	todayKills = {},
+	ver = VERSION,
 }
 
 local function emptySession() 
 	return {
-		["drops"] = {},
-		["kills"] = {},
-		["ranks"] = {},
-		["skill"] = {},
-		["rep"] = {},
-		["gold"] = 0,
-		["vendor"] = 0,
-		["ah"] = 0,
-		["xp"] = 0,
-		["honor"] = 0,
-		["hks"] = 0,
-		["dks"] = 0,
-		["deaths"] = 0,
-		["seconds"] = 0,
-		["resets"] = 0,
+		drops = {},
+		kills = {},
+		ranks = {},
+		skill = {},
+		rep = {},
+		gold = 0,
+		vendor = 0,
+		ah = 0,
+		xp = 0,
+		honor = 0,
+		hks = 0,
+		dks = 0,
+		deaths = 0,
+		seconds = 0,
+		resets = 0,
 	}
 end 
 
@@ -1947,15 +1948,6 @@ function FarmLog:OnAddonLoaded()
 	
 	self:UpdateInstanceCount()
 
-	-- init session
-	if FLogVars.enabled then 
-		self:ResumeSession()
-	else 
-		self:PauseSession()
-		FarmLog_MainWindow:RecalcTotals()
-	end 
-	FarmLog_MainWindow:Refresh()
-
 	-- init window visibility
 	FarmLog_MainWindow:LoadPosition()
 	if FLogVars.frameRect.visible then 
@@ -1979,10 +1971,21 @@ end
 
 -- Entering World
 
-function FarmLog:OnEnteringWorld() 
+function FarmLog:OnEnteringWorld(isInitialLogin, isReload) 
 	self:PurgeInstances()
 	self:UpdateInstanceCount()
 
+	if isInitialLogin or isReload then 
+		-- init session
+		if FLogVars.enabled and (not isInitialLogin or not FLogGlobalVars.pauseOnLogin) then 
+			self:ResumeSession()
+		else 
+			self:PauseSession()
+			FarmLog_MainWindow:RecalcTotals()
+		end 
+		FarmLog_MainWindow:Refresh()
+	end 
+	
 	local inInstance, _ = IsInInstance()
 	inInstance = tobool(inInstance)
 	local instanceName = GetInstanceInfo()

@@ -110,6 +110,7 @@ function FarmLog_BuildLocalization(context)
     L["Consumes Used"] = "Consumes Used"
     L["Instance Resets"] = "Instance Resets"
     L["Mobs Kill Count"] = "Mobs Kill Count"
+    L["pauseOnLogin"] = "Pause Session On Login"
     if (GetLocale() == "enUS") then
     end
     return L

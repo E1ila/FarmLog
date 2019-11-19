@@ -56,6 +56,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.16.1
+    * Added option to pause session on login, so it won't run after logging back in
 * 1.16
     * Options screen! You can now configure FarmLog to your liking. Write `/fl` or Shift+Click the minimap button to see the option screen.
 * 1.15.2
@@ -151,27 +153,20 @@ Another thing is that the more time & data you have per session, the more accura
     * Initial release.
 
 ### To do
-* Count instance IDs (total & last hour)
 * Track traded gold (for enchanting, etc)
-* Support Chest / Container opening
-* Track deaths
 * Show repair bill
-* Allow listing loot without mob names
 * Allow custom attribution loot to certain mob
 * Support multiboxing GPH
-* Add button to add a new session / rename
+* Add button to add a new farm / rename
 * Show menu when clicking items on list - delete/ignore/set AH price/reassign
-* Sort lists 
 * Remove specific item from the log
 * Show drop chances
-* Show items value
-* Allow automatic start session when choosing session name
-* Save GPH calc in session var
 * Allow ignoring certain drop from g/h calc
-* Ignore gray items in AH scan
 * Allow filtering loot window with buttons
-* Allow sub-sessions
 * Start instance session on first hit
 * Allow manually increasing/decreasing kill values
 * Allow sending session report
-* Ask if user wants to resume when logging in
+* Show list of instances and times
+* Allow adding new farm with name in search box
+* Show AH scan time
+* Allow scanning using a UI button
