@@ -19,6 +19,11 @@ local function CreateCheckButton(reference, parent, label)
 	return checkbutton
 end
 
+local function SetTrackFlag(flag, state)
+	FLogGlobalVars.track[flag] = state
+	FarmLog_MainWindow:Refresh()
+end 
+
 local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog", nil)
 InterfaceOptions_AddCategory(InterfacePanel);
 FarmLog.InterfacePanel = InterfacePanel
@@ -56,11 +61,13 @@ panel.MainFrame:SetHeight(100) 		-- If the items inside the frame overflow, it a
 -- Scrollable Panel Window
 ------------------------------
 panel.ScrollFrame = CreateFrame("ScrollFrame","FarmLog_Scrollframe", panel, "UIPanelScrollFrameTemplate")
-panel.ScrollFrame:SetPoint("LEFT", 16)
+panel.ScrollFrame:EnableMouse(true)
+panel.ScrollFrame:EnableMouseWheel(true)
+panel.ScrollFrame:SetPoint("LEFT", 8)
 panel.ScrollFrame:SetPoint("TOP", panel.DividerLine, "BOTTOM", 0, -8)
-panel.ScrollFrame:SetPoint("BOTTOMRIGHT", -32 , 16)
+panel.ScrollFrame:SetPoint("BOTTOMRIGHT", -32 , 8)
 panel.ScrollFrame:SetScrollChild(panel.MainFrame)
-panel.ScrollFrame:SetScript("OnMouseWheel", OnMouseWheelScrollFrame)
+-- panel.ScrollFrame:SetScript("OnMouseWheel", OnMouseWheelScrollFrame)
 
 -- Scroll Frame Border
 ------------------------------
@@ -101,21 +108,91 @@ mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.ResumeSessionOnSwitch
 mfpanel.DismissLootWindowOnEsc:SetScript("OnClick", function(self) FLogGlobalVars.dismissLootWindowOnEsc = self:GetChecked() end)
 mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
 
+
+----------------------------------------------
+-- Tracking
+----------------------------------------------
+mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.TrackingCategoryTitle:SetFont(font, 16)
+mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, "BOTTOMLEFT", 0, -20)
+
+mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
+mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
+mfpanel.TrackKills:SetScript("OnClick", function(self) 
+	SetTrackFlag("kills", self:GetChecked()) 
+	if not self:GetChecked() then 
+		SetTrackFlag("drops", false)
+		mfpanel.TrackLoot:SetChecked(false)
+	end 
+	mfpanel.TrackLoot:SetEnabled(self:GetChecked())
+end)
+
+mfpanel.TrackLoot = CreateCheckButton("FarmLogOptions_TrackLoot", mfpanel, L["Received Loot"])
+mfpanel.TrackLoot:SetPoint("TOPLEFT", mfpanel.TrackKills, "TOPLEFT", 0, -25)
+mfpanel.TrackLoot:SetScript("OnClick", function(self) SetTrackFlag("drops", self:GetChecked()) end)
+
+mfpanel.TrackHonor = CreateCheckButton("FarmLogOptions_TrackHonor", mfpanel, L["Honor"])
+mfpanel.TrackHonor:SetPoint("TOPLEFT", mfpanel.TrackLoot, "TOPLEFT", 0, -25)
+mfpanel.TrackHonor:SetScript("OnClick", function(self) SetTrackFlag("honor", self:GetChecked()) end)
+
+mfpanel.TrackHKs = CreateCheckButton("FarmLogOptions_TrackHKs", mfpanel, L["Honorable kills"])
+mfpanel.TrackHKs:SetPoint("TOPLEFT", mfpanel.TrackHonor, "TOPLEFT", 0, -25)
+mfpanel.TrackHKs:SetScript("OnClick", function(self) SetTrackFlag("hks", self:GetChecked()) end)
+
+mfpanel.TrackDKs = CreateCheckButton("FarmLogOptions_TrackDKs", mfpanel, L["Dishonorable kills"])
+mfpanel.TrackDKs:SetPoint("TOPLEFT", mfpanel.TrackHKs, "TOPLEFT", 0, -25)
+mfpanel.TrackDKs:SetScript("OnClick", function(self) SetTrackFlag("dks", self:GetChecked()) end)
+
+mfpanel.TrackRanks = CreateCheckButton("FarmLogOptions_TrackRanks", mfpanel, L["Ranks Kill Count"])
+mfpanel.TrackRanks:SetPoint("TOPLEFT", mfpanel.TrackDKs, "TOPLEFT", 0, -25)
+mfpanel.TrackRanks:SetScript("OnClick", function(self) SetTrackFlag("ranks", self:GetChecked()) end)
+
+mfpanel.TrackXP = CreateCheckButton("FarmLogOptions_TrackXP", mfpanel, L["Experience Gained"])
+mfpanel.TrackXP:SetPoint("TOPLEFT", mfpanel.TrackRanks, "TOPLEFT", 0, -25)
+mfpanel.TrackXP:SetScript("OnClick", function(self) SetTrackFlag("xp", self:GetChecked()) end)
+
+mfpanel.TrackSkill = CreateCheckButton("FarmLogOptions_TrackSkill", mfpanel, L["Skill Level Increments"])
+mfpanel.TrackSkill:SetPoint("TOPLEFT", mfpanel.TrackXP, "TOPLEFT", 0, -25)
+mfpanel.TrackSkill:SetScript("OnClick", function(self) SetTrackFlag("skill", self:GetChecked()) end)
+
+mfpanel.TrackRep = CreateCheckButton("FarmLogOptions_TrackRep", mfpanel, L["Reputation Gained"])
+mfpanel.TrackRep:SetPoint("TOPLEFT", mfpanel.TrackSkill, "TOPLEFT", 0, -25)
+mfpanel.TrackRep:SetScript("OnClick", function(self) SetTrackFlag("rep", self:GetChecked()) end)
+
+mfpanel.TrackDeaths = CreateCheckButton("FarmLogOptions_TrackDeaths", mfpanel, L["Deaths"])
+mfpanel.TrackDeaths:SetPoint("TOPLEFT", mfpanel.TrackRep, "TOPLEFT", 0, -25)
+mfpanel.TrackDeaths:SetScript("OnClick", function(self) SetTrackFlag("deaths", self:GetChecked()) end)
+
+mfpanel.TrackResets = CreateCheckButton("FarmLogOptions_TrackResets", mfpanel, L["Instance Resets"])
+mfpanel.TrackResets:SetPoint("TOPLEFT", mfpanel.TrackDeaths, "TOPLEFT", 0, -25)
+mfpanel.TrackResets:SetScript("OnClick", function(self) SetTrackFlag("resets", self:GetChecked()) end)
+
+mfpanel.TrackConsumes = CreateCheckButton("FarmLogOptions_TrackConsumes", mfpanel, L["Consumes Used"])
+mfpanel.TrackConsumes:SetPoint("TOPLEFT", mfpanel.TrackResets, "TOPLEFT", 0, -25)
+mfpanel.TrackConsumes:SetScript("OnClick", function(self) SetTrackFlag("consumes", self:GetChecked()) end)
+
+mfpanel.TrackMoney = CreateCheckButton("FarmLogOptions_TrackMoney", mfpanel, L["Money Gained"])
+mfpanel.TrackMoney:SetPoint("TOPLEFT", mfpanel.TrackConsumes, "TOPLEFT", 0, -25)
+mfpanel.TrackMoney:SetScript("OnClick", function(self) SetTrackFlag("money", self:GetChecked()) end)
+
+
+
 ----------------------------------------------
 -- Appearance
 ----------------------------------------------
 mfpanel.AppearanceCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.AppearanceCategoryTitle:SetFont(font, 16)
 mfpanel.AppearanceCategoryTitle:SetText(L["Appearance"])
-mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, "BOTTOMLEFT", 0, -20)
+mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.TrackMoney, "BOTTOMLEFT", 0, -20)
 
-mfpanel.ResetMinimapPositionButton = CreateFrame("Button", "FarmLogOptions_ResetMinimapPositionButton", panel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetMinimapPositionButton = CreateFrame("Button", "FarmLogOptions_ResetMinimapPositionButton", mfpanel, "FarmLogPanelButtonTemplate")
 mfpanel.ResetMinimapPositionButton:SetPoint("TOPLEFT", mfpanel.AppearanceCategoryTitle, "BOTTOMLEFT", -0, -10)
 mfpanel.ResetMinimapPositionButton:SetWidth(200)
 mfpanel.ResetMinimapPositionButton:SetText(L["Reset Minimap Icon Position"])
 mfpanel.ResetMinimapPositionButton:SetScript("OnClick", function(self) FarmLog_MinimapButton:ResetPosition() end)
 
-mfpanel.ResetLootWindowPositionButton = CreateFrame("Button", "FarmLogOptions_ResetButton", panel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetLootWindowPositionButton = CreateFrame("Button", "FarmLogOptions_ResetButton", mfpanel, "FarmLogPanelButtonTemplate")
 mfpanel.ResetLootWindowPositionButton:SetPoint("TOPLEFT", mfpanel.ResetMinimapPositionButton, "TOPRIGHT", 10, 0)
 mfpanel.ResetLootWindowPositionButton:SetWidth(200)
 mfpanel.ResetLootWindowPositionButton:SetText(L["Reset Loot Window Position"])
@@ -130,4 +207,18 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
 	InterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
 	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
+
+	InterfacePanel.MainFrame.TrackLoot:SetChecked(FLogGlobalVars.track.drops)
+	InterfacePanel.MainFrame.TrackKills:SetChecked(FLogGlobalVars.track.kills)
+	InterfacePanel.MainFrame.TrackHonor:SetChecked(FLogGlobalVars.track.honor)
+	InterfacePanel.MainFrame.TrackHKs:SetChecked(FLogGlobalVars.track.hks)
+	InterfacePanel.MainFrame.TrackDKs:SetChecked(FLogGlobalVars.track.dks)
+	InterfacePanel.MainFrame.TrackRanks:SetChecked(FLogGlobalVars.track.ranks)
+	InterfacePanel.MainFrame.TrackConsumes:SetChecked(FLogGlobalVars.track.consumes)
+	InterfacePanel.MainFrame.TrackMoney:SetChecked(FLogGlobalVars.track.money)
+	InterfacePanel.MainFrame.TrackXP:SetChecked(FLogGlobalVars.track.xp)
+	InterfacePanel.MainFrame.TrackSkill:SetChecked(FLogGlobalVars.track.skill)
+	InterfacePanel.MainFrame.TrackRep:SetChecked(FLogGlobalVars.track.rep)
+	InterfacePanel.MainFrame.TrackDeaths:SetChecked(FLogGlobalVars.track.deaths)
+	InterfacePanel.MainFrame.TrackResets:SetChecked(FLogGlobalVars.track.resets)
 end 

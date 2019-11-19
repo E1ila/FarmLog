@@ -92,6 +92,7 @@ function FarmLog_BuildLocalization(context)
     L["HK"] = "HK"
     L["General"] = "General"
     L["Appearance"] = "Appearance"
+    L["Tracking"] = "Tracking"
     L["autoSwitchInstances"] = "Auto Switch Instances"
     L["autoSwitchInstances-tooltip"] = "When entering an instance, automatic change and resume session; pause when leaving the instance"
     L["resumeSessionOnSwitch"] = "Resume Session On Selection"
@@ -100,6 +101,15 @@ function FarmLog_BuildLocalization(context)
     L["dismissLootWindowOnEsc-tooltip"] = "Should dismiss FarmLog loot window when pressing ESC"
     L["Reset Loot Window Position"] = "Reset Loot Window Position"
     L["Reset Minimap Icon Position"] = "Reset Minimap Icon Position"
+    L["Received Loot"] = "Received Loot"
+    L["Ranks Kill Count"] = "Ranks Kill Count"
+    L["Experience Gained"] = "Experience Gained"
+    L["Skill Level Increments"] = "Skill Level Increments"
+    L["Reputation Gained"] = "Reputation Gained"
+    L["Money Gained"] = "Money Gained"
+    L["Consumes Used"] = "Consumes Used"
+    L["Instance Resets"] = "Instance Resets"
+    L["Mobs Kill Count"] = "Mobs Kill Count"
     if (GetLocale() == "enUS") then
     end
     return L

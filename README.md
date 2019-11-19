@@ -56,6 +56,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.16
+    * Options screen! You can now configure FarmLog to your liking. Write `/fl` or Shift+Click the minimap button to see the option screen.
 * 1.15.2
     * Counting rank kill count, instead of player names. This will reduce overload on the log and display more relevant information in later weeks, when we have higher ranks.
     * Starting  a new session now resets session time
