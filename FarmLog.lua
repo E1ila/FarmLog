@@ -1983,7 +1983,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
 	FarmLog_MainWindow_Buttons_ToggleCurrentButton.selected = not FLogVars.viewTotal
 	FarmLog_MainWindow_Buttons_TogglePvPButton.selected = GetFarmVar("pvpMode") == true
-	FarmLog_MainWindow_ToggleHUDButton.selected = FLogGlobalVars.hud.show
+	FarmLog_MainWindow_ToggleHUDButton.selected = FLogGlobalVars.hud.show == true
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ToggleHUDButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton)
@@ -2015,6 +2015,11 @@ function FarmLog:OnAddonLoaded()
 		FarmLog_MainWindow:Show()
 	else 
 		FarmLog_MainWindow:Hide()
+	end 
+	if FLogGlobalVars.hud.show then 
+		FarmLog_HUD:Show()
+	else 
+		FarmLog_HUD:Hide()
 	end 
 	addonLoadedTime = time()
 
@@ -2950,8 +2955,10 @@ SlashCmdList.LH = function(msg)
 		elseif "HUD" == cmd then 
 			if FarmLog_HUD:IsShown() then 
 				FarmLog_HUD:Hide()
+				FLogGlobalVars.hud.show = false
 			else 
 				FarmLog_HUD:Show()
+				FLogGlobalVars.hud.show = true
 			end 
 		elseif "BL" == cmd then 
 			FarmLog:ShowBlackLotusLog()
