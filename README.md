@@ -20,6 +20,7 @@ FarmLog now tracks Black Lotus picking and shows respawn timers! (need DBM addon
     * Skill levels
     * Honor gain (not tested yet, will be available in phase 2)
     * Black Lotus pick time and location
+    * Deaths
 * Allows reporting farm results
 * Display farm yield in a window with all looted items
 * Allows filtering item poor and common items
@@ -50,13 +51,17 @@ Another thing is that the more time & data you have per session, the more accura
  This may also happen if you have addons like "Leatrix Plus" with "Fast loot" option enabled. This causes loot to be received before loot window is opened, so the addon doesn't know where it came from.
 
 
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview5.png)
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview6.png)
 ![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
 ![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
 ![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
-* 1.16.1
+* 1.17
+    * Heads-up Display! Minified window with quick summary of your current session.
+    * PvP mode! You can now switch between viewing honor or drops for each farm.
     * Added option to pause session on login, so it won't run after logging back in
 * 1.16
     * Options screen! You can now configure FarmLog to your liking. Write `/fl` or Shift+Click the minimap button to see the option screen.

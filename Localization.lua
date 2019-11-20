@@ -57,6 +57,7 @@ function FarmLog_BuildLocalization(context)
     L["Gold / Hour"] = "Gold / hour"
     L["Honor / Hour"] = "Honor / hour"
     L["g/h"] = "g/h"
+    L["Gold"] = "Gold"
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
@@ -83,13 +84,16 @@ function FarmLog_BuildLocalization(context)
     L["sort-gold-help"] = "Sort by gold yield"
     L["sort-abc-help"] = "Sort alphabetically"
     L["sort-kills-help"] = "Sort by mob kills"
+    L["toggle-pvp-help"] = "PvP mode"
     L["picked-by"] = "picked by"
     L["Honorable kills"] = "Honorable kills"
     L["Dishonorable kills"] = "Dishonorable kills"
     L["Honor"] = "Honor"
     L["honor"] = "honor"
-    L["per hour"] = "honor/hour"
+    L["honor/hour"] = "Honor / hour"
     L["HK"] = "HK"
+    L["Yesterday"] = "Yesterday"
+    L["This week"] = "This week"
     L["General"] = "General"
     L["Appearance"] = "Appearance"
     L["Tracking"] = "Tracking"

@@ -410,6 +410,54 @@
   </Frame>  <!--FarmLog_QuestionDialog-->
 
 
+  <!-- Heads-Up Display -->
+
+  <Frame name="FarmLog_HUD" frameStrata="MEDIUM" parent="UIParent" enableMouse="true" movable="true">
+    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+      <EdgeSize>
+        <AbsValue val="1"></AbsValue>
+      </EdgeSize>
+      <TileSize>
+        <AbsValue val="16" />
+      </TileSize>
+    </Backdrop>
+    <Anchor point="CENTER" />
+    <Scripts>
+      <OnLoad>
+        self:SetUserPlaced(true)
+      </OnLoad>
+      <OnDragStart>
+        self:DragStart()
+      </OnDragStart>
+      <OnDragStop>
+        self:DragStop()
+      </OnDragStop>
+    </Scripts>
+    <Frames>
+    </Frames>
+
+    <Layers>
+      <Layer level="ARTWORK">
+        <FontString name="$parent_Line1" inherits="ChatFontNormal" font="FarmLogFont" justifyH="LEFT" wordwrap="false" text="Line1" />
+        <FontString name="$parent_Line2" inherits="ChatFontNormal" font="FarmLogFont" justifyH="LEFT" wordwrap="false" text="Line2" />
+        <FontString name="$parent_Line3" inherits="ChatFontNormal" font="FarmLogFont" justifyH="LEFT" wordwrap="false" text="Line3" />
+        <FontString name="$parent_Line4" inherits="ChatFontNormal" font="FarmLogFont" justifyH="LEFT" wordwrap="false" text="Line4" />
+        <FontString name="$parent_Line5" inherits="ChatFontNormal" font="FarmLogFont" justifyH="LEFT" wordwrap="false" text="Line5" />
+        <FontString name="$parent_Line1N" inherits="ChatFontNormal" font="FarmLogFont" justifyH="RIGHT" wordwrap="false" text="7323" />
+        <FontString name="$parent_Line2N" inherits="ChatFontNormal" font="FarmLogFont" justifyH="RIGHT" wordwrap="false" text="337" />
+        <FontString name="$parent_Line3N" inherits="ChatFontNormal" font="FarmLogFont" justifyH="RIGHT" wordwrap="false" text="4462" />
+        <FontString name="$parent_Line4N" inherits="ChatFontNormal" font="FarmLogFont" justifyH="RIGHT" wordwrap="false" text="7323" />
+        <FontString name="$parent_Line5N" inherits="ChatFontNormal" font="FarmLogFont" justifyH="RIGHT" wordwrap="false" text="337" />
+        <Texture name="$parent_Sep" file="Interface\AddOns\FarmLog\assets\ThinBlackLine">
+          <Size x="100" y="4"/>
+        </Texture>
+      </Layer>
+    </Layers>
+  </Frame>  <!--FarmLog_HUD-->
+
+
+  <!-- Main Loot Window -->
+
   <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
     <Size>
       <AbsDimension x="250" y="250"/>
@@ -843,7 +891,7 @@
 
           <Button name="$parent_ToggleMobNameButton">
             <Size>
-              <AbsDimension x="28" y="14"/>
+              <AbsDimension x="32" y="14"/>
             </Size>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>
@@ -888,7 +936,7 @@
 
           <Button name="$parent_ToggleCurrentButton">
             <Size>
-              <AbsDimension x="38" y="14"/>
+              <AbsDimension x="42" y="14"/>
             </Size>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>
@@ -976,6 +1024,53 @@
               </OnLeave>
             </Scripts>
           </Frame>          <!--$parent_Instances-->
+
+          <Button name="$parent_TogglePvPButton">
+            <Size>
+              <AbsDimension x="28" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="$parent_Instances" relativePoint="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="3" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="PvP">
+                  <Color r="1" g="1" b="1"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_MainWindow_Buttons_TogglePvPButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+                self:MouseEnter()
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+                self:MouseLeave()
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_TogglePvPButton-->
 
         </Frames>
       </Frame>      <!--$parent_Buttons-->
