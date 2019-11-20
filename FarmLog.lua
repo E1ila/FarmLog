@@ -115,8 +115,9 @@ FLogGlobalVars = {
 		paddingY = 5,
 		fontName = FONT_NAME,
 		fontSize = 12,
-		alpha = 0.4,
+		alpha = 0.7,
 		locked = false,
+		show = false,
 	},
 	autoSwitchInstances = false,
 	resumeSessionOnSwitch = true,
@@ -579,8 +580,9 @@ function FarmLog:Migrate()
 			paddingY = 5,
 			fontName = FONT_NAME,
 			fontSize = 12,
-			alpha = 0.4,
+			alpha = 0.7,
 			locked = false,
+			show = false,
 		}
 	end 
 
@@ -1981,6 +1983,8 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
 	FarmLog_MainWindow_Buttons_ToggleCurrentButton.selected = not FLogVars.viewTotal
 	FarmLog_MainWindow_Buttons_TogglePvPButton.selected = GetFarmVar("pvpMode") == true
+	FarmLog_MainWindow_ToggleHUDButton.selected = FLogGlobalVars.hud.show
+	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ToggleHUDButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortKillsButton)
@@ -2373,8 +2377,6 @@ end
 
 function FarmLog_HUD:ResetPosition()
 	self:ClearAllPoints()
-	-- self:SetWidth(FLogVars.frameRect.width)
-	-- self:SetHeight(FLogVars.frameRect.height)
 	self:SetPoint("CENTER", 0, 200)
 end 
 
@@ -2385,11 +2387,11 @@ function FarmLog_HUD:Refresh()
 	local pvpMode = GetFarmVar("pvpMode") == true
 	if pvpMode then 
 		if FLogVars.viewTotal then 
-			perHour = "|cffffef96"..GetFarmVar("honorPerHourTotal") or 0
-			total = "|cffffef96"..GetFarmVar("honorTotal") or 0
+			perHour = "|cffffef96"..(GetFarmVar("honorPerHourTotal") or 0)
+			total = "|cffffef96"..(GetFarmVar("honorTotal") or 0)
 		else 
-			perHour = "|cffffef96"..GetFarmVar("honorPerHour") or 0
-			total = "|cffffef96"..GetFarmVar("honor") or 0
+			perHour = "|cffffef96"..(GetFarmVar("honorPerHour") or 0)
+			total = "|cffffef96"..(GetFarmVar("honor") or 0)
 		end 
 	else 
 		if FLogVars.viewTotal then 
@@ -2659,6 +2661,22 @@ end
 function FarmLog_MainWindow_NewSessionButton:Clicked()
 	if self.disabled then return end 
 	FarmLog:NewSession()
+end 
+
+function FarmLog_MainWindow_ToggleHUDButton:Clicked() 
+	FLogGlobalVars.hud.show = not FLogGlobalVars.hud.show
+	self.selected = FLogGlobalVars.hud.show
+	if FLogGlobalVars.hud.show then 
+		if not FLogGlobalVars.hud.resetOnce then 
+			FLogGlobalVars.hud.resetOnce = true 
+			FarmLog_HUD:ResetPosition()
+		end 
+		FarmLog_HUD:Refresh()
+		FarmLog_HUD:DressUp()
+		FarmLog_HUD:Show()
+	else 
+		FarmLog_HUD:Hide()
+	end 
 end 
 
 -- sessions buttons

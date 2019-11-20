@@ -513,6 +513,47 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
+      <Button name="$parent_ToggleHUDButton">
+        <Size>
+          <AbsDimension x="28" y="14"/>
+        </Size>
+        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+          <EdgeSize>
+            <AbsValue val="1"></AbsValue>
+          </EdgeSize>
+          <TileSize>
+            <AbsValue val="16" />
+          </TileSize>
+        </Backdrop>
+        <Anchors>
+          <Anchor point="TOPRIGHT" relativeTo="$parent_CloseButton" relativePoint="TOPLEFT" x="0" y="-6" />
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="HUD">
+              <Color r="1" g="1" b="1"/>
+              <Anchors>
+                <Anchor point="CENTER" />
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnLoad>
+            self.label = FarmLog_MainWindow_ToggleHUDButton_Text
+          </OnLoad>
+          <OnEnter>
+            FarmLog_SetTextButtonBackdropColor(self, true)
+          </OnEnter>
+          <OnLeave>
+            FarmLog_SetTextButtonBackdropColor(self, false)
+          </OnLeave>
+          <OnClick>
+            self:Clicked()
+          </OnClick>
+        </Scripts>
+      </Button>          <!--$parent_ToggleHUDButton-->
+      
       <Button name="$parent_SessionsButton">
         <Size>
           <AbsDimension x="14" y="14"/>
