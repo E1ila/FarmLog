@@ -18,7 +18,7 @@ FarmLog now tracks Black Lotus picking and shows respawn timers! (need DBM addon
     * Reputation gain per faction
     * XP gained
     * Skill levels
-    * Honor gain (not tested yet, will be available in phase 2)
+    * Honor gain, HKs, DKs, ranks kill count
     * Black Lotus pick time and location
     * Deaths
 * Allows reporting farm results
@@ -59,6 +59,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.17.1
+    * Added + button in All Farms window to create a new farm, will use the text in search box
 * 1.17
     * Heads-up Display! Minified window with quick summary of your current session.
     * PvP mode! You can now switch between viewing honor or drops for each farm.

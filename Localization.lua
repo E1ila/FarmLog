@@ -115,6 +115,7 @@ function FarmLog_BuildLocalization(context)
     L["Instance Resets"] = "Instance Resets"
     L["Mobs Kill Count"] = "Mobs Kill Count"
     L["pauseOnLogin"] = "Pause Session On Login"
+    L["new-farm-help"] = "Create a new farm, will use the name in search box"
     if (GetLocale() == "enUS") then
     end
     return L

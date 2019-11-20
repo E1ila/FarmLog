@@ -552,8 +552,8 @@
             self:Clicked()
           </OnClick>
         </Scripts>
-      </Button>          <!--$parent_ToggleHUDButton-->
-      
+      </Button>      <!--$parent_ToggleHUDButton-->
+
       <Button name="$parent_SessionsButton">
         <Size>
           <AbsDimension x="14" y="14"/>
@@ -1444,15 +1444,56 @@
             </Scripts>
           </Button>          <!--$parent_SortAbcButton-->
 
+          <Button name="$parent_NewFarmButton">
+            <Size>
+              <AbsDimension x="14" y="14"/>
+            </Size>
+            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+              <EdgeSize>
+                <AbsValue val="1"></AbsValue>
+              </EdgeSize>
+              <TileSize>
+                <AbsValue val="16" />
+              </TileSize>
+            </Backdrop>
+            <Anchors>
+              <Anchor point="TOPRIGHT" relativeTo="$parent_SortAbcButton" relativePoint="TOPLEFT" x="-6" y="0" />
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Text" inherits="ChatFontNormal" font="FarmLogSmallFont" text="+">
+                  <Color r="0" g="1" b="0"/>
+                  <Anchors>
+                    <Anchor point="CENTER" />
+                  </Anchors>
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnLoad>
+                self.label = FarmLog_SessionsWindow_Buttons_NewFarmButton_Text
+              </OnLoad>
+              <OnEnter>
+                FarmLog_SetTextButtonBackdropColor(self, true)
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                GameTooltip:SetText(FarmLog.L["new-farm-help"])
+                GameTooltip:Show()
+              </OnEnter>
+              <OnLeave>
+                FarmLog_SetTextButtonBackdropColor(self, false)
+              	GameTooltip_Hide();
+              </OnLeave>
+              <OnClick>
+                self:Clicked()
+              </OnClick>
+            </Scripts>
+          </Button>          <!--$parent_NewFarmButton-->
+
           <EditBox name="$parent_SearchBox" letters="80" autoFocus="false">
             <Size x="10" y="16" />
             <Anchors>
-              <Anchor point="LEFT">
-                <Offset x="2" y="0" />
-              </Anchor>
-              <Anchor point="RIGHT" relativeTo="$parent_SortAbcButton" relativePoint="LEFT">
-                <Offset x="-4" y="0" />
-              </Anchor>
+              <Anchor point="LEFT" x="2" y="0" />
+              <Anchor point="RIGHT" relativeTo="$parent_NewFarmButton" relativePoint="LEFT" x="-2" y="0" />
             </Anchors>
             <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
               <EdgeSize>

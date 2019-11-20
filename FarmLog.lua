@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17"
-local VERSION_INT = 1.17
+﻿local VERSION = "1.17.1"
+local VERSION_INT = 1.1701
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -40,6 +40,7 @@ local SORT_BY_USE = "U"
 
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
+local HUD_DRESSUP_TIME = 60
 
 local TEXT_COLOR = {
 	["xp"] = "6a78f9",
@@ -207,6 +208,7 @@ local ahScanPauseTime = 0
 local sessionSearchResult = nil 
 local addonLoadedTime = nil
 local blSeen = nil
+local lastHudDressUp = 0
 lastLootedMobs = {}
 
 local function out(text)
@@ -249,10 +251,10 @@ local function secondsToClockShort(seconds)
 	if not seconds or  seconds <= 0 then
 		return "--";
 	else
-		hours = string.format("%02.f", math.floor(seconds/3600));
-		mins = string.format("%02.f", math.floor(seconds/60 - (hours*60)));
+		hours = string.format("%2.f", math.floor(seconds/3600));
+		mins = string.format("%2.f", math.floor(seconds/60 - (hours*60)));
 		secs = string.format("%02.f", math.floor(seconds - hours*3600 - mins *60));
-		if hours == 0 then 
+		if seconds/3600 < 1 then 
 			return mins.."m "..secs.."s"
 		end 
 		return hours.."h "..mins.."m"
@@ -1994,6 +1996,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_SessionsButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ClearButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_NewSessionButton)
+	FarmLog_SetTextButtonBackdropColor(FarmLog_SessionsWindow_Buttons_NewFarmButton)
 
 	-- sessions window buttons
 	if FLogGlobalVars.sortSessionsBy == SORT_BY_TEXT then 
@@ -2265,12 +2268,18 @@ end
 -- OnUpdate
 
 function FarmLog:OnUpdate() 
+	local now = time()
 	if FLogVars.enabled then 
 		FarmLog_MainWindow:UpdateTime()
-		FarmLog_HUD:Refresh()
+		if FLogGlobalVars.hud.show then 
+			FarmLog_HUD:Refresh()
+			if now - lastHudDressUp >= HUD_DRESSUP_TIME then 
+				FarmLog_HUD:DressUp()
+				lastHudDressUp = now
+			end 
+		end 
 	end 
 	if skillNameTime then 
-		local now = time()
 		if now - skillNameTime >= SKILL_LOOTWINDOW_OPEN_TIMEOUT then 
 			skillNameTime = nil 
 			skillName = nil 
@@ -2459,6 +2468,7 @@ function FarmLog_HUD:DressUp()
 		label:SetFont(fontName, fontSize)
 		if label:GetStringWidth() > numberMaxwidth then numberMaxwidth = label:GetStringWidth() end 
 	end 
+	numberMaxwidth = max(numberMaxwidth + 5, 50)
 
 	for _, label in ipairs(numberLabels) do 
 		label:SetWidth(numberMaxwidth)
@@ -2682,6 +2692,18 @@ function FarmLog_MainWindow_ToggleHUDButton:Clicked()
 	else 
 		FarmLog_HUD:Hide()
 	end 
+end 
+
+function FarmLog_SessionsWindow_Buttons_NewFarmButton:Clicked()
+	local searchText = FarmLog_SessionsWindow_Buttons_SearchBox:GetText()
+	if FLogVars.farms[searchText] then 
+		out("|cffff0000There's already a farm with that name, choose an unused name, or choose the existing one to use it")
+		return 
+	end 
+	out("Starting a new farm |cff99ff00"..searchText)
+	FarmLog:SwitchFarm(searchText, true, true)
+	FarmLog_MainWindow:Refresh() 
+	FarmLog_HUD:DressUp() 
 end 
 
 -- sessions buttons
@@ -2913,6 +2935,7 @@ SlashCmdList.LH = function(msg)
 			out("Switching session to |cff99ff00"..arg1)
 			FarmLog:SwitchFarm(arg1, true, true)
 			FarmLog_MainWindow:Refresh() 
+			FarmLog_HUD:DressUp() 
 		elseif  "REN" == cmd then
 			out("Renaming session from |cff99ff00"..FLogVars.currentFarm.."|r to |cff99ff00"..arg1)
 			FLogVars.farms[arg1] = FLogVars.farms[FLogVars.currentFarm]
