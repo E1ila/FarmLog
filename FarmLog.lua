@@ -69,6 +69,7 @@ local SPELL_FISHING = {
 	["7732"] = 1,
 	["18248"] = 1
 }
+local SPELL_FISHING_NAME = select(1, GetSpellInfo(7620))
 local SPELL_OPEN = 3365
 local SPELL_OPEN_NOTEXT = 22810
 local SPELL_LOCKPICK = 1804
@@ -1676,9 +1677,15 @@ function FarmLog:OnLootOpened(autoLoot)
 	if not FLogGlobalVars.track.drops then return end 
 
 	local lootCount = GetNumLootItems()
-	local mobName = nil 
-	if skillName then 
-		mobName = skillName 
+	local mobName = nil
+
+	-- Fishing workaround
+	if not skillName and ChannelInfo() == SPELL_FISHING_NAME then
+		skillName = L["Fishing"]
+	end
+
+	if skillName then
+		mobName = skillName
 		-- count gathering skill act in kills table
 		local sessionKills = GetSessionVar("kills", false)
 		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
