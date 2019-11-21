@@ -1,4 +1,4 @@
-local VERSION = "1.17.3"
+﻿local VERSION = "1.17.3"
 local VERSION_INT = 1.1703
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -26,10 +26,12 @@ local DROP_META_INDEX_VALUE_TYPE =  4
 local VALUE_TYPE_MANUAL = 'M'
 local VALUE_TYPE_SCAN = 'S'
 local VALUE_TYPE_VENDOR = 'V'
+local VALUE_TYPE_NOVALUE = '0'
 local VALUE_TYPE_COLOR = {
 	["M"] = "e1d592",
 	["S"] = "95d6e5",
 	["V"] = "fbf9ed",
+	["0"] = "fb3300",
 	["?"] = "f3c0c0",
 }
 
@@ -1267,11 +1269,10 @@ function FarmLog_MainWindow:Refresh()
 end
 
 function FarmLog_MainWindow:RecalcTotals()
-	local recalcMeta = function (farm) 
+	local recalcMeta = function (session) 
 		local sessionVendor = 0
 		local sessionAH = 0
-		local sessionDrops = farm["drops"]
-		for mobName, drops in pairs(sessionDrops) do
+		for mobName, drops in pairs(session.drops) do
 			for itemLink, meta in pairs(drops) do
 				if not FLogGlobalVars.ignoredItems[itemLink] then
 					local value, priceType = getItemValue(itemLink)
@@ -1290,8 +1291,8 @@ function FarmLog_MainWindow:RecalcTotals()
 				end
 			end
 		end
-		farm["vendor"] = sessionVendor
-		farm["ah"] = sessionAH
+		session.vendor = sessionVendor
+		session.ah = sessionAH
 	end 
 
 	local farm = FLogVars.farms[FLogVars.currentFarm]
@@ -1857,23 +1858,23 @@ end
 
 -- Loot helper
 function getItemValue(itemLink, vendorPrice)
-	-- check manual price info
 	local ahValue = GetManualPrice(itemLink)
 	if ahValue then
-		-- no need to be smart when using manual price info
 		return ahValue, VALUE_TYPE_MANUAL
 	else
-		-- check AH scan info
-		ahValue = (Atr_GetAuctionBuyout or GetAHScanPrice)(itemLink)
+		local PriceCheck = Atr_GetAuctionBuyout or GetAHScanPrice
+		ahValue = PriceCheck(itemLink)
 	end
 
-	-- check if AH price (-15%) > vendor price + 1s
 	vendorPrice = (vendorPrice or select(11, GetItemInfo(itemLink))) or 0;
-	if ahValue and ahValue > 0 and ahValue * 0.85 > vendorPrice + 100 then
+
+	-- check if AH price (-15%) > vendor price + 1s
+	if isPositive(ahValue) and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) then
 		return ahValue, VALUE_TYPE_SCAN
-	else
+	elseif isPositive(vendorPrice) then 
 		return vendorPrice, VALUE_TYPE_VENDOR
 	end
+	return 0, VALUE_TYPE_NOVALUE
 end
 
 -- Loot receive event
@@ -1896,13 +1897,14 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 	end 
 	local meta = sessionDrops[mobName][itemLink]
 	if meta then
-		debug("|cff999999FarmLog:InsertLoot|r meta |cffff9900"..meta[1]..","..meta[2]..","..meta[3]..","..meta[4])
-		meta[DROP_META_INDEX_COUNT] = meta[DROP_META_INDEX_COUNT] + count
-		meta[DROP_META_INDEX_VALUE] = value * meta[DROP_META_INDEX_COUNT] 
-		meta[DROP_META_INDEX_VALUE_EACH] = value				
+		debug("|cff999999FarmLog:InsertLoot|r meta |cffff9900"..meta[1]..","..tostring(meta[2])..","..tostring(meta[3])..","..tostring(meta[4]))
+		local totalCount = meta[DROP_META_INDEX_COUNT] + count
+		meta[DROP_META_INDEX_COUNT] = totalCount
+		meta[DROP_META_INDEX_VALUE] = value * totalCount
+		meta[DROP_META_INDEX_VALUE_EACH] = value
 		meta[DROP_META_INDEX_VALUE_TYPE] = priceType				
 	else
-		sessionDrops[mobName][itemLink] = {count, value * count, value, priceType};
+		sessionDrops[mobName][itemLink] = {count, value * count, value, priceType}
 	end
 end
 

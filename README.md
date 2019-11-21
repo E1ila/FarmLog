@@ -61,6 +61,8 @@ Another thing is that the more time & data you have per session, the more accura
 ### Changes 
 * 1.17.3
     * Fixed Fishing bug when loot was attributed to "Unknown", thanks https://github.com/aEnigmatic
+    * Added integration with Auctionator for AH item value, thanks https://github.com/aEnigmatic
+    * Supporting items with no AH nor vendor value (Mature Black Dragon Sinew, etc)
 * 1.17.2
     * Added XP/hour, contribution by github.com/Tanoh
     * Fixed crash for unknown XP & money loot events
