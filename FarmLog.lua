@@ -1088,11 +1088,6 @@ function FarmLog_MainWindow:Refresh()
 	else 
 		SetFarmVar("xpPerHour", xpPerHour)
 	end 
-	-- add special rows
-	if isPositive(goldPerHour) then 
-		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
-	end 
-
 	-- calculate XPH
 	local xpPerHour = 0
 	if sessionTime > 0 then 
