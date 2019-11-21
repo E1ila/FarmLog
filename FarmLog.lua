@@ -1,4 +1,4 @@
-﻿local VERSION = "1.17.1"
+local VERSION = "1.17.1"
 local VERSION_INT = 1.1701
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -63,7 +63,12 @@ TEXT_COLOR[UNKNOWN_MOBNAME] = TEXT_COLOR["unknown"]
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
-local SPELL_FISHING = 7620
+local SPELL_FISHING = {
+	["7620"] = 1,
+	["7731"] = 1,
+	["7732"] = 1,
+	["18248"] = 1
+}
 local SPELL_OPEN = 3365
 local SPELL_OPEN_NOTEXT = 22810
 local SPELL_LOCKPICK = 1804
@@ -1473,7 +1478,7 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	elseif spellId == SPELL_MINING then 
 		skillName = L["Mining"]
 		skillNameTime = time()
-	elseif spellId == SPELL_FISHING then 
+	elseif SPELL_FISHING[tostring(spellId)] == 1 then
 		skillName = L["Fishing"]
 		skillNameTime = time()
 	elseif spellId == SPELL_OPEN or spellId == SPELL_OPEN_NOTEXT then 
