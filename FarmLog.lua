@@ -1078,27 +1078,6 @@ function FarmLog_MainWindow:Refresh()
 		SetFarmVar("gold", ahProfit + vendorProfit + goldProfit)
 	end 
 
-	-- calculate XPH
-	local xpPerHour = 0
-	if sessionTime > 0 then 
-		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
-	end 
-	if FLogVars.viewTotal then 
-		SetFarmVar("xpPerHourTotal", xpPerHour)
-	else 
-		SetFarmVar("xpPerHour", xpPerHour)
-	end 
-	-- calculate XPH
-	local xpPerHour = 0
-	if sessionTime > 0 then 
-		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
-	end 
-	if FLogVars.viewTotal then 
-		SetFarmVar("xpPerHourTotal", xpPerHour)
-	else 
-		SetFarmVar("xpPerHour", xpPerHour)
-	end 
-
 	if FLogGlobalVars.track.money and not pvpMode then 
 		if isPositive(goldPerHour) then 
 			self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
@@ -1113,18 +1092,29 @@ function FarmLog_MainWindow:Refresh()
 			self:AddRow(L["Vendor"], GetShortCoinTextureString(vendorProfit), nil, TEXT_COLOR["money"]) 
 		end 
 	end 
+	
+	local xp = GetSessionVar("xp", FLogVars.viewTotal)
+	if FLogGlobalVars.track.xp and isPositive(xp) then 
+		local xpPerHour = 0
+		if sessionTime > 0 then 
+			xpPerHour = xp / (sessionTime / 3600)
+		end 
+		if FLogVars.viewTotal then 
+			SetFarmVar("xpPerHourTotal", xpPerHour)
+		else 
+			SetFarmVar("xpPerHour", xpPerHour)
+		end 
 
-	if FLogGlobalVars.track.xp and isPositive(GetSessionVar("xp", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("xp", FLogVars.viewTotal).." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
+		local text = xp.." "..L["XP"]
+		if FLogGlobalVars.track.xp and isPositive(xpPerHour) then 
+			text = text .. ", " .. math.floor(xpPerHour) .. " " .. L["XP / hour"]
+		end 
+		self:AddRow(text, nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	-- Show XP/hour only for non-max level chars
-	if FLogGlobalVars.track.xp and isPositive(xpPerHour) and UnitLevel("player") < MAX_PLAYER_LEVEL then 
-		self:AddRow(L["XP / Hour"], math.floor(xpPerHour), nil, nil, TEXT_COLOR["xp"])
-	end 
-	if FLogGlobalVars.track.resets and isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
-		if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
-			self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
-		end
+
+	local resets = GetSessionVar("resets", FLogVars.viewTotal)
+	if FLogGlobalVars.track.resets and isPositive(resets) then 
+		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end
 
 	local honor = GetSessionVar("honor", FLogVars.viewTotal)
@@ -2818,16 +2808,16 @@ function FarmLog_MinimapButton:UpdateTooltipText()
 	local text = "|cff5CC4ff" .. ADDON_NAME
 	text = text .. "|r|nSession: " text = text .. sessionColor text = text .. FLogVars.currentFarm 
 	text = text .. "|r|nTime: " text = text .. sessionColor text = text .. secondsToClock(FarmLog:GetCurrentSessionTime()) 
-	if FLogGlobalVars.track.money then
-		text = text .. "|r|ng/h: |cffeeeeee" text = text .. GetShortCoinTextureString(goldPerHour) 
+	if FLogGlobalVars.track.money and isPositive(goldPerHour) then
+		text = text .. "|r|n" .. L["g/h"] .. ": |cffeeeeee" text = text .. GetShortCoinTextureString(goldPerHour) 
 	end
-	if FLogGlobalVars.track.xp then
-		text = text .. "|r|nxp/h: |cff6a78f9" text = text .. math.floor(xpPerHour) 
+	if FLogGlobalVars.track.xp and isPositive(xpPerHour) then
+		text = text .. "|r|n" .. L["xp/h"] .. ": |cffeeeeee" text = text .. math.floor(xpPerHour) 
 	end
-	text = text .. "|r|nLeft click: |cffeeeeeeopen main window"
-	text = text .. "|r|nRight click: |cffeeeeeepause/resume session"
-	text = text .. "|r|nCtrl click: |cffeeeeeeopen session list"
-	text = text .. "|r|nShift click: |cffeeeeeeshow options"
+	text = text .. "|cff999999|nLeft click: |cffeeeeeeopen main window"
+	text = text .. "|cff999999|nRight click: |cffeeeeeepause/resume session"
+	text = text .. "|cff999999|nCtrl click: |cffeeeeeeopen session list"
+	text = text .. "|cff999999|nShift click: |cffeeeeeeshow options"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
@@ -2881,7 +2871,7 @@ end
 SLASH_LH1 = "/farmlog";
 SLASH_LH2 = "/fl";
 SlashCmdList.LH = function(msg)
-	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$");
+	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$")
 	if not cmd then
 		-- FarmLog:ToggleLogging()
 		InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)

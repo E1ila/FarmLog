@@ -56,10 +56,10 @@ function FarmLog_BuildLocalization(context)
     L["Unknown"] = "Unknown"
     L["Gold / Hour"] = "Gold / hour"
     L["Honor / Hour"] = "Honor / hour"
-    L["g/h"] = "g/h"
+    L["g/h"] = "G/H"
     L["Gold"] = "Gold"
-    L["XP / Hour"] = "XP / Hour"
-    L["xp/h"] = "xp/h"
+    L["XP / hour"] = "XP / hour"
+    L["xp/h"] = "XP/H"
     L["need"] = "N: ";
     L["greed"] = "G: ";
     L["disenchant"] = "D: ";
