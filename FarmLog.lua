@@ -1848,7 +1848,7 @@ function getItemValue(itemLink, vendorPrice)
 		return ahValue, VALUE_TYPE_MANUAL
 	else
 		-- check AH scan info
-		ahValue = GetAHScanPrice(itemLink)
+		ahValue = (Atr_GetAuctionBuyout or GetAHScanPrice)(itemLink)
 	end
 
 	-- check if AH price (-15%) > vendor price + 1s
