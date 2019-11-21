@@ -1,5 +1,5 @@
-local VERSION = "1.17.1"
-local VERSION_INT = 1.1701
+﻿local VERSION = "1.17.3"
+local VERSION_INT = 1.1703
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -58,28 +58,34 @@ local TEXT_COLOR = {
 TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
+TEXT_COLOR[L["Fishing"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[UNKNOWN_MOBNAME] = TEXT_COLOR["unknown"]
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
 local SPELL_MINING = 2575
 local SPELL_FISHING = {
-	["7620"] = 1,
-	["7731"] = 1,
-	["7732"] = 1,
-	["18248"] = 1
+	[7620] = true,
+	[7731] = true,
+	[7732] = true,
+	[18248] = true,
 }
-local SPELL_FISHING_NAME = select(1, GetSpellInfo(7620))
+local SPELL_FISHING_NAME = GetSpellInfo(7620)
 local SPELL_OPEN = 3365
 local SPELL_OPEN_NOTEXT = 22810
 local SPELL_LOCKPICK = 1804
 local SPELL_SKINNING = {
-	["10768"] = 1,
-	["8617"] = 1,
-	["8618"] = 1,
-	["8613"] = 1,
+	[10768] = true,
+	[8617] = true,
+	[8618] = true,
+	[8613] = true,
 }
-local SKILL_LOOTWINDOW_OPEN_TIMEOUT = 8 -- trade skill takes 5 sec to cast, after 8 discard it
+local SKILL_LOOTWINDOW_OPEN_TIMEOUT = { -- trade skill takes a few sec to cast
+	[L["Fishing"]] = 35,
+	[L["Skinning"]] = 8,
+	[L["Herbalism"]] = 8,
+	[L["Mining"]] = 8,
+}
 
 local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 
@@ -1467,7 +1473,7 @@ end
 -- Spell cast 
 
 function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
-	-- debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
+	debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
 
 	if spellId == SPELL_HERBING then 
 		skillName = L["Herbalism"]
@@ -1479,13 +1485,13 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	elseif spellId == SPELL_MINING then 
 		skillName = L["Mining"]
 		skillNameTime = time()
-	elseif SPELL_FISHING[tostring(spellId)] == 1 then
+	elseif SPELL_FISHING[spellId] then
 		skillName = L["Fishing"]
 		skillNameTime = time()
 	elseif spellId == SPELL_OPEN or spellId == SPELL_OPEN_NOTEXT then 
 		skillName = L["Treasure"]
 		skillNameTime = time()
-	elseif SPELL_SKINNING[tostring(spellId)] == 1 then 
+	elseif SPELL_SKINNING[spellId] then 
 		skillName = L["Skinning"]
 		skillNameTime = time()
 	else 
@@ -1678,11 +1684,6 @@ function FarmLog:OnLootOpened(autoLoot)
 
 	local lootCount = GetNumLootItems()
 	local mobName = nil
-
-	-- Fishing workaround
-	if not skillName and ChannelInfo() == SPELL_FISHING_NAME then
-		skillName = L["Fishing"]
-	end
 
 	if skillName then
 		mobName = skillName
@@ -2311,9 +2312,14 @@ function FarmLog:OnUpdate()
 		end 
 	end 
 	if skillNameTime then 
-		if now - skillNameTime >= SKILL_LOOTWINDOW_OPEN_TIMEOUT then 
+		if not skillName then 
 			skillNameTime = nil 
-			skillName = nil 
+		else
+			local timeout = SKILL_LOOTWINDOW_OPEN_TIMEOUT[skillName] or 0
+			if now - skillNameTime >= timeout then 
+				skillNameTime = nil 
+				skillName = nil 
+			end 
 		end 
 	end 
 	if ahScanning then 
