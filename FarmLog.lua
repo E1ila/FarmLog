@@ -1114,7 +1114,7 @@ function FarmLog_MainWindow:Refresh()
 
 	local resets = GetSessionVar("resets", FLogVars.viewTotal)
 	if FLogGlobalVars.track.resets and isPositive(resets) then 
-		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+		self:AddRow(resets.." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end
 
 	local honor = GetSessionVar("honor", FLogVars.viewTotal)

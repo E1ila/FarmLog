@@ -59,6 +59,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.17.2
+    * Added XP/hour, contribution by github.com/Tanoh
 * 1.17.1
     * Added + button in All Farms window to create a new farm, will use the text in search box
 * 1.17
