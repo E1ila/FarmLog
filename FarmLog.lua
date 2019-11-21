@@ -1127,9 +1127,10 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(L["XP / Hour"], math.floor(xpPerHour), nil, nil, TEXT_COLOR["xp"])
 	end 
 	if FLogGlobalVars.track.resets and isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
-	if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
-	end 
+		if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
+			self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+		end
+	end
 
 	local honor = GetSessionVar("honor", FLogVars.viewTotal)
 	local honorPerHour = 0
