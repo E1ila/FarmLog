@@ -1603,9 +1603,10 @@ function FarmLog:OnCombatXPEvent(text)
 	if not FLogGlobalVars.track.xp then return end 
 
 	local xp = self:ParseXPEvent(text)
-	-- debug("FarmLog:OnCombatXPEvent - text:"..text.." playerName:"..playerName.." languageName:"..languageName.." channelName:"..channelName.." playerName2:"..playerName2.." specialFlags:"..specialFlags)
-	IncreaseSessionVar("xp", xp)
-	FarmLog_MainWindow:Refresh()
+	if xp then 
+		IncreaseSessionVar("xp", xp)
+		FarmLog_MainWindow:Refresh()
+	end 
 end 
 
 -- Faction change 
@@ -1734,8 +1735,10 @@ end
 
 function FarmLog:OnMoneyEvent(text)
 	local money = ParseMoneyEvent(text)
-	IncreaseSessionVar("gold", money)
-	FarmLog_MainWindow:Refresh()
+	if money then 
+		IncreaseSessionVar("gold", money)
+		FarmLog_MainWindow:Refresh()
+	end 
 end 
 
 -- Black lotus tracking
