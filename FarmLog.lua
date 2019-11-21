@@ -1088,6 +1088,21 @@ function FarmLog_MainWindow:Refresh()
 	else 
 		SetFarmVar("xpPerHour", xpPerHour)
 	end 
+	-- add special rows
+	if isPositive(goldPerHour) then 
+		self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
+	end 
+
+	-- calculate XPH
+	local xpPerHour = 0
+	if sessionTime > 0 then 
+		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
+	end 
+	if FLogVars.viewTotal then 
+		SetFarmVar("xpPerHourTotal", xpPerHour)
+	else 
+		SetFarmVar("xpPerHour", xpPerHour)
+	end 
 
 	if FLogGlobalVars.track.money and not pvpMode then 
 		if isPositive(goldPerHour) then 
@@ -1112,6 +1127,7 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(L["XP / Hour"], math.floor(xpPerHour), nil, nil, TEXT_COLOR["xp"])
 	end 
 	if FLogGlobalVars.track.resets and isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
+	if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
 
