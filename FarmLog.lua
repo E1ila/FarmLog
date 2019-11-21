@@ -541,9 +541,11 @@ function FarmLog:Migrate()
 				["current"] = emptySession(),
 				["goldPerHour"] = session.goldPerHour,
 				["goldPerHourTotal"] = session.goldPerHour,
+				["xpPerHour"] = session.xpPerHour,
 				["lastUse"] = session.lastUse,
 			}
 			session.goldPerHour = nil 
+			session.xpPerHour = nil 
 			session.lastUse = nil 
 		end 
 		FLogVars.sessions = nil 
@@ -1076,6 +1078,27 @@ function FarmLog_MainWindow:Refresh()
 		SetFarmVar("gold", ahProfit + vendorProfit + goldProfit)
 	end 
 
+	-- calculate XPH
+	local xpPerHour = 0
+	if sessionTime > 0 then 
+		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
+	end 
+	if FLogVars.viewTotal then 
+		SetFarmVar("xpPerHourTotal", xpPerHour)
+	else 
+		SetFarmVar("xpPerHour", xpPerHour)
+	end 
+	-- calculate XPH
+	local xpPerHour = 0
+	if sessionTime > 0 then 
+		xpPerHour = (GetSessionVar("xp")) / (sessionTime / 3600)
+	end 
+	if FLogVars.viewTotal then 
+		SetFarmVar("xpPerHourTotal", xpPerHour)
+	else 
+		SetFarmVar("xpPerHour", xpPerHour)
+	end 
+
 	if FLogGlobalVars.track.money and not pvpMode then 
 		if isPositive(goldPerHour) then 
 			self:AddRow(L["Gold / Hour"], GetShortCoinTextureString(goldPerHour), nil, nil)
@@ -1094,9 +1117,15 @@ function FarmLog_MainWindow:Refresh()
 	if FLogGlobalVars.track.xp and isPositive(GetSessionVar("xp", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("xp", FLogVars.viewTotal).." "..L["XP"], nil, nil, TEXT_COLOR["xp"]) 
 	end 
-	if FLogGlobalVars.track.resets and isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+	-- Show XP/hour only for non-max level chars
+	if FLogGlobalVars.track.xp and isPositive(xpPerHour) and UnitLevel("player") < MAX_PLAYER_LEVEL then 
+		self:AddRow(L["XP / Hour"], math.floor(xpPerHour), nil, nil, TEXT_COLOR["xp"])
 	end 
+	if FLogGlobalVars.track.resets and isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
+		if isPositive(GetSessionVar("resets", FLogVars.viewTotal)) then 
+			self:AddRow(GetSessionVar("resets", FLogVars.viewTotal).." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
+		end
+	end
 
 	local honor = GetSessionVar("honor", FLogVars.viewTotal)
 	local honorPerHour = 0
@@ -1121,7 +1150,7 @@ function FarmLog_MainWindow:Refresh()
 		SetFarmVar("honorPerHour", honorPerHour)
 		SetFarmVar("honor", honor)
 	end 
-
+	
 	if FLogGlobalVars.track.deaths and isPositive(GetSessionVar("deaths", FLogVars.viewTotal)) then 
 		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
@@ -2778,19 +2807,27 @@ function FarmLog_MinimapButton:UpdateTooltipText()
 	local sessionColor = "|cffffff00"
 	if FLogVars.enabled then sessionColor = "|cff00ff00" end 
 	local goldPerHour
+	local xpPerHour
 	if FLogVars.viewTotal then 
 		goldPerHour = GetFarmVar("goldPerHourTotal") or 0
+		xpPerHour = GetFarmVar("xpPerHourTotal") or 0
 	else 
 		goldPerHour = GetFarmVar("goldPerHour") or 0
+		xpPerHour = GetFarmVar("xpPerHour") or 0
 	end 
-	local text = 	"|cff5CC4ff" .. ADDON_NAME 
-					.. "|r|nSession: " .. sessionColor .. FLogVars.currentFarm 
-					.. "|r|nTime: " .. sessionColor .. secondsToClock(FarmLog:GetCurrentSessionTime()) 
-					.. "|r|ng/h: |cffeeeeee" .. GetShortCoinTextureString(goldPerHour) 
-					.. "|r|nLeft click: |cffeeeeeeopen main window"
-					.. "|r|nRight click: |cffeeeeeepause/resume session"
-					.. "|r|nCtrl click: |cffeeeeeeopen session list"
-					.. "|r|nShift click: |cffeeeeeeshow options"
+	local text = "|cff5CC4ff" .. ADDON_NAME
+	text = text .. "|r|nSession: " text = text .. sessionColor text = text .. FLogVars.currentFarm 
+	text = text .. "|r|nTime: " text = text .. sessionColor text = text .. secondsToClock(FarmLog:GetCurrentSessionTime()) 
+	if FLogGlobalVars.track.money then
+		text = text .. "|r|ng/h: |cffeeeeee" text = text .. GetShortCoinTextureString(goldPerHour) 
+	end
+	if FLogGlobalVars.track.xp then
+		text = text .. "|r|nxp/h: |cff6a78f9" text = text .. math.floor(xpPerHour) 
+	end
+	text = text .. "|r|nLeft click: |cffeeeeeeopen main window"
+	text = text .. "|r|nRight click: |cffeeeeeepause/resume session"
+	text = text .. "|r|nCtrl click: |cffeeeeeeopen session list"
+	text = text .. "|r|nShift click: |cffeeeeeeshow options"
 	GameTooltip:SetText(text, nil, nil, nil, nil, true)
 end 
 
