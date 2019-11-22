@@ -290,7 +290,6 @@ local function numberToString(str)
 	str = tostring(str)
 	if #str <= 3 then return str end 
 	local prefix, number, suffix = str:match"(%D*%d)(%d+)(%D*)"
-	debug("str = " .. str .. "  number = "..tostring(number))
     return prefix .. number:reverse():gsub("(%d%d%d)","%1,"):reverse() .. suffix
 end
 
@@ -1302,7 +1301,8 @@ function FarmLog_MainWindow:RecalcTotals()
 		for mobName, drops in pairs(session.drops) do
 			for itemLink, meta in pairs(drops) do
 				if not FLogGlobalVars.ignoredItems[itemLink] then
-					local value, priceType = getItemValue(itemLink)
+					local vendorPrice = meta[DROP_META_INDEX_VALUE_TYPE] == VALUE_TYPE_VENDOR and meta[DROP_META_INDEX_VALUE_EACH]
+					local value, priceType = getItemValue(itemLink, vendorPrice)
 					local count = meta[DROP_META_INDEX_COUNT]
 					local totalValue = value * count
 
@@ -1936,6 +1936,7 @@ function getItemValue(itemLink, vendorPrice)
 	end
 
 	vendorPrice = (vendorPrice or select(11, GetItemInfo(itemLink))) or 0;
+	debug("vendorPrice = "..vendorPrice.." for "..itemLink)
 
 	-- check if AH price (-15%) > vendor price + 1s
 	if isPositive(ahValue) and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) then
