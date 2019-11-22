@@ -62,6 +62,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.17.7
     * Numbers bigger than 999 will use a thusands separator
     * Using known vendor price when recalculating profit, this fixes some vendor items with no value due wow API thottle
+    * Removed number of instances form pvp mode
 * 1.17.6
     * Supporting TradeSkillManager addon for AH price check!
 * 1.17.5

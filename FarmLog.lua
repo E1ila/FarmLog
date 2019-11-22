@@ -1149,8 +1149,8 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(text, nil, nil, TEXT_COLOR["xp"]) 
 	end 
 
-	local resets = GetSessionVar("resets", FLogVars.viewTotal)
-	if FLogGlobalVars.track.resets and isPositive(resets) then 
+	local resets = not pvpMode and FLogGlobalVars.track.resets and GetSessionVar("resets", FLogVars.viewTotal)
+	if isPositive(resets) then 
 		self:AddRow(resets.." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end
 
@@ -2534,11 +2534,11 @@ function FarmLog_HUD:Refresh()
 	local pvpMode = GetFarmVar("pvpMode") == true
 	if pvpMode then 
 		if FLogVars.viewTotal then 
-			perHour = "|cffffef96"..(GetFarmVar("honorPerHourTotal") or 0)
-			total = "|cffffef96"..(GetFarmVar("honorTotal") or 0)
+			perHour = "|cffffef96"..numberToString(GetFarmVar("honorPerHourTotal") or 0)
+			total = "|cffffef96"..numberToString(GetFarmVar("honorTotal") or 0)
 		else 
-			perHour = "|cffffef96"..(GetFarmVar("honorPerHour") or 0)
-			total = "|cffffef96"..(GetFarmVar("honor") or 0)
+			perHour = "|cffffef96"..numberToString(GetFarmVar("honorPerHour") or 0)
+			total = "|cffffef96"..numberToString(GetFarmVar("honor") or 0)
 		end 
 	else 
 		if FLogVars.viewTotal then 
@@ -2558,9 +2558,9 @@ function FarmLog_HUD:Refresh()
 		local _, thisweekHonor = GetPVPThisWeekStats()
 		FarmLog_HUD_Line2:SetText("|cff"..TEXT_COLOR["honor"] .. L["honor/hour"])
 		FarmLog_HUD_Line3:SetText("|cff"..TEXT_COLOR["honor"] .. L["Honor"])
-		FarmLog_HUD_Line4N:SetText("|cffbbbbbb"..tostring(yesterdayHonor))
+		FarmLog_HUD_Line4N:SetText("|cffbbbbbb"..numberToString(yesterdayHonor))
 		FarmLog_HUD_Line4:SetText("|cff"..TEXT_COLOR["honor"] .. L["Yesterday"])
-		FarmLog_HUD_Line5N:SetText("|cffbbbbbb"..tostring(thisweekHonor))
+		FarmLog_HUD_Line5N:SetText("|cffbbbbbb"..numberToString(thisweekHonor))
 		FarmLog_HUD_Line5:SetText("|cff"..TEXT_COLOR["honor"] .. L["This week"])
 	else 
 		FarmLog_HUD_Line2:SetText("|cff"..TEXT_COLOR["money"] .. L["Gold / Hour"])
