@@ -286,6 +286,14 @@ local function secondsToClockShort(seconds)
 	end
 end
 
+local function numberToString(str)
+	str = tostring(str)
+	if #str <= 3 then return str end 
+	local prefix, number, suffix = str:match"(%D*%d)(%d+)(%D*)"
+	debug("str = " .. str .. "  number = "..tostring(number))
+    return prefix .. number:reverse():gsub("(%d%d%d)","%1,"):reverse() .. suffix
+end
+
 local function GetShortCoinTextureString(money)
 	if not money or tostring(money) == "nan" or tostring(money) == "inf" or money == 0 then return "--" end 
 	-- out("money = "..tostring(money))
@@ -1020,7 +1028,7 @@ function FarmLog_MainWindow:AddRow(text, valueText, quantity, color, valueColor)
 		valueText = "|cff"..valueColor..valueText.."|r"
 	end 
 	if quantity and quantity > 1 then 
-		text = text.." x"..tostring(quantity)
+		text = text.." x"..numberToString(quantity)
 	end 
 	return self:CreateRow(text, valueText)
 end 
@@ -1123,8 +1131,8 @@ function FarmLog_MainWindow:Refresh()
 		end 
 	end 
 	
-	local xp = GetSessionVar("xp", FLogVars.viewTotal)
-	if FLogGlobalVars.track.xp and isPositive(xp) then 
+	local xp = FLogGlobalVars.track.xp and GetSessionVar("xp", FLogVars.viewTotal)
+	if isPositive(xp) then 
 		local xpPerHour = 0
 		if sessionTime > 0 then 
 			xpPerHour = xp / (sessionTime / 3600)
@@ -1135,9 +1143,9 @@ function FarmLog_MainWindow:Refresh()
 			SetFarmVar("xpPerHour", xpPerHour)
 		end 
 
-		local text = xp.." "..L["XP"]
+		local text = numberToString(xp).." "..L["XP"]
 		if FLogGlobalVars.track.xp and isPositive(xpPerHour) then 
-			text = text .. ", " .. math.floor(xpPerHour) .. " " .. L["XP / hour"]
+			text = text .. ", " .. numberToString(math.floor(xpPerHour)) .. " " .. L["XP / hour"]
 		end 
 		self:AddRow(text, nil, nil, TEXT_COLOR["xp"]) 
 	end 
@@ -1147,21 +1155,23 @@ function FarmLog_MainWindow:Refresh()
 		self:AddRow(resets.." "..L["Instances"], nil, nil, TEXT_COLOR["xp"]) 
 	end
 
-	local honor = GetSessionVar("honor", FLogVars.viewTotal)
+	local honor = FLogGlobalVars.track.honor and GetSessionVar("honor", FLogVars.viewTotal)
 	local honorPerHour = 0
-	if FLogGlobalVars.track.honor and isPositive(honor) then 
-		local text = honor.." "..L["Honor"]
+	if isPositive(honor) then 
+		local text = numberToString(honor).." "..L["Honor"]
 		if sessionTime > 0 then 
 			honorPerHour = math.floor(honor / (sessionTime / 3600))
-			text = text .. ", " .. tostring(honorPerHour) .. " " .. L["honor/hour"]
+			text = text .. ", " .. numberToString(honorPerHour) .. " " .. L["honor/hour"]
 		end
 		self:AddRow(text, nil, nil, TEXT_COLOR["honor"]) 
 	end 
-	if FLogGlobalVars.track.hks and isPositive(GetSessionVar("hks", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("hks", FLogVars.viewTotal).." "..L["Honorable kills"], nil, nil, TEXT_COLOR["honor"]) 
+	local hks = FLogGlobalVars.track.hks and GetSessionVar("hks", FLogVars.viewTotal)
+	if isPositive(hks) then 
+		self:AddRow(numberToString(hks).." "..L["Honorable kills"], nil, nil, TEXT_COLOR["honor"]) 
 	end 
-	if FLogGlobalVars.track.dks and isPositive(GetSessionVar("dks", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("dks", FLogVars.viewTotal).." "..L["Dishonorable kills"], nil, nil, TEXT_COLOR["deaths"]) 
+	local dks = FLogGlobalVars.track.dks and GetSessionVar("dks", FLogVars.viewTotal)
+	if isPositive(dks) then 
+		self:AddRow(dks.." "..L["Dishonorable kills"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
 	if FLogVars.viewTotal then 
 		SetFarmVar("honorPerHourTotal", honorPerHour)
@@ -1171,12 +1181,13 @@ function FarmLog_MainWindow:Refresh()
 		SetFarmVar("honor", honor)
 	end 
 	
-	if FLogGlobalVars.track.deaths and isPositive(GetSessionVar("deaths", FLogVars.viewTotal)) then 
-		self:AddRow(GetSessionVar("deaths", FLogVars.viewTotal).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
+	local deaths = FLogGlobalVars.track.deaths and GetSessionVar("deaths", FLogVars.viewTotal)
+	if isPositive(deaths) then 
+		self:AddRow(numberToString(deaths).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
 	end 
 	if FLogGlobalVars.track.rep then 
 		for faction, rep in pairs(GetSessionVar("rep", FLogVars.viewTotal)) do 
-			self:AddRow(rep.." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
+			self:AddRow(numberToString(rep).." "..faction.." "..L["reputation"], nil, nil, TEXT_COLOR["rep"]) 
 		end 
 	end 
 	if FLogGlobalVars.track.skill then 
