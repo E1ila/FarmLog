@@ -59,7 +59,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
-* 1.17.4
+* 1.17.6
+    * Supporting TradeSkillManager addon for AH price check!
+* 1.17.5
     * Showing honor % to be received on enemy player tooltip! 
     * Fixed Fishing bug when loot was attributed to "Unknown", thanks https://github.com/aEnigmatic
     * Added integration with Auctionator for AH item value, thanks https://github.com/aEnigmatic

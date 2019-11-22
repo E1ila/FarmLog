@@ -1916,7 +1916,11 @@ function getItemValue(itemLink, vendorPrice)
 	if ahValue then
 		return ahValue, VALUE_TYPE_MANUAL
 	else
-		local PriceCheck = Atr_GetAuctionBuyout or GetAHScanPrice
+		local GetTSMPrice = TSM_API and function(link) 
+			local TSM_ItemString = TSM_API.ToItemString(itemLink)
+			return TSM_API.GetCustomPriceValue("dbmarket", TSM_ItemString)
+		end
+		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
 		ahValue = PriceCheck(itemLink)
 	end
 
