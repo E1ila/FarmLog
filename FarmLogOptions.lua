@@ -117,6 +117,10 @@ mfpanel.ShowBlackLotusTimer:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, 
 mfpanel.ShowBlackLotusTimer:SetScript("OnClick", function(self) FLogGlobalVars.showBlackLotusTimer = self:GetChecked() end)
 mfpanel.ShowBlackLotusTimer.tooltipText = L["showBlackLotusTimer-tooltip"]
 
+mfpanel.ShowHonorPercentOnTooltip = CreateCheckButton("FarmLogOptions_ShowHonorPercentOnTooltip", mfpanel, L["showHonorPercentOnTooltip"])
+mfpanel.ShowHonorPercentOnTooltip:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "TOPLEFT", 0, -25)
+mfpanel.ShowHonorPercentOnTooltip:SetScript("OnClick", function(self) FLogGlobalVars.showHonorPercentOnTooltip = self:GetChecked() end)
+
 
 ----------------------------------------------
 -- Tracking
@@ -124,7 +128,7 @@ mfpanel.ShowBlackLotusTimer.tooltipText = L["showBlackLotusTimer-tooltip"]
 mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.TrackingCategoryTitle:SetFont(font, 16)
 mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
-mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "BOTTOMLEFT", 0, -20)
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowHonorPercentOnTooltip, "BOTTOMLEFT", 0, -20)
 
 mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
 mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
@@ -223,6 +227,7 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
 	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
 	InterfacePanel.MainFrame.ShowBlackLotusTimer:SetChecked(FLogGlobalVars.showBlackLotusTimer)
+	InterfacePanel.MainFrame.ShowHonorPercentOnTooltip:SetChecked(FLogGlobalVars.showHonorPercentOnTooltip)
 
 	InterfacePanel.MainFrame.TrackLoot:SetChecked(FLogGlobalVars.track.drops)
 	InterfacePanel.MainFrame.TrackKills:SetChecked(FLogGlobalVars.track.kills)

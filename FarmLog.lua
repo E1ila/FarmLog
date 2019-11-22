@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.4"
-local VERSION_INT = 1.1704
+﻿local VERSION = "1.17.5"
+local VERSION_INT = 1.1705
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -33,6 +33,14 @@ local VALUE_TYPE_COLOR = {
 	["V"] = "fbf9ed",
 	["0"] = "fb3300",
 	["?"] = "f3c0c0",
+}
+
+local HonorDRColor = {
+	[100] = "2bff00",
+	[75] = "99ff00",
+	[50] = "fffb00",
+	[25] = "ff9100",
+	[0] = "ff1900",
 }
 
 local SORT_BY_TEXT = "A"
@@ -141,6 +149,7 @@ FLogGlobalVars = {
 	dismissLootWindowOnEsc = false,
 	groupByMobName = true,
 	pauseOnLogin = true,
+	showHonorPercentOnTooltip = true,
 	instances = {},
 	blt = {}, -- BL timers
 	blp = {}, -- BL pick/fail counters
@@ -606,8 +615,9 @@ function FarmLog:Migrate()
 		}
 	end 
 
-	if FLogGlobalVars.ver < 1.1704 then 
+	if FLogGlobalVars.ver < 1.1705 then 
 		FLogGlobalVars.showBlackLotusTimer = true
+		FLogGlobalVars.showHonorPercentOnTooltip = true
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1506,35 +1516,48 @@ local HonorGainStrings = {
 	_G.COMBATLOG_HONORGAIN,
 }
 
+function FarmLog:EstimatedHonorPercent(unitName)
+	local timesKilledToday = FLogVars.todayKills[unitName] or 0
+	return 1 - min(0.25 * timesKilledToday, 1)
+end 
+
 function FarmLog:OnCombatHonorEvent(text)
 	debug("|cff999999OnCombatHonorEvent|r "..tostring(text))
+
+	local todayHKs = GetPVPSessionStats()
+	if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
+		-- new pvp day, reset diminishing returns 
+		FLogVars.todayKills = {}
+		out("PvP diminishing returns was reset.")
+	end 
+
 	local name = FLogDeformat(text, HonorGainStrings[1])
 	if name then 
-		if FLogGlobalVars.track.dks then 
+		if FLogVars.enabled and FLogGlobalVars.track.dks then 
 			IncreaseSessionVar("dks", 1)
 		end 
 	else 
 		local rank, honor
 		name, rank, honor = FLogDeformat(text, HonorGainStrings[2])
 		if name and #name > 0 then 
-			if FLogGlobalVars.track.hks then 
+			if FLogVars.enabled and FLogGlobalVars.track.hks then 
 				IncreaseSessionVar("hks", 1)
 			end 
 
-			if FLogGlobalVars.track.honor then 
-				-- count character kills for honor diminishing returns effect 
-				local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
-				FLogVars.todayKills[name] = timesKilledToday
+			-- count character kills for honor diminishing returns effect 
+			local honorDR = self:EstimatedHonorPercent(name)
+			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
+			FLogVars.todayKills[name] = timesKilledToday
 
+			if FLogVars.enabled and FLogGlobalVars.track.honor then 
 				if isPositive(honor) then 
-					local honorDR = 1 - min(0.25 * (timesKilledToday - 1), 1)
 					local adjustedHonor = math.floor(tonumber(honor) * honorDR)
 					IncreaseSessionVar("honor", adjustedHonor)
 					debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r estimated honor |cffff9900"..tostring(honor).."|r DR |cffff99ff"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
 				end 
 			end 
 
-			if FLogGlobalVars.track.ranks and rank and #rank > 0 then 
+			if FLogVars.enabled and FLogGlobalVars.track.ranks and rank and #rank > 0 then 
 				local sessionRanks = GetSessionVar("ranks", false)
 				sessionRanks[rank] = (sessionRanks[rank] or 0) + 1
 			end 	
@@ -1542,7 +1565,9 @@ function FarmLog:OnCombatHonorEvent(text)
 			debug("|cff999999OnCombatHonorEvent|r unrecognized honor event |cffff9900"..tostring(text))
 		end 
 	end 
-	FarmLog_MainWindow:Refresh()
+	if FLogVars.enabled then 
+		FarmLog_MainWindow:Refresh()
+	end 
 end 
 
 function FarmLog:OnPlayerDead()
@@ -2111,6 +2136,8 @@ function FarmLog:OnAddonLoaded()
 	-- Options UI
 	FarmLog.InterfacePanel:AddonLoaded()
 	FarmLog_HUD:DressUp()
+
+	FarmLog:HookTooltip()
 end 
 
 -- Entering World
@@ -2196,6 +2223,30 @@ function FarmLog:OnEnterCombat()
 	end 
 end 
 
+-- Tooltip extend --------------------------------------------------------------------------
+
+local OriginalOnTooltipSetUnit = nil 
+
+local function OnTooltipSetUnit(...)
+	OriginalOnTooltipSetUnit(GameTooltip, ...)
+
+	local _, unit = GameTooltip:GetUnit()
+	if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) then 
+		local name = UnitName(unit)
+		local honor = FarmLog:EstimatedHonorPercent(name) * 100
+		GameTooltip:AddLine("|cff"..HonorDRColor[honor]..honor.."% "..L["Honor"])
+	end 
+	
+	GameTooltip:Show()
+end
+
+function FarmLog:HookTooltip() 
+	if FLogGlobalVars.showHonorPercentOnTooltip and OriginalOnTooltipSetUnit == nil then
+		OriginalOnTooltipSetUnit = GameTooltip:GetScript("OnTooltipSetUnit") or false
+		GameTooltip:SetScript("OnTooltipSetUnit", OnTooltipSetUnit)
+	end
+end 
+
 -- Auction House Scan --------------------------------------------------------------------------
 
 function FarmLog:ScanAuctionHouse()
@@ -2279,22 +2330,11 @@ end
 -- OnEvent
 
 function FarmLog:OnEvent(event, ...)
-	
-	if event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
-		local todayHKs = GetPVPSessionStats()
-		if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
-			-- new pvp day, reset diminishing returns 
-			FLogVars.todayKills = {}
-			out("PvP diminishing returns was reset.")
-		end 
-	end 
 
 	if FLogVars.enabled then 
 		-- debug(event)
 		if event == "LOOT_OPENED" then
 			self:OnLootOpened(...)			
-		elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
-			self:OnCombatHonorEvent(...);			
 		elseif event == "CHAT_MSG_COMBAT_XP_GAIN" then 
 			self:OnCombatXPEvent(...);			
 		elseif event == "CHAT_MSG_SKILL" then 
@@ -2319,6 +2359,8 @@ function FarmLog:OnEvent(event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" then
 		self:OnEnteringWorld(...)
+	elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
+		self:OnCombatHonorEvent(...);			
 	elseif event == "CHAT_MSG_LOOT" then
 		if (... and (strfind(..., L["loot"]))) then
 			self:OnLootEvent(...)		
@@ -2354,14 +2396,10 @@ function FarmLog:OnUpdate()
 		end 
 	end 
 	if skillNameTime then 
-		if not skillName then 
+		local timeout = SKILL_LOOTWINDOW_OPEN_TIMEOUT[skillName or ""] or 0
+		if now - skillNameTime >= timeout then 
 			skillNameTime = nil 
-		else
-			local timeout = SKILL_LOOTWINDOW_OPEN_TIMEOUT[skillName] or 0
-			if now - skillNameTime >= timeout then 
-				skillNameTime = nil 
-				skillName = nil 
-			end 
+			skillName = nil 
 		end 
 	end 
 	if ahScanning then 
@@ -2913,7 +2951,8 @@ function FarmLog:UIError(event,msg)
 		-- Failed attempt
 		local now = time()
 		debug("|cff999999UIError|r msg |cffff9900"..tostring(msg).."|r skillTooltip1 |cffff9900"..tostring(skillTooltip1).."|r time delta |cffff9900"..tostring(now - skillNameTime))
-		if now - skillNameTime < SKILL_LOOTWINDOW_OPEN_TIMEOUT and skillTooltip1 == BL_ITEM_NAME then 
+		local timeout = SKILL_LOOTWINDOW_OPEN_TIMEOUT[skillName or ""] or 0
+		if now - skillNameTime < timeout and skillTooltip1 == BL_ITEM_NAME then 
 			-- failed picking BL
 			self:IncreaseBlackLotusPickStat("fail")
 		end 

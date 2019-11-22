@@ -60,6 +60,7 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.17.4
+    * Showing honor % to be received on enemy player tooltip! 
     * Fixed Fishing bug when loot was attributed to "Unknown", thanks https://github.com/aEnigmatic
     * Added integration with Auctionator for AH item value, thanks https://github.com/aEnigmatic
     * Supporting items with no AH nor vendor value (Mature Black Dragon Sinew, etc)
