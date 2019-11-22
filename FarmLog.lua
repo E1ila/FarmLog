@@ -1936,7 +1936,6 @@ function getItemValue(itemLink, vendorPrice)
 	end
 
 	vendorPrice = (vendorPrice or select(11, GetItemInfo(itemLink))) or 0;
-	debug("vendorPrice = "..vendorPrice.." for "..itemLink)
 
 	-- check if AH price (-15%) > vendor price + 1s
 	if isPositive(ahValue) and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) then
