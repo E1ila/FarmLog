@@ -112,6 +112,11 @@ mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.PauseOnLogin, "TOPLEF
 mfpanel.DismissLootWindowOnEsc:SetScript("OnClick", function(self) FLogGlobalVars.dismissLootWindowOnEsc = self:GetChecked() end)
 mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
 
+mfpanel.ShowBlackLotusTimer = CreateCheckButton("FarmLogOptions_ShowBlackLotusTimer", mfpanel, L["showBlackLotusTimer"])
+mfpanel.ShowBlackLotusTimer:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, "TOPLEFT", 0, -25)
+mfpanel.ShowBlackLotusTimer:SetScript("OnClick", function(self) FLogGlobalVars.showBlackLotusTimer = self:GetChecked() end)
+mfpanel.ShowBlackLotusTimer.tooltipText = L["showBlackLotusTimer-tooltip"]
+
 
 ----------------------------------------------
 -- Tracking
@@ -119,7 +124,7 @@ mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
 mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.TrackingCategoryTitle:SetFont(font, 16)
 mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
-mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, "BOTTOMLEFT", 0, -20)
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "BOTTOMLEFT", 0, -20)
 
 mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
 mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
@@ -196,11 +201,17 @@ mfpanel.ResetMinimapPositionButton:SetWidth(200)
 mfpanel.ResetMinimapPositionButton:SetText(L["Reset Minimap Icon Position"])
 mfpanel.ResetMinimapPositionButton:SetScript("OnClick", function(self) FarmLog_MinimapButton:ResetPosition() end)
 
-mfpanel.ResetLootWindowPositionButton = CreateFrame("Button", "FarmLogOptions_ResetButton", mfpanel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetLootWindowPositionButton = CreateFrame("Button", "FarmLogOptions_ResetLootWindowPositionButton", mfpanel, "FarmLogPanelButtonTemplate")
 mfpanel.ResetLootWindowPositionButton:SetPoint("TOPLEFT", mfpanel.ResetMinimapPositionButton, "TOPRIGHT", 10, 0)
 mfpanel.ResetLootWindowPositionButton:SetWidth(200)
 mfpanel.ResetLootWindowPositionButton:SetText(L["Reset Loot Window Position"])
 mfpanel.ResetLootWindowPositionButton:SetScript("OnClick", function(self) FarmLog_MainWindow:ResetPosition() end)
+
+mfpanel.ResetHUDPositionButton = CreateFrame("Button", "FarmLogOptions_ResetHUDPositionButton", mfpanel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetHUDPositionButton:SetPoint("TOPLEFT", mfpanel.ResetMinimapPositionButton, "BOTTOMLEFT", 0, -5)
+mfpanel.ResetHUDPositionButton:SetWidth(200)
+mfpanel.ResetHUDPositionButton:SetText(L["Reset HUD Position"])
+mfpanel.ResetHUDPositionButton:SetScript("OnClick", function(self) FarmLog_HUD:ResetPosition() end)
 
 
 ----------------------------------------------
@@ -211,6 +222,7 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
 	InterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
 	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
+	InterfacePanel.MainFrame.ShowBlackLotusTimer:SetChecked(FLogGlobalVars.showBlackLotusTimer)
 
 	InterfacePanel.MainFrame.TrackLoot:SetChecked(FLogGlobalVars.track.drops)
 	InterfacePanel.MainFrame.TrackKills:SetChecked(FLogGlobalVars.track.kills)

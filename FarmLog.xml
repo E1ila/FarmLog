@@ -540,6 +540,7 @@
         </Layers>
         <Scripts>
           <OnLoad>
+				    self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
             self.label = FarmLog_MainWindow_ToggleHUDButton_Text
           </OnLoad>
           <OnEnter>
@@ -549,7 +550,7 @@
             FarmLog_SetTextButtonBackdropColor(self, false)
           </OnLeave>
           <OnClick>
-            self:Clicked()
+            self:Clicked(button)
           </OnClick>
         </Scripts>
       </Button>      <!--$parent_ToggleHUDButton-->

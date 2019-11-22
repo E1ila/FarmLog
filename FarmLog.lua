@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.3"
-local VERSION_INT = 1.1703
+﻿local VERSION = "1.17.4"
+local VERSION_INT = 1.1704
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -134,6 +134,7 @@ FLogGlobalVars = {
 		locked = false,
 		show = false,
 	},
+	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
 	resumeSessionOnSwitch = true,
 	reportTo = {},
@@ -223,6 +224,7 @@ local sessionSearchResult = nil
 local addonLoadedTime = nil
 local blSeen = nil
 local lastHudDressUp = 0
+local hasBigwigs = false
 lastLootedMobs = {}
 
 local function out(text)
@@ -602,6 +604,10 @@ function FarmLog:Migrate()
 			locked = false,
 			show = false,
 		}
+	end 
+
+	if FLogGlobalVars.ver < 1.1704 then 
+		FLogGlobalVars.showBlackLotusTimer = true
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1840,15 +1846,38 @@ function FarmLog:SaveBLSeenTime()
 	debug("|cff999999SaveBLSeenTime|r blSeenTime |cffff9900"..blSeen.ts.."|r blSeenZone |cffff9900"..blSeen.zone)
 end 
 
+function FarmLog:CheckTimerAddons()
+	if FLogGlobalVars.showBlackLotusTimer then 
+		local bigwigsAddons = {'BigWigs_Core', 'BigWigs_Options', 'BigWigs_Plugins',}
+		hasBigwigs = true
+		for i=1, #bigwigsAddons do
+			if IsAddOnLoadOnDemand(bigwigsAddons[i]) then 
+				LoadAddOn(bigwigsAddons[i])
+			else 
+				if not IsAddOnLoaded(bigwigsAddons[i]) then
+					hasBigwigs = false
+					break
+				end
+			end 
+		end
+	end 
+end 
+
 function FarmLog:ShowBlackLotusTimers()
-	local now = time()
-	if DBM then 
+	if FLogGlobalVars.showBlackLotusTimer and (DBM or hasBigwigs) then 
+		local now = time()
 		for realmName, timers in pairs(FLogGlobalVars.blt) do 
 			if realmName == REALM then 
 				for zoneName, lastPick in pairs(timers) do 
 					local delta = now - lastPick
 					if delta < BL_SPAWN_TIME_SECONDS then 
-						DBM:CreatePizzaTimer(BL_SPAWN_TIME_SECONDS - delta, L["blacklotus-short"]..": "..zoneName)
+						local seconds = BL_SPAWN_TIME_SECONDS - delta
+						local text = L["blacklotus-short"]..": "..zoneName
+						if DBM then 
+							DBM:CreatePizzaTimer(seconds, text)
+						else 
+							SlashCmdList.BIGWIGSLOCALBAR(seconds.." "..text)
+						end 
 					end 
 				end 
 			end 
@@ -2340,6 +2369,7 @@ function FarmLog:OnUpdate()
 	end 
 	if addonLoadedTime and time() - addonLoadedTime > BL_TIMERS_DELAY then 
 		addonLoadedTime = nil 
+		self:CheckTimerAddons()
 		self:ShowBlackLotusTimers()
 	end 
 	if GameTooltip:IsShown() then
@@ -2728,8 +2758,14 @@ function FarmLog_MainWindow_NewSessionButton:Clicked()
 	FarmLog:NewSession()
 end 
 
-function FarmLog_MainWindow_ToggleHUDButton:Clicked() 
-	FLogGlobalVars.hud.show = not FLogGlobalVars.hud.show
+function FarmLog_MainWindow_ToggleHUDButton:Clicked(button) 
+	if button == "RightButton" then 
+		FarmLog_HUD:ResetPosition()
+		FLogGlobalVars.hud.show = true 
+	else 
+		FLogGlobalVars.hud.show = not FLogGlobalVars.hud.show
+	end 
+
 	self.selected = FLogGlobalVars.hud.show
 	if FLogGlobalVars.hud.show then 
 		if not FLogGlobalVars.hud.resetOnce then 

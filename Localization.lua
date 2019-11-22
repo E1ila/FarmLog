@@ -118,6 +118,8 @@ function FarmLog_BuildLocalization(context)
     L["Mobs Kill Count"] = "Mobs Kill Count"
     L["pauseOnLogin"] = "Pause Session On Login"
     L["new-farm-help"] = "Create a new farm, will use the name in search box"
+    L["Reset HUD Position"] = "Reset HUD Position"
+    L["showBlackLotusTimer"] = "Black Lotus Timer"
     if (GetLocale() == "enUS") then
     end
     return L

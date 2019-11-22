@@ -59,10 +59,11 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
-* 1.17.3
+* 1.17.4
     * Fixed Fishing bug when loot was attributed to "Unknown", thanks https://github.com/aEnigmatic
     * Added integration with Auctionator for AH item value, thanks https://github.com/aEnigmatic
     * Supporting items with no AH nor vendor value (Mature Black Dragon Sinew, etc)
+    * Supporting BigWigs for Black Lotus timer
 * 1.17.2
     * Added XP/hour, contribution by github.com/Tanoh
     * Fixed crash for unknown XP & money loot events
@@ -186,3 +187,4 @@ Another thing is that the more time & data you have per session, the more accura
 * Allow scanning using a UI button
 * Add diminishing returns to target tooltip
 * Format numbers with thosands separator
+* Show honor in last 10 seconds
