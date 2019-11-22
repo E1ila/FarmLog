@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.5"
-local VERSION_INT = 1.1705
+﻿local VERSION = "1.17.7"
+local VERSION_INT = 1.1707
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -2235,7 +2235,7 @@ local function OnTooltipSetUnit(...)
 	OriginalOnTooltipSetUnit(GameTooltip, ...)
 
 	local _, unit = GameTooltip:GetUnit()
-	if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) then 
+	if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) and UnitLevel(unit) >= UnitLevel("player") - 10 then 
 		local name = UnitName(unit)
 		local honor = FarmLog:EstimatedHonorPercent(name) * 100
 		GameTooltip:AddLine("|cff"..HonorDRColor[honor]..honor.."% "..L["Honor"])
