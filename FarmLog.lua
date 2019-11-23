@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.7"
-local VERSION_INT = 1.1707
+﻿local VERSION = "1.17.8"
+local VERSION_INT = 1.1708
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -51,6 +51,7 @@ local SORT_BY_USE = "U"
 local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
 local HUD_DRESSUP_TIME = 60
+local HONOR_FRENZY_UPTIME = 10
 
 local TEXT_COLOR = {
 	["xp"] = "6a78f9",
@@ -150,6 +151,7 @@ FLogGlobalVars = {
 	groupByMobName = true,
 	pauseOnLogin = true,
 	showHonorPercentOnTooltip = true,
+	showHonorFrenzyCounter = true,
 	instances = {},
 	blt = {}, -- BL timers
 	blp = {}, -- BL pick/fail counters
@@ -234,6 +236,11 @@ local addonLoadedTime = nil
 local blSeen = nil
 local lastHudDressUp = 0
 local hasBigwigs = false
+local honorFrenzySetTime = nil 
+local honorFrenzyTotal = 0
+local honorFrenzyKills = 0
+local honorFrenzyTest = false
+
 lastLootedMobs = {}
 
 local function out(text)
@@ -625,6 +632,10 @@ function FarmLog:Migrate()
 	if FLogGlobalVars.ver < 1.1705 then 
 		FLogGlobalVars.showBlackLotusTimer = true
 		FLogGlobalVars.showHonorPercentOnTooltip = true
+	end 
+
+	if FLogGlobalVars.ver < 1.1708 then 
+		FLogGlobalVars.showHonorFrenzyCounter = true		
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1560,12 +1571,15 @@ function FarmLog:OnCombatHonorEvent(text)
 			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
 			FLogVars.todayKills[name] = timesKilledToday
 
-			if FLogVars.enabled and FLogGlobalVars.track.honor then 
-				if isPositive(honor) then 
-					local adjustedHonor = math.floor(tonumber(honor) * honorDR)
-					IncreaseSessionVar("honor", adjustedHonor)
-					debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r estimated honor |cffff9900"..tostring(honor).."|r DR |cffff99ff"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
+			if isPositive(honor) then 
+				local adjustedHonor = math.floor(tonumber(honor) * honorDR)
+				if FLogGlobalVars.showHonorFrenzyCounter then 
+					FarmLog_HonorFrenzyMeter:Add(adjustedHonor)
 				end 
+				if FLogVars.enabled and FLogGlobalVars.track.honor then 
+					IncreaseSessionVar("honor", adjustedHonor)
+				end 
+				debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r estimated honor |cffff9900"..tostring(honor).."|r DR |cffff99ff"..tostring(honorDR).."|r adjusted |cffff9900"..adjustedHonor)
 			end 
 
 			if FLogVars.enabled and FLogGlobalVars.track.ranks and rank and #rank > 0 then 
@@ -2430,6 +2444,18 @@ function FarmLog:OnUpdate()
 			self:ParseMinimapTooltip()
 		end 
 	end
+	if honorFrenzySetTime and now - honorFrenzySetTime >= HONOR_FRENZY_UPTIME then 
+		if FarmLog_HonorFrenzyMeter:GetAlpha() > 0 then 
+			UIFrameFadeOut(FarmLog_HonorFrenzyMeter, 1, 1, 0)
+		end 
+		honorFrenzySetTime = nil 
+		honorFrenzyTotal = 0
+		honorFrenzyKills = 0
+		if honorFrenzyTest then 
+			FarmLog_HonorFrenzyMeter:SetBackdropColor(0, 0, 0, 0)
+			honorFrenzyTest = false
+		end 
+	end 
 	if FLogPlayerAlert and UnitPlayerControlled("mouseover") then 
 		local name = UnitName("mouseover") 
 		if name ~= lastPlayerChecked then 
@@ -2958,6 +2984,26 @@ function FarmLog_MainWindow_Buttons_Instances:MouseLeave()
 	GameTooltip_Hide();
 end 
 
+
+-- Honor frenzy counter
+
+function FarmLog_HonorFrenzyMeter:Add(honor, test)
+	if test then 
+		self:SetBackdropColor(0, 0, 0, 0.5)
+		honorFrenzyTest = true
+	end 
+	if honorFrenzyTotal > 0 or test then 
+		self:Show()
+		if self:GetAlpha() == 0 then 
+			UIFrameFadeIn(self, 0.1, 0, 1)
+		end 
+	end 
+	honorFrenzyKills = honorFrenzyKills + 1
+	honorFrenzyTotal = honorFrenzyTotal + honor
+	FarmLog_HonorFrenzyMeter_Text:SetText(numberToString(honorFrenzyTotal))
+	FarmLog_HonorFrenzyMeter_Kills_Text:SetText(tostring(honorFrenzyKills))
+	honorFrenzySetTime = time()
+end 
 
 -- UI errors
 

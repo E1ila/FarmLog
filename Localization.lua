@@ -103,7 +103,7 @@ function FarmLog_BuildLocalization(context)
     L["autoSwitchInstances-tooltip"] = "When entering an instance, automatic change and resume session; pause when leaving the instance"
     L["resumeSessionOnSwitch"] = "Resume session on selection"
     L["resumeSessionOnSwitch-tooltip"] = "Auto resume a farm session when chosen from All Farms list"
-    L["dismissLootWindowOnEsc"] = "Dismiss loot window on ESC (requires reload)"
+    L["dismissLootWindowOnEsc"] = "Dismiss log window on ESC (requires reload)"
     L["dismissLootWindowOnEsc-tooltip"] = "Should dismiss FarmLog loot window when pressing ESC"
     L["Reset Loot Window Position"] = "Reset Loot Window Position"
     L["Reset Minimap Icon Position"] = "Reset Minimap Icon Position"
@@ -121,6 +121,9 @@ function FarmLog_BuildLocalization(context)
     L["showHonorPercentOnTooltip"] = "Show honor % on enemy target's tooltip (requires reload)"
     L["new-farm-help"] = "Create a new farm, will use the name in search box"
     L["Reset HUD Position"] = "Reset HUD Position"
+    L["PvP"] = "PvP"
+    L["Move Honor Frenzy Frame"] = "Move Honor Frenzy Frame"
+    L["showHonorFrenzyCounter"] = "Show Honor Frenzy Count"
     if (GetLocale() == "enUS") then
     end
     return L

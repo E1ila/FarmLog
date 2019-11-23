@@ -59,6 +59,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.17.8
+    * Honor frenzy count! Shows how many you've killed in a row and how much honor it yielded.
 * 1.17.7
     * Numbers bigger than 999 will use a thusands separator
     * Using known vendor price when recalculating profit, this fixes some vendor items with no value due wow API thottle

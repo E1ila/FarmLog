@@ -117,10 +117,6 @@ mfpanel.ShowBlackLotusTimer:SetPoint("TOPLEFT", mfpanel.DismissLootWindowOnEsc, 
 mfpanel.ShowBlackLotusTimer:SetScript("OnClick", function(self) FLogGlobalVars.showBlackLotusTimer = self:GetChecked() end)
 mfpanel.ShowBlackLotusTimer.tooltipText = L["showBlackLotusTimer-tooltip"]
 
-mfpanel.ShowHonorPercentOnTooltip = CreateCheckButton("FarmLogOptions_ShowHonorPercentOnTooltip", mfpanel, L["showHonorPercentOnTooltip"])
-mfpanel.ShowHonorPercentOnTooltip:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "TOPLEFT", 0, -25)
-mfpanel.ShowHonorPercentOnTooltip:SetScript("OnClick", function(self) FLogGlobalVars.showHonorPercentOnTooltip = self:GetChecked() end)
-
 
 ----------------------------------------------
 -- Tracking
@@ -128,7 +124,7 @@ mfpanel.ShowHonorPercentOnTooltip:SetScript("OnClick", function(self) FLogGlobal
 mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.TrackingCategoryTitle:SetFont(font, 16)
 mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
-mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowHonorPercentOnTooltip, "BOTTOMLEFT", 0, -20)
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "BOTTOMLEFT", 0, -20)
 
 mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
 mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
@@ -190,6 +186,28 @@ mfpanel.TrackMoney:SetPoint("TOPLEFT", mfpanel.TrackConsumes, "TOPLEFT", 0, -25)
 mfpanel.TrackMoney:SetScript("OnClick", function(self) SetTrackFlag("money", self:GetChecked()) end)
 
 
+----------------------------------------------
+-- PvP
+----------------------------------------------
+mfpanel.AppearanceCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.AppearanceCategoryTitle:SetFont(font, 16)
+mfpanel.AppearanceCategoryTitle:SetText(L["PvP"])
+mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.TrackMoney, "BOTTOMLEFT", 0, -20)
+
+mfpanel.ShowHonorPercentOnTooltip = CreateCheckButton("FarmLogOptions_ShowHonorPercentOnTooltip", mfpanel, L["showHonorPercentOnTooltip"])
+mfpanel.ShowHonorPercentOnTooltip:SetPoint("TOPLEFT", mfpanel.AppearanceCategoryTitle, "TOPLEFT", 0, -25)
+mfpanel.ShowHonorPercentOnTooltip:SetScript("OnClick", function(self) FLogGlobalVars.showHonorPercentOnTooltip = self:GetChecked() end)
+
+mfpanel.ShowHonorFrenzyCounter = CreateCheckButton("FarmLogOptions_ShowHonorFrenzy", mfpanel, L["showHonorFrenzyCounter"])
+mfpanel.ShowHonorFrenzyCounter:SetPoint("TOPLEFT", mfpanel.ShowHonorPercentOnTooltip, "TOPLEFT", 0, -25)
+mfpanel.ShowHonorFrenzyCounter:SetScript("OnClick", function(self) FLogGlobalVars.showHonorFrenzyCounter = self:GetChecked() end)
+
+mfpanel.MoveHonorFrenzyButton = CreateFrame("Button", "FarmLogOptions_MoveHonorFrenzyButton", mfpanel, "FarmLogPanelButtonTemplate")
+mfpanel.MoveHonorFrenzyButton:SetPoint("TOPLEFT", mfpanel.ShowHonorFrenzyCounter, "BOTTOMLEFT", -0, -5)
+mfpanel.MoveHonorFrenzyButton:SetWidth(200)
+mfpanel.MoveHonorFrenzyButton:SetText(L["Move Honor Frenzy Frame"])
+mfpanel.MoveHonorFrenzyButton:SetScript("OnClick", function(self) FarmLog_HonorFrenzyMeter:Add(100, true) end)
+
 
 ----------------------------------------------
 -- Appearance
@@ -197,7 +215,7 @@ mfpanel.TrackMoney:SetScript("OnClick", function(self) SetTrackFlag("money", sel
 mfpanel.AppearanceCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.AppearanceCategoryTitle:SetFont(font, 16)
 mfpanel.AppearanceCategoryTitle:SetText(L["Appearance"])
-mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.TrackMoney, "BOTTOMLEFT", 0, -20)
+mfpanel.AppearanceCategoryTitle:SetPoint("TOPLEFT", mfpanel.MoveHonorFrenzyButton, "BOTTOMLEFT", 0, -20)
 
 mfpanel.ResetMinimapPositionButton = CreateFrame("Button", "FarmLogOptions_ResetMinimapPositionButton", mfpanel, "FarmLogPanelButtonTemplate")
 mfpanel.ResetMinimapPositionButton:SetPoint("TOPLEFT", mfpanel.AppearanceCategoryTitle, "BOTTOMLEFT", -0, -10)
@@ -228,6 +246,7 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
 	InterfacePanel.MainFrame.ShowBlackLotusTimer:SetChecked(FLogGlobalVars.showBlackLotusTimer)
 	InterfacePanel.MainFrame.ShowHonorPercentOnTooltip:SetChecked(FLogGlobalVars.showHonorPercentOnTooltip)
+	InterfacePanel.MainFrame.ShowHonorFrenzyCounter:SetChecked(FLogGlobalVars.showHonorFrenzyCounter)
 
 	InterfacePanel.MainFrame.TrackLoot:SetChecked(FLogGlobalVars.track.drops)
 	InterfacePanel.MainFrame.TrackKills:SetChecked(FLogGlobalVars.track.kills)

@@ -202,6 +202,78 @@
     <HighlightTexture inherits="UIPanelButtonHighlightTexture"/>
   </Button>
 
+
+  <Frame name="FarmLog_HonorFrenzyMeter" parent="UIParent" enableMouse="true" movable="true">
+    <Size>
+      <AbsDimension x="140" y="40"/>
+    </Size>
+    <Anchors>
+      <Anchor point="TOP" x="0" y="-30" />
+    </Anchors>
+    <Scripts>
+      <OnLoad>
+        self:SetAlpha(0)
+   			self:SetBackdropColor (0, 0, 0, 0)
+    		self:SetBackdropBorderColor(0, 0, 0, 0)
+        self:RegisterForDrag("LeftButton")
+      </OnLoad>
+      <OnDragStart>
+        self:StartMoving()
+      </OnDragStart>
+      <OnDragStop>
+        self:StopMovingOrSizing()
+      </OnDragStop>
+    </Scripts>
+    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
+      <EdgeSize>
+        <AbsValue val="1"></AbsValue>
+      </EdgeSize>
+      <TileSize>
+        <AbsValue val="16" />
+      </TileSize>
+    </Backdrop>
+    <Layers>
+      <Layer level="ARTWORK">
+        <FontString name="$parent_Text" font="Fonts\FRIZQT___CYR.TTF" outline="THICK" text="1,200">
+          <Color r="1" g="0.9" b="0.38"/>
+          <FontHeight>
+            <AbsValue val="20"/>
+          </FontHeight>
+          <Anchors>
+            <Anchor point="BOTTOM" x="25" y="2" />
+          </Anchors>
+        </FontString>
+        <FontString name="$parent_Title" font="Fonts\FRIZQT___CYR.TTF" outline="THICK" text="Honor">
+          <Color r="0.88" g="0.78" b="0.23"/>
+          <FontHeight>
+            <AbsValue val="10"/>
+          </FontHeight>
+          <Anchors>
+            <Anchor point="BOTTOM" relativeTo="$parent_Text" relativePoint="TOP" x="0" y="2" />
+          </Anchors>
+        </FontString>
+        <FontString name="$parent_Kills_Text" font="Fonts\FRIZQT___CYR.TTF" outline="THICK" text="1,200">
+          <Color r="1" g="0.9" b="0.38"/>
+          <FontHeight>
+            <AbsValue val="20"/>
+          </FontHeight>
+          <Anchors>
+            <Anchor point="BOTTOM" x="-35" y="2" />
+          </Anchors>
+        </FontString>
+        <FontString name="$parent_Kills_Title" font="Fonts\FRIZQT___CYR.TTF" outline="THICK" text="Kills">
+          <Color r="0.88" g="0.78" b="0.23"/>
+          <FontHeight>
+            <AbsValue val="10"/>
+          </FontHeight>
+          <Anchors>
+            <Anchor point="BOTTOM" relativeTo="$parent_Kills_Text" relativePoint="TOP" x="0" y="2" />
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+  </Frame>
+
   <!-- Minimap Button -->
 
   <Button name="FarmLog_MinimapButton" parent="Minimap" frameStrata="LOW" enableMouse="true" movable="true">
