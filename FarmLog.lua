@@ -1543,15 +1543,19 @@ function FarmLog:EstimatedHonorPercent(unitName)
 	return 1 - min(0.25 * timesKilledToday, 1)
 end 
 
-function FarmLog:OnCombatHonorEvent(text)
-	debug("|cff999999OnCombatHonorEvent|r "..tostring(text))
-
+function FarmLog:CheckPvPDayReset()
 	local todayHKs = GetPVPSessionStats()
 	if todayHKs == 0 and next(FLogVars.todayKills) ~= nil then 
 		-- new pvp day, reset diminishing returns 
 		FLogVars.todayKills = {}
-		out("PvP diminishing returns was reset.")
+		debug("PvP diminishing returns was reset.")
 	end 
+end 
+
+function FarmLog:OnCombatHonorEvent(text)
+	debug("|cff999999OnCombatHonorEvent|r "..tostring(text))
+
+	FarmLog:CheckPvPDayReset()
 
 	local name = FLogDeformat(text, HonorGainStrings[1])
 	if name then 
@@ -2161,6 +2165,8 @@ function FarmLog:OnAddonLoaded()
 			end 
 		end 
 	end 
+
+	FarmLog:CheckPvPDayReset()
 
 	-- Options UI
 	FarmLog.InterfacePanel:AddonLoaded()
