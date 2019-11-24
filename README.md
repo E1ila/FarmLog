@@ -64,6 +64,7 @@ Another thing is that the more time & data you have per session, the more accura
     * Added `/farm` command to toggle session active/paused.
     * Starting a new session will enable Current session view
     * Diminishing returns reset is checked upon login as well, for Honor % tooltip
+    * Disabled mouse interaction of Honor Frenzy frame
 * 1.17.8
     * Honor frenzy count! Shows how many you've killed in a row and how much honor it yielded.
 * 1.17.7

@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.9"
-local VERSION_INT = 1.1709
+﻿local VERSION = "1.17.10"
+local VERSION_INT = 1.1710
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -2463,6 +2463,7 @@ function FarmLog:OnUpdate()
 		honorFrenzyTotal = 0
 		honorFrenzyKills = 0
 		if honorFrenzyTest then 
+			FarmLog_HonorFrenzyMeter:EnableMouse(false)
 			FarmLog_HonorFrenzyMeter:SetBackdropColor(0, 0, 0, 0)
 			honorFrenzyTest = false
 		end 
@@ -3009,6 +3010,7 @@ end
 
 function FarmLog_HonorFrenzyMeter:Add(honor, test)
 	if test then 
+		self:EnableMouse(true)
 		self:SetBackdropColor(0, 0, 0, 0.5)
 		honorFrenzyTest = true
 	end 

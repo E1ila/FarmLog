@@ -203,7 +203,7 @@
   </Button>
 
 
-  <Frame name="FarmLog_HonorFrenzyMeter" parent="UIParent" enableMouse="true" movable="true">
+  <Frame name="FarmLog_HonorFrenzyMeter" parent="UIParent" enableMouse="false" movable="true">
     <Size>
       <AbsDimension x="140" y="40"/>
     </Size>
@@ -216,6 +216,7 @@
    			self:SetBackdropColor (0, 0, 0, 0)
     		self:SetBackdropBorderColor(0, 0, 0, 0)
         self:RegisterForDrag("LeftButton")
+        self:EnableMouse(false)
       </OnLoad>
       <OnDragStart>
         self:StartMoving()
