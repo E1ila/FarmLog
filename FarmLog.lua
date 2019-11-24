@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.8"
-local VERSION_INT = 1.1708
+﻿local VERSION = "1.17.9"
+local VERSION_INT = 1.1709
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -2205,7 +2205,12 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 		FLogVars.inInstance = true
 		FLogVars.instanceName = instanceName
 		if FLogGlobalVars.autoSwitchInstances then 
-			self:SwitchFarm(instanceName, true, true)
+			local farm = FLogVars.farms[FLogVars.currentFarm]
+			if farm.instanceName == instanceName then 
+				self:ResumeSession()
+			else 
+				self:SwitchFarm(instanceName, true, true)
+			end
 		end 
 		if FLogGlobalVars.track.resets then 
 			local lastInstance, lastIndex = self:GetLastInstance(instanceName)
@@ -3035,9 +3040,14 @@ end
 
 -- Slash Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-SLASH_LH1 = "/farmlog";
-SLASH_LH2 = "/fl";
-SlashCmdList.LH = function(msg)
+SLASH_FARMLOGTOGGLE1 = "/farm";
+SlashCmdList.FARMLOGTOGGLE = function(msg)
+	FarmLog:ToggleLogging()
+end 
+
+SLASH_FARMLOG1 = "/farmlog";
+SLASH_FARMLOG2 = "/fl";
+SlashCmdList.FARMLOG = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$")
 	if not cmd then
 		-- FarmLog:ToggleLogging()

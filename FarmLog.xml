@@ -617,9 +617,13 @@
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+            GameTooltip:SetText(FarmLog.L["sort-hud-help"])
+            GameTooltip:Show()
           </OnEnter>
           <OnLeave>
             FarmLog_SetTextButtonBackdropColor(self, false)
+            GameTooltip_Hide()
           </OnLeave>
           <OnClick>
             self:Clicked(button)
