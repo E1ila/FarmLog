@@ -2788,6 +2788,7 @@ function FarmLog_MainWindow_Buttons_ToggleCurrentButton:Clicked()
 	self.selected = not FLogVars.viewTotal
 	FarmLog_MainWindow:Refresh()
 	FarmLog_MainWindow:UpdateTitle()
+	FarmLog_SetTextButtonBackdropColor(self, true)
 end 
 
 function FarmLog_MainWindow_Buttons_ToggleCurrentButton:MouseEnter()
@@ -2834,12 +2835,20 @@ function FarmLog_MainWindow_ClearButton:Clicked()
 	FarmLog:AskQuestion(L["clear-session-title"], L["clear-session-question"], function() 
 		FarmLog:ClearSession()
 		FarmLog_QuestionDialog:Hide()
+		if FLogVars.viewTotal then 
+			-- starting a new session will do nothing if current session isn't toggled
+			FarmLog_MainWindow_Buttons_ToggleCurrentButton:Clicked() 
+		end 
 	end)
 end 
 
 function FarmLog_MainWindow_NewSessionButton:Clicked()
 	if self.disabled then return end 
 	FarmLog:NewSession()
+	if FLogVars.viewTotal then 
+		-- starting a new session will do nothing if current session isn't toggled
+		FarmLog_MainWindow_Buttons_ToggleCurrentButton:Clicked() 
+	end 
 end 
 
 function FarmLog_MainWindow_ToggleHUDButton:Clicked(button) 

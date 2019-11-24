@@ -62,6 +62,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.17.9
     * With Auto Instance Switch enabled, FarmLog will now resume a session if current farm is an instance farm. When choosing a farm that's used in an instance, it'll bind the farm session to that instance and from that moment on, when you enter that instance while on this farm session, the addon will just resume it, instead of switching to "Dire Maul" farm. If FarmLog is set to another session, not related to DM, it will switch to "Dire Maul" farm session once you go into DM. Hope I explained it well, if not - just try and see how it works.
     * Added `/farm` command to toggle session active/paused.
+    * Starting a new session will enable Current session view
 * 1.17.8
     * Honor frenzy count! Shows how many you've killed in a row and how much honor it yielded.
 * 1.17.7
