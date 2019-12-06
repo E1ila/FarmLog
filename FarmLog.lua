@@ -1,5 +1,5 @@
-﻿local VERSION = "1.17.10"
-local VERSION_INT = 1.1710
+﻿local VERSION = "1.18"
+local VERSION_INT = 1.1800
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -65,6 +65,7 @@ local TEXT_COLOR = {
 	["deaths"] = "ee3333",
 	["gathering"] = "38c98d",
 	["unknown"] = "888888",
+	["consumes"] = "3ddb9f",
 }
 
 TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
@@ -72,6 +73,7 @@ TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Fishing"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[UNKNOWN_MOBNAME] = TEXT_COLOR["unknown"]
+TEXT_COLOR[CONSUMES_MOBNAME] = TEXT_COLOR["consumes"]
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
@@ -640,6 +642,13 @@ function FarmLog:Migrate()
 
 	if FLogGlobalVars.ver < 1.1708 then 
 		FLogGlobalVars.showHonorFrenzyCounter = true		
+	end 
+
+	if FLogVars.ver < 1.1800 then 
+		for _, farm in pairs(FLogVars.farms) do 
+			if not farm.current.consumes then farm.current.consumes = {} end 
+			if not farm.past.consumes then farm.past.consumes = {} end 
+		end 
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1218,31 +1227,40 @@ function FarmLog_MainWindow:Refresh()
 		end
 	end 
 
+	local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
+	local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
+	local extractLink = function (link) return GetItemInfo(link) or link end  
+	local valueIndex = DROP_META_INDEX_VALUE
+	if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
+
+	local addDropRows = function (dropMap, indent) 
+		local sortedItemLinks = SortMapKeys(dropMap, not sortLinksByText, not sortLinksByText, extractLink, extractGold)
+		for _, itemLink in ipairs(sortedItemLinks) do			
+			if not FLogGlobalVars.ignoredItems[itemLink] then 
+				local meta = dropMap[itemLink]
+				local colorType = meta[DROP_META_INDEX_VALUE_TYPE] or "?"
+				local color = VALUE_TYPE_COLOR[colorType]
+				-- debug("|cff999999FarmLog_MainWindow:Refresh|r link |cffff9900"..itemLink.."|r color |cffff9900"..color.."|r")
+				local text = itemLink
+				if indent then text = "    "..text end 
+				local row = self:AddRow(text, GetShortCoinTextureString(meta[valueIndex]), meta[DROP_META_INDEX_COUNT], nil, color)
+				SetItemTooltip(row, itemLink)
+				SetItemActions(row, self:GetOnLogItemClick(itemLink))
+				row.root:Show();
+			end 
+		end		
+	end 
+
+	if FLogGlobalVars.track.consumes then 
+		local sessionConsumes = GetSessionVar("consumes", FLogVars.viewTotal, nil, mergeDrops)
+		if sessionConsumes[CONSUMES_MOBNAME] then 
+			self:AddRow(CONSUMES_MOBNAME, nil, 1, TEXT_COLOR[CONSUMES_MOBNAME])
+			addDropRows(sessionConsumes[CONSUMES_MOBNAME] or {}, true)
+		end 
+	end 
+
 	if FLogGlobalVars.track.kills and not pvpMode then 
 		local sessionDrops = GetSessionVar("drops", FLogVars.viewTotal, nil, mergeDrops)
-		local sortLinksByText = FLogGlobalVars.sortBy == SORT_BY_TEXT or FLogGlobalVars.sortBy == SORT_BY_KILLS
-		local extractGold = function (meta) return meta[DROP_META_INDEX_VALUE] end  
-		local extractLink = function (link) return GetItemInfo(link) or link end  
-		local valueIndex = DROP_META_INDEX_VALUE
-		if IsShiftKeyDown() then valueIndex = DROP_META_INDEX_VALUE_EACH end 
-
-		local addDropRows = function (dropMap, indent) 
-			local sortedItemLinks = SortMapKeys(dropMap, not sortLinksByText, not sortLinksByText, extractLink, extractGold)
-			for _, itemLink in ipairs(sortedItemLinks) do			
-				if not FLogGlobalVars.ignoredItems[itemLink] then 
-					local meta = dropMap[itemLink]
-					local colorType = meta[DROP_META_INDEX_VALUE_TYPE] or "?"
-					local color = VALUE_TYPE_COLOR[colorType]
-					-- debug("|cff999999FarmLog_MainWindow:Refresh|r link |cffff9900"..itemLink.."|r color |cffff9900"..color.."|r")
-					local text = itemLink
-					if indent then text = "    "..text end 
-					local row = self:AddRow(text, GetShortCoinTextureString(meta[valueIndex]), meta[DROP_META_INDEX_COUNT], nil, color)
-					SetItemTooltip(row, itemLink)
-					SetItemActions(row, self:GetOnLogItemClick(itemLink))
-					row.root:Show();
-				end 
-			end		
-		end 
 
 		if FLogGlobalVars.groupByMobName then 
 			local sessionKills = GetSessionVar("kills", FLogVars.viewTotal)
@@ -1543,7 +1561,7 @@ function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
 		-- item has/had to be in bags for get by name to work
 		local _, itemLink, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(buffmeta.item)
 		if itemLink then 
-			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice)
+			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice, "consumes")
 			FarmLog_MainWindow:Refresh()
 		else 
 			debug("Could not fetch item link for "..buffmeta.item)
@@ -1987,20 +2005,20 @@ end
 
 -- Loot receive event
 
-function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, mul)
-	if not mul then mul = 1 end 
-	if not FLogGlobalVars.track.drops or not mobName or not itemLink or not count then return end 
+function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section)
+	section = section or "drops"
+	if not FLogGlobalVars.track[section] or not mobName or not itemLink or not count then return end 
 
 	local value, priceType = getItemValue(itemLink, vendorPrice)
 
 	if priceType == VALUE_TYPE_VENDOR then
-		IncreaseSessionVar("vendor", value * count * mul)
+		IncreaseSessionVar("vendor", value * count)
 	elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
-		IncreaseSessionVar("ah", value * count * mul)
+		IncreaseSessionVar("ah", value * count)
 	end 
 	debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
 
-	local sessionDrops = GetSessionVar("drops", false)
+	local sessionDrops = GetSessionVar(section, false)
 	if not sessionDrops[mobName] then		
 		sessionDrops[mobName] = {}
 	end 
@@ -2009,11 +2027,11 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, mul)
 		debug("|cff999999FarmLog:InsertLoot|r meta |cffff9900"..meta[1]..","..tostring(meta[2])..","..tostring(meta[3])..","..tostring(meta[4]))
 		local totalCount = meta[DROP_META_INDEX_COUNT] + count
 		meta[DROP_META_INDEX_COUNT] = totalCount
-		meta[DROP_META_INDEX_VALUE] = value * totalCount * mul
-		meta[DROP_META_INDEX_VALUE_EACH] = value * mul
+		meta[DROP_META_INDEX_VALUE] = value * totalCount
+		meta[DROP_META_INDEX_VALUE_EACH] = value
 		meta[DROP_META_INDEX_VALUE_TYPE] = priceType				
 	else
-		sessionDrops[mobName][itemLink] = {count, value * count * mul, value * mul, priceType}
+		sessionDrops[mobName][itemLink] = {count, value * count, value, priceType}
 	end
 end
 
