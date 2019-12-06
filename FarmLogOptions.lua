@@ -70,7 +70,7 @@ panel.DividerLine:SetPoint("TOPLEFT", panel.Label, "BOTTOMLEFT", -6, -8)
 -- Main Scrolled Frame
 ------------------------------
 panel.MainFrame = CreateFrame("Frame")
-panel.MainFrame:SetWidth(412)
+panel.MainFrame:SetWidth(500)
 panel.MainFrame:SetHeight(100) 		-- If the items inside the frame overflow, it automatically adjusts the height.
 
 -- Scrollable Panel Window
