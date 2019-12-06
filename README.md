@@ -59,6 +59,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.18
+    * Consumes tracking! Will now log all (hopefully) consumes you've been using in your session. Their value will be deducted from the vendor price, thus affecting GPH. You can disable it from the options screen (`/fl`), or manually adjust consumes prices with `/fl set [Item Link] 1` to set an item's price to 1 gold, it'll try to use Auctionator or TSM price first. If you find any missing consume, feel free to report in https://github.com/E1ila/FarmLog
 * 1.17.9
     * With Auto Instance Switch enabled, FarmLog will now resume a session if current farm is an instance farm. When choosing a farm that's used in an instance, it'll bind the farm session to that instance and from that moment on, when you enter that instance while on this farm session, the addon will just resume it, instead of switching to "Dire Maul" farm. If FarmLog is set to another session, not related to DM, it will switch to "Dire Maul" farm session once you go into DM. Hope I explained it well, if not - just try and see how it works.
     * Added `/farm` command to toggle session active/paused.
