@@ -1929,7 +1929,7 @@ function FarmLog:ShowBlackLotusTimers()
 						local text = L["blacklotus-short"]..": "..zoneName
 						if DBM then 
 							DBM:CreatePizzaTimer(seconds, text)
-						else 
+						elseif SlashCmdList.BIGWIGSLOCALBAR then 
 							SlashCmdList.BIGWIGSLOCALBAR(seconds.." "..text)
 						end 
 					end 

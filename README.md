@@ -205,3 +205,4 @@ Another thing is that the more time & data you have per session, the more accura
 * Show honor in last 10 seconds
 * Allow to show specific lines from log in HUD
 * Allow tracking rested XP
+* Disable using AH prices
