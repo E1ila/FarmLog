@@ -1800,7 +1800,7 @@ function FarmLog:OnLootOpened(autoLoot)
 		local sessionKills = GetSessionVar("kills", false)
 		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
 	end 
-	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
+	if not mobName and (not UnitIsFriend("player" , "target") or UnitIsEnemy("player", "target")) and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
 		lastLootedMobs[UnitGUID("target")] = time()
 		mobName = UnitName("target") 
 	end 
@@ -2091,7 +2091,7 @@ function FarmLog:OnLootEvent(text)
 
 	if not mobName then 
 		-- loot window hasn't opened yet
-		if not UnitInParty("player") and not IsInRaid() and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
+		if not UnitInParty("player") and not IsInRaid() and (not UnitIsFriend("player" , "target") or UnitIsEnemy("player", "target")) and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
 			debug("Assuming targeted mob for loot source, GUID "..UnitGUID("target")) 
 			lastLootedMobs[UnitGUID("target")] = time()
 			-- with fast loot the loot window opens late and is empty, we assume that our dead target is the source
@@ -2330,7 +2330,7 @@ local function OnTooltipSetUnit(...)
 	OriginalOnTooltipSetUnit(GameTooltip, ...)
 
 	local _, unit = GameTooltip:GetUnit()
-	if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) and UnitLevel(unit) >= UnitLevel("player") - 10 then 
+	if unit and UnitExists(unit) and (not UnitIsFriend(unit, "player") or UnitIsEnemy(unit, "player")) and UnitIsPlayer(unit) and UnitLevel(unit) >= UnitLevel("player") - 10 then 
 		local name = UnitName(unit)
 		local honor = FarmLog:EstimatedHonorPercent(name) * 100
 		GameTooltip:AddLine("|cff"..HonorDRColor[honor]..honor.."% "..L["Honor"])
@@ -2463,7 +2463,8 @@ function FarmLog:OnEvent(event, ...)
 	elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 		self:OnCombatHonorEvent(...);			
 	elseif event == "CHAT_MSG_LOOT" then
-		if (... and (strfind(..., L["loot"]))) then
+		if (... and (strfind(..., L["loot"]))) or
+		   (... and (strfind(..., "Beute"))) then
 			self:OnLootEvent(...)		
 		end	
 	elseif event == "ADDON_LOADED" and ... == ADDON_NAME then		
