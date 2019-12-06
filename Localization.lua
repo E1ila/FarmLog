@@ -126,6 +126,7 @@ function FarmLog_BuildLocalization(context)
     L["showHonorFrenzyCounter"] = "Show Honor Frenzy Count"
     L["sort-hud-help"] = "Heads-Up Display, right click to reset position"
     L["Consumes"] = "Consumes"
+    L["options-help-sessions"] = "You can switch farm with |cff00ff00/fl w DM Lashers|r or |cff00ff00/fl w BRM PvP|r, your previous data will be saved. View all farm sessions using the top left (F) button on the main log window."
     if (GetLocale() == "enUS") then
     end
     return L

@@ -1,15 +1,27 @@
 
-local function CreatePanelFrame(reference, name, title)
+local function CreatePanelFrame(reference, title)
 	local panelframe = CreateFrame( "Frame", reference, UIParent);
-	panelframe.name = name
+	panelframe.name = reference
 	panelframe.Label = panelframe:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
 	panelframe.Label:SetPoint("TOPLEFT", panelframe, "TOPLEFT", 16, -16)
 	panelframe.Label:SetHeight(15)
 	panelframe.Label:SetWidth(350)
 	panelframe.Label:SetJustifyH("LEFT")
 	panelframe.Label:SetJustifyV("TOP")
-	panelframe.Label:SetText(title or name)
+	panelframe.Label:SetText(title)
 	return panelframe
+end
+
+local function CreateHelpFrame(reference, text)
+	local helpframe = CreateFrame( "Frame", reference, UIParent);
+	helpframe.name = reference
+	helpframe.Label = helpframe:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
+	helpframe.Label:SetPoint("TOPLEFT", helpframe, "TOPLEFT", 16, -16)
+	helpframe.Label:SetPoint("RIGHT", helpframe, "RIGHT", -16, 16)
+	helpframe.Label:SetJustifyH("LEFT")
+	helpframe.Label:SetJustifyV("TOP")
+	helpframe.Label:SetText(text)
+	return helpframe
 end
 
 local function CreateCheckButton(reference, parent, label)
@@ -27,7 +39,7 @@ local function SetTrackFlag(flag, state, recalc)
 	FarmLog_MainWindow:Refresh()
 end 
 
-local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog", nil)
+local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog")
 InterfaceOptions_AddCategory(InterfacePanel);
 FarmLog.InterfacePanel = InterfacePanel
 
@@ -88,13 +100,22 @@ panel.ScrollFrameBorder:SetBackdropBorderColor(0.2, 0.2, 0.2, 0)
 
 local mfpanel = panel.MainFrame
 
+mfpanel.TopHelp = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.TopHelp:SetFont(font, 12)
+mfpanel.TopHelp:SetText(L["options-help-sessions"])
+mfpanel.TopHelp:SetPoint("TOPLEFT", 25, 0)
+mfpanel.TopHelp:SetPoint("RIGHT", -20, 0)
+mfpanel.TopHelp:SetJustifyH("LEFT")
+mfpanel.TopHelp:SetJustifyV("TOP")
+mfpanel.TopHelp:SetTextColor(1, 1, 1, 1)
+
 ----------------------------------------------
 -- General
 ----------------------------------------------
 mfpanel.GeneralCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.GeneralCategoryTitle:SetFont(font, 16)
 mfpanel.GeneralCategoryTitle:SetText(L["General"])
-mfpanel.GeneralCategoryTitle:SetPoint("TOPLEFT", 20, -10)
+mfpanel.GeneralCategoryTitle:SetPoint("TOPLEFT", mfpanel.TopHelp, "BOTTOMLEFT", 0, -20)
 
 mfpanel.AutoSwitchInstances = CreateCheckButton("FarmLogOptions_AutoSwitchInstances", mfpanel, L["autoSwitchInstances"])
 mfpanel.AutoSwitchInstances:SetPoint("TOPLEFT", mfpanel.GeneralCategoryTitle, "BOTTOMLEFT", 0, -8)
