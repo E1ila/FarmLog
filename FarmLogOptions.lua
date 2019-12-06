@@ -19,8 +19,11 @@ local function CreateCheckButton(reference, parent, label)
 	return checkbutton
 end
 
-local function SetTrackFlag(flag, state)
+local function SetTrackFlag(flag, state, recalc)
 	FLogGlobalVars.track[flag] = state
+	if recalc then 
+		FarmLog_MainWindow:RecalcTotals()
+	end 
 	FarmLog_MainWindow:Refresh()
 end 
 
@@ -179,7 +182,7 @@ mfpanel.TrackResets:SetScript("OnClick", function(self) SetTrackFlag("resets", s
 
 mfpanel.TrackConsumes = CreateCheckButton("FarmLogOptions_TrackConsumes", mfpanel, L["Consumes Used"])
 mfpanel.TrackConsumes:SetPoint("TOPLEFT", mfpanel.TrackResets, "TOPLEFT", 0, -25)
-mfpanel.TrackConsumes:SetScript("OnClick", function(self) SetTrackFlag("consumes", self:GetChecked()) end)
+mfpanel.TrackConsumes:SetScript("OnClick", function(self) SetTrackFlag("consumes", self:GetChecked(), true) end)
 
 mfpanel.TrackMoney = CreateCheckButton("FarmLogOptions_TrackMoney", mfpanel, L["Money Gained"])
 mfpanel.TrackMoney:SetPoint("TOPLEFT", mfpanel.TrackConsumes, "TOPLEFT", 0, -25)

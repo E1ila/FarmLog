@@ -313,6 +313,9 @@ local function GetShortCoinTextureString(money)
 	elseif money > 10000 then 
 		money = math.floor(money / 100) * 100
 	end 
+	if money < 0 then 
+		return "-"..GetCoinTextureString(money * -1, 12)
+	end 
 	return GetCoinTextureString(money, 12)
 end 
 
@@ -396,7 +399,7 @@ local function GetAHScanPrice(itemLink)
 	return FLogGlobalVars.ahScan[REALM][itemLink]
 end 
 
-local function GetManualPrice(itemLink)
+function FarmLog:GetManualPrice(itemLink)
 	return FLogGlobalVars.ahPrice[REALM][itemLink]
 end 
 
@@ -1331,26 +1334,38 @@ function FarmLog_MainWindow:RecalcTotals()
 	local recalcMeta = function (session) 
 		local sessionVendor = 0
 		local sessionAH = 0
-		for mobName, drops in pairs(session.drops) do
-			for itemLink, meta in pairs(drops) do
-				if not FLogGlobalVars.ignoredItems[itemLink] then
-					local vendorPrice = meta[DROP_META_INDEX_VALUE_TYPE] == VALUE_TYPE_VENDOR and meta[DROP_META_INDEX_VALUE_EACH]
-					local value, priceType = getItemValue(itemLink, vendorPrice)
-					local count = meta[DROP_META_INDEX_COUNT]
-					local totalValue = value * count
 
-					meta[DROP_META_INDEX_VALUE] = totalValue
-					meta[DROP_META_INDEX_VALUE_EACH] = value
-					meta[DROP_META_INDEX_VALUE_TYPE] = priceType
-
-					if priceType == VALUE_TYPE_VENDOR then
-						sessionVendor = sessionVendor + totalValue
-					elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
-						sessionAH = sessionAH + totalValue
+		local function recalc(section, mul) 
+			for mobName, drops in pairs(session[section]) do
+				for itemLink, meta in pairs(drops) do
+					if not FLogGlobalVars.ignoredItems[itemLink] then
+						local vendorPrice = meta[DROP_META_INDEX_VALUE_TYPE] == VALUE_TYPE_VENDOR and meta[DROP_META_INDEX_VALUE_EACH]
+						local value, priceType = FarmLog:GetItemValue(itemLink, vendorPrice)
+						local count = meta[DROP_META_INDEX_COUNT]
+						local totalValue = value * count
+	
+						meta[DROP_META_INDEX_VALUE] = totalValue
+						meta[DROP_META_INDEX_VALUE_EACH] = value
+						meta[DROP_META_INDEX_VALUE_TYPE] = priceType
+	
+						if priceType == VALUE_TYPE_VENDOR then
+							sessionVendor = sessionVendor + totalValue * mul
+						elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
+							sessionAH = sessionAH + totalValue * mul
+						end
+						-- debug("section "..section.." totalValue "..totalValue.." mul "..mul.." sessionVendor "..sessionVendor)
 					end
 				end
-			end
-		end
+			end	
+		end 
+
+		if FLogGlobalVars.track.drops then 
+			recalc("drops", 1)
+		end 
+		if FLogGlobalVars.track.consumes then 
+			recalc("consumes", -1)
+		end 
+
 		session.vendor = sessionVendor
 		session.ah = sessionAH
 	end 
@@ -1561,7 +1576,7 @@ function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
 		-- item has/had to be in bags for get by name to work
 		local _, itemLink, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(buffmeta.item)
 		if itemLink then 
-			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice, "consumes")
+			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice, "consumes", -1)
 			FarmLog_MainWindow:Refresh()
 		else 
 			debug("Could not fetch item link for "..buffmeta.item)
@@ -1979,17 +1994,18 @@ function FarmLog:ShowBlackLotusTimers()
 end 
 
 -- Loot helper
-function getItemValue(itemLink, vendorPrice)
-	local ahValue = GetManualPrice(itemLink)
+function FarmLog:GetItemValue(itemLink, vendorPrice)
+	local normLink = normalizeLink(itemLink)
+	local ahValue = FarmLog:GetManualPrice(normLink)
 	if ahValue then
 		return ahValue, VALUE_TYPE_MANUAL
 	else
 		local GetTSMPrice = TSM_API and function(link) 
-			local TSM_ItemString = TSM_API.ToItemString(itemLink)
+			local TSM_ItemString = TSM_API.ToItemString(normLink)
 			return TSM_API.GetCustomPriceValue("dbmarket", TSM_ItemString)
 		end
 		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
-		ahValue = PriceCheck(itemLink)
+		ahValue = PriceCheck(normLink)
 	end
 
 	vendorPrice = (vendorPrice or select(11, GetItemInfo(itemLink))) or 0;
@@ -2005,16 +2021,17 @@ end
 
 -- Loot receive event
 
-function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section)
+function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section, mul)
 	section = section or "drops"
+	mul = mul or 1
 	if not FLogGlobalVars.track[section] or not mobName or not itemLink or not count then return end 
 
-	local value, priceType = getItemValue(itemLink, vendorPrice)
+	local value, priceType = FarmLog:GetItemValue(itemLink, vendorPrice)
 
 	if priceType == VALUE_TYPE_VENDOR then
-		IncreaseSessionVar("vendor", value * count)
+		IncreaseSessionVar("vendor", value * count * mul)
 	elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
-		IncreaseSessionVar("ah", value * count)
+		IncreaseSessionVar("ah", value * count * mul)
 	end 
 	debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
 

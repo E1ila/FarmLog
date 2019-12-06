@@ -301,6 +301,11 @@ FarmLog.Consumes = {
         item = "Purification Potion",
         type = "Consumable",
     },
+    ["2379"] = {
+        name = "Speed",
+        item = "Swiftness Potion",
+        type = "Consumable",
+    },
     ["24364"] = {
         name = "Living Free Action",
         item = "Living Action Potion",
