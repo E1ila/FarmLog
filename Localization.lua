@@ -125,6 +125,7 @@ function FarmLog_BuildLocalization(context)
     L["Move Honor Frenzy Frame"] = "Move Honor Frenzy Frame"
     L["showHonorFrenzyCounter"] = "Show Honor Frenzy Count"
     L["sort-hud-help"] = "Heads-Up Display, right click to reset position"
+    L["Consumes"] = "Consumes"
     if (GetLocale() == "enUS") then
     end
     return L

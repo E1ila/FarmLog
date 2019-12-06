@@ -51,6 +51,7 @@
         self:RegisterEvent("CHAT_MSG_MONEY")
         self:RegisterEvent("CHAT_MSG_SKILL")
         self:RegisterEvent("UNIT_SPELLCAST_SENT")
+        self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
         self:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
         self:RegisterEvent("CHAT_MSG_OPENING")
         self:RegisterEvent("PLAYER_LOGOUT")
@@ -1839,5 +1840,6 @@
   <Script file="Localization.lua"/>
   <Script file="FarmLog.lua"/>
   <Script file="FarmLogOptions.lua"/>
+  <Script file="Consumes.lua"/>
 
 </Ui>

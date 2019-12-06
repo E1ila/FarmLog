@@ -7,6 +7,7 @@ local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
 local UNKNOWN_MOBNAME = L["Unknown"]
+local CONSUMES_MOBNAME = L["Consumes"]
 local REALM = GetRealmName()
 
 FarmLog.L = L 
@@ -195,6 +196,7 @@ local function emptySession()
 		kills = {},
 		ranks = {},
 		skill = {},
+		consumes = {},
 		rep = {},
 		gold = 0,
 		vendor = 0,
@@ -240,6 +242,7 @@ local honorFrenzySetTime = nil
 local honorFrenzyTotal = 0
 local honorFrenzyKills = 0
 local honorFrenzyTest = false
+local selfPlayerName = nil
 
 lastLootedMobs = {}
 
@@ -437,6 +440,7 @@ function FarmLog:Migrate()
 			["hks"] = 0,
 			["dks"] = 0,
 			["ranks"] = {},
+			["consumes"] = {},
 		}
 		FLogSVTotalSeconds = nil 
 		out("Migrated previous session into session 'default'.")
@@ -1531,6 +1535,22 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	end 
 end 
 
+function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
+	debug("|cff999999OnSpellCastSuccessEvent|r spellId |cffff9900"..tostring(spellId).."|r unit |cffff9900"..tostring(unit))
+	if not FLogGlobalVars.track.consumes or unit ~= "player" then return end 
+	local buffmeta = FarmLog.Consumes[tostring(spellId)]
+	if buffmeta and buffmeta.item then 
+		-- item has/had to be in bags for get by name to work
+		local _, itemLink, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(buffmeta.item)
+		if itemLink then 
+			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice)
+			FarmLog_MainWindow:Refresh()
+		else 
+			debug("Could not fetch item link for "..buffmeta.item)
+		end 
+	end 
+end 
+
 -- Honor event
 
 local HonorGainStrings = {
@@ -1705,11 +1725,12 @@ end
 -- Combat log event
 
 function FarmLog:OnCombatLogEvent()
-	if not FLogGlobalVars.track.kills then return end 
-
 	local eventInfo = {CombatLogGetCurrentEventInfo()}
 	local eventName = eventInfo[2]
+
 	if eventName == "PARTY_KILL" then 
+		if not FLogGlobalVars.track.kills then return end 
+
 		local mobName = eventInfo[9]
 		local mobGuid = eventInfo[8]
 		local mobFlags = eventInfo[10]
@@ -1966,15 +1987,16 @@ end
 
 -- Loot receive event
 
-function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
+function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, mul)
+	if not mul then mul = 1 end 
 	if not FLogGlobalVars.track.drops or not mobName or not itemLink or not count then return end 
 
 	local value, priceType = getItemValue(itemLink, vendorPrice)
 
 	if priceType == VALUE_TYPE_VENDOR then
-		IncreaseSessionVar("vendor", value * count)
+		IncreaseSessionVar("vendor", value * count * mul)
 	elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
-		IncreaseSessionVar("ah", value * count)
+		IncreaseSessionVar("ah", value * count * mul)
 	end 
 	debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
 
@@ -1987,11 +2009,11 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice)
 		debug("|cff999999FarmLog:InsertLoot|r meta |cffff9900"..meta[1]..","..tostring(meta[2])..","..tostring(meta[3])..","..tostring(meta[4]))
 		local totalCount = meta[DROP_META_INDEX_COUNT] + count
 		meta[DROP_META_INDEX_COUNT] = totalCount
-		meta[DROP_META_INDEX_VALUE] = value * totalCount
-		meta[DROP_META_INDEX_VALUE_EACH] = value
+		meta[DROP_META_INDEX_VALUE] = value * totalCount * mul
+		meta[DROP_META_INDEX_VALUE_EACH] = value * mul
 		meta[DROP_META_INDEX_VALUE_TYPE] = priceType				
 	else
-		sessionDrops[mobName][itemLink] = {count, value * count, value, priceType}
+		sessionDrops[mobName][itemLink] = {count, value * count * mul, value * mul, priceType}
 	end
 end
 
@@ -2083,8 +2105,6 @@ end
 
 function FarmLog:OnAddonLoaded()
 	out("|cffffbb00v"..tostring(VERSION).."|r "..CREDITS..", "..L["loaded-welcome"]);
-
-	BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
 
 	FarmLog:Migrate()	
 
@@ -2180,6 +2200,10 @@ end
 function FarmLog:OnEnteringWorld(isInitialLogin, isReload) 
 	self:PurgeInstances()
 	self:UpdateInstanceCount()
+
+	BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
+	local playerNameParts = {_G.string.split("-", (UnitFullName("player")))}
+	selfPlayerName = playerNameParts[1]
 
 	if isInitialLogin or isReload then 
 		-- init session
@@ -2390,6 +2414,8 @@ function FarmLog:OnEvent(event, ...)
 			self:OnMoneyEvent(...)	
 		elseif event == "UNIT_SPELLCAST_SENT" then 
 			self:OnSpellCastEvent(...)
+		elseif event == "UNIT_SPELLCAST_SUCCEEDED" then 
+			self:OnSpellCastSuccessEvent(...)
 		elseif event == "CHAT_MSG_COMBAT_FACTION_CHANGE" then 
 			self:OnCombatFactionChange(...)
 		elseif event == "PLAYER_DEAD" then 
