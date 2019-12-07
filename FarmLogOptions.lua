@@ -1,7 +1,8 @@
+-- Some pieces of the code here were taken from NeatPlates https://www.curseforge.com/wow/addons/neatplates
 
 local function CreatePanelFrame(reference, title)
 	local panelframe = CreateFrame( "Frame", reference, UIParent);
-	panelframe.name = reference
+	panelframe.name = title
 	panelframe.Label = panelframe:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
 	panelframe.Label:SetPoint("TOPLEFT", panelframe, "TOPLEFT", 16, -16)
 	panelframe.Label:SetHeight(15)
@@ -38,6 +39,12 @@ local function SetTrackFlag(flag, state, recalc)
 	end 
 	FarmLog_MainWindow:Refresh()
 end 
+
+
+
+------------------------------------------------
+-- Build Options UI
+------------------------------------------------
 
 local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog")
 InterfaceOptions_AddCategory(InterfacePanel);
@@ -143,12 +150,50 @@ mfpanel.ShowBlackLotusTimer.tooltipText = L["showBlackLotusTimer-tooltip"]
 
 
 ----------------------------------------------
+-- Prices
+----------------------------------------------
+mfpanel.PricesCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.PricesCategoryTitle:SetFont(font, 16)
+mfpanel.PricesCategoryTitle:SetText(L["Prices"])
+mfpanel.PricesCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "BOTTOMLEFT", 0, -20)
+
+mfpanel.AHMinQuality = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.AHMinQuality:SetPoint("TOPLEFT", mfpanel.PricesCategoryTitle, "BOTTOMLEFT", 0, -12)
+mfpanel.AHMinQuality:SetWidth(170)
+mfpanel.AHMinQuality:SetJustifyH("LEFT")
+mfpanel.AHMinQuality:SetText(L["AH Min Quality"])
+
+local function AHMinQualityDropdown_OnClick(self)
+	for i = 0,4 do 
+		if L["ah-quality-"..i] == self.value then 
+			FLogGlobalVars.ahMinQuality = i 
+			UIDropDownMenu_SetText(mfpanel.AHMinQualityDropdown, L["ah-quality-"..i])
+			FarmLog_MainWindow:RecalcTotals()
+			FarmLog_MainWindow:Refresh()
+			break
+		end 
+	end 
+end
+mfpanel.AHMinQualityDropdown = CreateFrame("Frame", "FarmLogAHMinQualityDropdown", mfpanel, "UIDropDownMenuTemplate")
+mfpanel.AHMinQualityDropdown:SetPoint("TOPLEFT", mfpanel.AHMinQuality, "BOTTOMLEFT", -20, -2)
+UIDropDownMenu_SetWidth(mfpanel.AHMinQualityDropdown, 200) 
+UIDropDownMenu_Initialize(mfpanel.AHMinQualityDropdown, function (frame, level, menuList)
+	local info = UIDropDownMenu_CreateInfo()
+	info.func = AHMinQualityDropdown_OnClick
+	for i = 0,4 do 
+		info.text, info.checked = L["ah-quality-"..i], i == FLogGlobalVars.ahMinQuality
+		UIDropDownMenu_AddButton(info)
+	end 
+end)
+
+
+----------------------------------------------
 -- Tracking
 ----------------------------------------------
 mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.TrackingCategoryTitle:SetFont(font, 16)
 mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
-mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.ShowBlackLotusTimer, "BOTTOMLEFT", 0, -20)
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.AHMinQualityDropdown, "BOTTOMLEFT", 20, -20)
 
 mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
 mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
@@ -286,4 +331,6 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.TrackRep:SetChecked(FLogGlobalVars.track.rep)
 	InterfacePanel.MainFrame.TrackDeaths:SetChecked(FLogGlobalVars.track.deaths)
 	InterfacePanel.MainFrame.TrackResets:SetChecked(FLogGlobalVars.track.resets)
+
+	UIDropDownMenu_SetText(InterfacePanel.MainFrame.AHMinQualityDropdown, L["ah-quality-"..FLogGlobalVars.ahMinQuality])
 end 

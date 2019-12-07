@@ -1,5 +1,5 @@
-﻿local VERSION = "1.18"
-local VERSION_INT = 1.1800
+﻿local VERSION = "1.18.1"
+local VERSION_INT = 1.1801
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -120,7 +120,7 @@ FLogGlobalVars = {
 	debug = false,
 	ahPrice = {},
 	ahScan = {},
-	ahMinQuality = 1,
+	ahMinQuality = 3,
 	ignoredItems = {},
 	track = {
 		drops = true,
@@ -143,8 +143,6 @@ FLogGlobalVars = {
 		fontName = FONT_NAME,
 		fontSize = 12,
 		alpha = 0.7,
-		locked = false,
-		show = false,
 	},
 	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
@@ -161,7 +159,7 @@ FLogGlobalVars = {
 	bls = {}, -- BL pick log
 	sortBy = SORT_BY_TEXT,
 	sortSessionBy = SORT_BY_TEXT,
-	ver = VERSION,
+	ver = VERSION_INT,
 }
 
 FLogVars = {
@@ -189,7 +187,11 @@ FLogVars = {
 	viewTotal = false,
 	farms = {},
 	todayKills = {},
-	ver = VERSION,
+	ver = VERSION_INT,
+	hud = {
+		show = false,
+		locked = false,
+	}
 }
 
 local function emptySession() 
@@ -652,6 +654,13 @@ function FarmLog:Migrate()
 			if not farm.current.consumes then farm.current.consumes = {} end 
 			if not farm.past.consumes then farm.past.consumes = {} end 
 		end 
+	end 
+
+	if FLogVars.ver < 1.1801 then 
+		FLogVars.hud = {
+			show = FLogGlobalVars.hud.show,
+			locked = FLogGlobalVars.hud.locked,
+		}
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1340,7 +1349,7 @@ function FarmLog_MainWindow:RecalcTotals()
 				for itemLink, meta in pairs(drops) do
 					if not FLogGlobalVars.ignoredItems[itemLink] then
 						local vendorPrice = meta[DROP_META_INDEX_VALUE_TYPE] == VALUE_TYPE_VENDOR and meta[DROP_META_INDEX_VALUE_EACH]
-						local value, priceType = FarmLog:GetItemValue(itemLink, vendorPrice)
+						local value, priceType = FarmLog:GetItemValue(itemLink)
 						local count = meta[DROP_META_INDEX_COUNT]
 						local totalValue = value * count
 	
@@ -1994,12 +2003,14 @@ function FarmLog:ShowBlackLotusTimers()
 end 
 
 -- Loot helper
-function FarmLog:GetItemValue(itemLink, vendorPrice)
+function FarmLog:GetItemValue(itemLink)
+	local _, _, quality, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink)
 	local normLink = normalizeLink(itemLink)
 	local ahValue = FarmLog:GetManualPrice(normLink)
 	if ahValue then
 		return ahValue, VALUE_TYPE_MANUAL
-	else
+	elseif not quality or quality >= FLogGlobalVars.ahMinQuality then 
+		-- debug("GetItemValue   "..itemLink.."   quality "..quality)
 		local GetTSMPrice = TSM_API and function(link) 
 			local TSM_ItemString = TSM_API.ToItemString(normLink)
 			return TSM_API.GetCustomPriceValue("dbmarket", TSM_ItemString)
@@ -2007,8 +2018,6 @@ function FarmLog:GetItemValue(itemLink, vendorPrice)
 		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
 		ahValue = PriceCheck(normLink)
 	end
-
-	vendorPrice = (vendorPrice or select(11, GetItemInfo(itemLink))) or 0;
 
 	-- check if AH price (-15%) > vendor price + 1s
 	if isPositive(ahValue) and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) then
@@ -2026,7 +2035,7 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section, mul)
 	mul = mul or 1
 	if not FLogGlobalVars.track[section] or not mobName or not itemLink or not count then return end 
 
-	local value, priceType = FarmLog:GetItemValue(itemLink, vendorPrice)
+	local value, priceType = FarmLog:GetItemValue(itemLink)
 
 	if priceType == VALUE_TYPE_VENDOR then
 		IncreaseSessionVar("vendor", value * count * mul)
@@ -2172,7 +2181,7 @@ function FarmLog:OnAddonLoaded()
 	FarmLog_MainWindow_Buttons_SortKillsButton.disabled = not FLogGlobalVars.groupByMobName
 	FarmLog_MainWindow_Buttons_ToggleCurrentButton.selected = not FLogVars.viewTotal
 	FarmLog_MainWindow_Buttons_TogglePvPButton.selected = GetFarmVar("pvpMode") == true
-	FarmLog_MainWindow_ToggleHUDButton.selected = FLogGlobalVars.hud.show == true
+	FarmLog_MainWindow_ToggleHUDButton.selected = FLogVars.hud.show == true
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_ToggleHUDButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortAbcButton)
 	FarmLog_SetTextButtonBackdropColor(FarmLog_MainWindow_Buttons_SortGoldButton)
@@ -2206,10 +2215,17 @@ function FarmLog:OnAddonLoaded()
 	else 
 		FarmLog_MainWindow:Hide()
 	end 
-	if FLogGlobalVars.hud.show then 
+	if not FarmLog_MainWindow:GetPoint() then 
+		FarmLog_MainWindow:ResetPosition()
+	end 
+
+	if FLogVars.hud.show then 
 		FarmLog_HUD:Show()
 	else 
 		FarmLog_HUD:Hide()
+	end 
+	if not FarmLog_HUD:GetPoint() then 
+		FarmLog_HUD:ResetPosition()
 	end 
 	addonLoadedTime = time()
 
@@ -2220,8 +2236,6 @@ function FarmLog:OnAddonLoaded()
 			end 
 		end 
 	end 
-
-	FarmLog:CheckPvPDayReset()
 
 	-- Options UI
 	FarmLog.InterfacePanel:AddonLoaded()
@@ -2488,7 +2502,7 @@ function FarmLog:OnUpdate()
 	local now = time()
 	if FLogVars.enabled then 
 		FarmLog_MainWindow:UpdateTime()
-		if FLogGlobalVars.hud.show then 
+		if FLogVars.hud.show then 
 			FarmLog_HUD:Refresh()
 			if now - lastHudDressUp >= HUD_DRESSUP_TIME then 
 				FarmLog_HUD:DressUp()
@@ -2510,6 +2524,7 @@ function FarmLog:OnUpdate()
 		addonLoadedTime = nil 
 		self:CheckTimerAddons()
 		self:ShowBlackLotusTimers()
+		self:CheckPvPDayReset() -- this may return 0 if called too soon
 	end 
 	if GameTooltip:IsShown() then
 		if GameTooltip:IsOwned(Minimap) then 
@@ -2586,7 +2601,7 @@ function FarmLog_MinimapButton:ResetPosition()
 end 
 
 function FarmLog_MinimapButton:DragStopped() 
-	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint();
+	local point, relativeTo, relativePoint, x, y = FarmLog_MinimapButton:GetPoint()
 	FLogVars.minimapButtonPosition.point = point;													
 	FLogVars.minimapButtonPosition.x = x;
 	FLogVars.minimapButtonPosition.y = y;
@@ -2747,13 +2762,13 @@ function FarmLog_HUD:DressUp()
 end 
 
 function FarmLog_HUD:DragStart() 
-	if not FLogGlobalVars.hud.locked then 
+	if not FLogVars.hud.locked then 
 		self:StartMoving()
 	end 
 end 
 
 function FarmLog_HUD:DragStop() 
-	if not FLogGlobalVars.hud.locked then 
+	if not FLogVars.hud.locked then 
 		self:StopMovingOrSizing()
 	end 
 end 
@@ -2922,17 +2937,13 @@ end
 function FarmLog_MainWindow_ToggleHUDButton:Clicked(button) 
 	if button == "RightButton" then 
 		FarmLog_HUD:ResetPosition()
-		FLogGlobalVars.hud.show = true 
+		FLogVars.hud.show = true 
 	else 
-		FLogGlobalVars.hud.show = not FLogGlobalVars.hud.show
+		FLogVars.hud.show = not FLogVars.hud.show
 	end 
 
-	self.selected = FLogGlobalVars.hud.show
-	if FLogGlobalVars.hud.show then 
-		if not FLogGlobalVars.hud.resetOnce then 
-			FLogGlobalVars.hud.resetOnce = true 
-			FarmLog_HUD:ResetPosition()
-		end 
+	self.selected = FLogVars.hud.show
+	if FLogVars.hud.show then 
 		FarmLog_HUD:Refresh()
 		FarmLog_HUD:DressUp()
 		FarmLog_HUD:Show()
@@ -3260,10 +3271,10 @@ SlashCmdList.FARMLOG = function(msg)
 		elseif "HUD" == cmd then 
 			if FarmLog_HUD:IsShown() then 
 				FarmLog_HUD:Hide()
-				FLogGlobalVars.hud.show = false
+				FLogVars.hud.show = false
 			else 
 				FarmLog_HUD:Show()
-				FLogGlobalVars.hud.show = true
+				FLogVars.hud.show = true
 			end 
 		elseif "BL" == cmd then 
 			FarmLog:ShowBlackLotusLog()

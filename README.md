@@ -59,6 +59,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.18.1
+    * Added option for AH min quality, this will allow choosing for which item quality price will be taken from an AH scan. For instance, if min quality is Rare+, vendor price will be used for green items and below.
+    * Fixed HUD positioning issue, it should now show correctly.
 * 1.18
     * Consumes tracking! Will now log all (hopefully) consumes you've been using in your session. Their value will be deducted from the vendor price, thus affecting GPH. You can disable it from the options screen (`/fl`), or manually adjust consumes prices with `/fl set [Item Link] 1` to set an item's price to 1 gold, it'll try to use Auctionator or TSM price first. If you find any missing consume, feel free to report in https://github.com/E1ila/FarmLog
 * 1.17.9

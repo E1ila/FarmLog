@@ -127,6 +127,13 @@ function FarmLog_BuildLocalization(context)
     L["sort-hud-help"] = "Heads-Up Display, right click to reset position"
     L["Consumes"] = "Consumes"
     L["options-help-sessions"] = "You can switch between farms with |cff00ff00/fl w DM Lashers|r or |cff00ff00/fl w BRM PvP|r etc., your previous data will be saved. View all farm sessions using the top left button (F) on the main log window."
+    L["Prices"] = "Prices"
+    L["AH Min Quality"] = "AH Min Quality"
+    L["ah-quality-0"] = "No filter (gray+)"
+    L["ah-quality-1"] = "Common (white+)"
+    L["ah-quality-2"] = "Uncommon (green+)"
+    L["ah-quality-3"] = "Rare (blue+)"
+    L["ah-quality-4"] = "Epic (purple+)"
     if (GetLocale() == "enUS") then
     end
     return L
