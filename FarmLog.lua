@@ -2477,9 +2477,7 @@ function FarmLog:OnEvent(event, ...)
 	elseif event == "CHAT_MSG_COMBAT_HONOR_GAIN" then 
 		self:OnCombatHonorEvent(...);			
 	elseif event == "CHAT_MSG_LOOT" then
-		if (... and (strfind(..., L["loot"]))) then
-			self:OnLootEvent(...)		
-		end	
+		self:OnLootEvent(...)		
 	elseif event == "ADDON_LOADED" and ... == ADDON_NAME then		
 		self:OnAddonLoaded(...)
 	elseif event == "PLAYER_LOGOUT" then 
