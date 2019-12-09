@@ -1,5 +1,5 @@
-﻿local VERSION = "1.18.1"
-local VERSION_INT = 1.1801
+﻿local VERSION = "1.18.2"
+local VERSION_INT = 1.1802
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -894,7 +894,7 @@ function FarmLog:NewSession()
 	local mergedSessions = {}
 	for key, _ in pairs(newSession) do 
 		local mergeFunc = nil 
-		if key == "drops" then mergeFunc = mergeDrops end 
+		if key == "drops" or key == "consumes" then mergeFunc = mergeDrops end 
 		mergedSessions[key] = GetSessionVar(key, true, nil, mergeFunc)
 	end 	
 	SetFarmVar("past", mergedSessions)

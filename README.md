@@ -59,6 +59,9 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.18.2 
+    * Fixed (non) parsing of loot messages for non-english languages.
+    * Fixed an error when starting new session when old one had consumes in it.
 * 1.18.1
     * Added option for AH min quality, this will allow choosing for which item quality price will be taken from an AH scan. For instance, if min quality is Rare+, vendor price will be used for green items and below.
     * Fixed HUD positioning issue, it should now show correctly.
