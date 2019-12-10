@@ -1585,6 +1585,7 @@ function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
 		-- item has/had to be in bags for get by name to work
 		local _, itemLink, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(buffmeta.item)
 		if itemLink then 
+			itemLink = normalizeLink(itemLink) -- remove player level from link
 			FarmLog:InsertLoot(CONSUMES_MOBNAME, itemLink, buffmeta.quantity or 1, vendorPrice, "consumes", -1)
 			FarmLog_MainWindow:Refresh()
 		else 

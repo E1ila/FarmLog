@@ -59,6 +59,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.18.3
+    * Fixed bug causing consumes used on different levels (character level up) to be shown seperately on the log.
 * 1.18.2 
     * Fixed (non) parsing of loot messages for non-english languages.
     * Fixed an error when starting new session when old one had consumes in it.
