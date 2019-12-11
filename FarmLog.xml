@@ -40,6 +40,7 @@
   <Frame name="FarmLog">
     <Scripts>
       <OnLoad>
+        self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
         self:RegisterEvent("PLAYER_LEVEL_UP")
         self:RegisterEvent("ADDON_LOADED")
         self:RegisterEvent("CHAT_MSG_LOOT")

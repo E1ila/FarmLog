@@ -154,6 +154,7 @@ FLogGlobalVars = {
 	},
 	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
+	autoResumeBGs = true,
 	resumeSessionOnSwitch = true,
 	honorDRinBGs = true,
 	reportTo = {},
@@ -259,6 +260,7 @@ local honorFrenzyTotal = 0
 local honorFrenzyKills = 0
 local honorFrenzyTest = false
 local selfPlayerName = nil
+local selfPlayerFaction = nil 
 
 lastLootedMobs = {}
 
@@ -690,6 +692,7 @@ function FarmLog:Migrate()
 		end 
 		FLogGlobalVars.track.bgs = true
 		FLogGlobalVars.honorDRinBGs = true 
+		FLogGlobalVars.autoResumeBGs = true 
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -2316,6 +2319,11 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 	BL_ITEM_NAME = GetItemInfo(BL_ITEMID)
 	local playerNameParts = {_G.string.split("-", (UnitFullName("player")))}
 	selfPlayerName = playerNameParts[1]
+	if (UnitFactionGroup("player")) == "Horde" then 
+		selfPlayerFaction = 0
+	else 
+		selfPlayerFaction = 1
+	end 
 
 	if isInitialLogin or isReload then 
 		-- init session
@@ -2334,18 +2342,18 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 	inInstance = tobool(inInstance)
 	local instanceName = GetInstanceInfo()
 	local now = time()
+	local farm = FLogVars.farms[FLogVars.currentFarm]
 	debug("|cff999999FarmLog:OnEnteringWorld|r FLogVars.inInstance |cffff9900"..tostring(FLogVars.inInstance).."|r inInstance |cffff9900"..tostring(inInstance))
 
 	if FLogVars.inInstance and not inInstance then 
 		FLogVars.inInstance = false
 		FLogVars.instanceName = nil
 		self:CloseOpenInstances()
-		if FLogGlobalVars.autoSwitchInstances then 
+		if BG_INSTANCE_NAMES[farm.instanceName] or FLogGlobalVars.autoSwitchInstances then 
 			self:PauseSession()
 		end 
 	elseif inInstance then
-		if FLogGlobalVars.autoSwitchInstances then 
-			local farm = FLogVars.farms[FLogVars.currentFarm]
+		if FLogGlobalVars.autoSwitchInstances or (FLogGlobalVars.autoResumeBGs and BG_INSTANCE_NAMES[farm.instanceName] and farm.instanceName == instanceName) then 
 			if farm.instanceName == instanceName then 
 				self:ResumeSession()
 			else 
@@ -2402,6 +2410,24 @@ function FarmLog:OnEnterCombat()
 	for guid, t in pairs(lastLootedMobs) do
 		if now - t >= PURGE_LOOTED_MOBS_SECONDS then 
 			lastLootedMobs[guid] = nil
+		end 
+	end 
+end 
+
+-- Battleground events 
+
+function FarmLog:OnUpdateBattlefieldStatus(arg1, arg2, arg3) 
+	debug("OnUpdateBattlefieldStatus - "..tostring(arg1 or "").."  "..tostring(arg2 or "").."  "..tostring(arg3 or ""))
+	local winner = GetBattlefieldWinner()
+	debug("GetBattlefieldWinner() = "..tostring(winner))
+	debug("FLogVars.instanceName = "..(FLogVars.instanceName or ""))
+	if selfPlayerFaction and FLogVars.instanceName and winner then 
+		if winner == selfPlayerFaction then 
+			IncreaseSessionDictVar("bgsWin", FLogVars.instanceName, 1)
+			debug("Battlefield won")
+		else 
+			IncreaseSessionDictVar("bgsLoss", FLogVars.instanceName, 1)
+			debug("Battlefield lost")
 		end 
 	end 
 end 
@@ -2543,6 +2569,8 @@ function FarmLog:OnEvent(event, ...)
 			self:OnPlayerDead(...)
 		elseif event == "PLAYER_LEVEL_UP" then 
 			self:OnPlayerLevelUp(...)
+		elseif event == "UPDATE_BATTLEFIELD_STATUS" then 
+			self:OnUpdateBattlefieldStatus()
 		end 
 	end 
 

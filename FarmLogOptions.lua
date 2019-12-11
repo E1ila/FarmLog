@@ -275,8 +275,12 @@ mfpanel.HonorDRinBGs = CreateCheckButton("FarmLogOptions_HonorDRinBGs", mfpanel,
 mfpanel.HonorDRinBGs:SetPoint("TOPLEFT", mfpanel.ShowHonorFrenzyCounter, "TOPLEFT", 0, -25)
 mfpanel.HonorDRinBGs:SetScript("OnClick", function(self) FLogGlobalVars.honorDRinBGs = self:GetChecked() end)
 
+mfpanel.AutoResumeBGs = CreateCheckButton("FarmLogOptions_AutoResumeBGs", mfpanel, L["autoResumeBGs"])
+mfpanel.AutoResumeBGs:SetPoint("TOPLEFT", mfpanel.HonorDRinBGs, "TOPLEFT", 0, -25)
+mfpanel.AutoResumeBGs:SetScript("OnClick", function(self) FLogGlobalVars.autoResumeBGs = self:GetChecked() end)
+
 mfpanel.MoveHonorFrenzyButton = CreateFrame("Button", "FarmLogOptions_MoveHonorFrenzyButton", mfpanel, "FarmLogPanelButtonTemplate")
-mfpanel.MoveHonorFrenzyButton:SetPoint("TOPLEFT", mfpanel.HonorDRinBGs, "BOTTOMLEFT", -0, -5)
+mfpanel.MoveHonorFrenzyButton:SetPoint("TOPLEFT", mfpanel.AutoResumeBGs, "BOTTOMLEFT", -0, -5)
 mfpanel.MoveHonorFrenzyButton:SetWidth(200)
 mfpanel.MoveHonorFrenzyButton:SetText(L["Move Honor Frenzy Frame"])
 mfpanel.MoveHonorFrenzyButton:SetScript("OnClick", function(self) FarmLog_HonorFrenzyMeter:Add(100, true) end)
@@ -322,6 +326,7 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.ShowHonorFrenzyCounter:SetChecked(FLogGlobalVars.showHonorFrenzyCounter)
 	InterfacePanel.MainFrame.PauseOnLogin:SetChecked(FLogGlobalVars.pauseOnLogin)
 	InterfacePanel.MainFrame.HonorDRinBGs:SetChecked(FLogGlobalVars.honorDRinBGs)
+	InterfacePanel.MainFrame.AutoResumeBGs:SetChecked(FLogGlobalVars.autoResumeBGs)
 
 	InterfacePanel.MainFrame.TrackLoot:SetChecked(FLogGlobalVars.track.drops)
 	InterfacePanel.MainFrame.TrackKills:SetChecked(FLogGlobalVars.track.kills)

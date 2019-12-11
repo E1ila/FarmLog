@@ -139,6 +139,7 @@ function FarmLog_BuildLocalization(context)
     L["Won"] = "Won"
     L["Lost"] = "Lost"
     L["honorDRinBGs"] = "Enable honor diminishing returns in BGs"
+    L["autoResumeBGs"] = "Auto resume BG farms when entering"
     if (GetLocale() == "enUS") then
     end
     return L
