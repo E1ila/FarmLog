@@ -51,12 +51,13 @@ Another thing is that the more time & data you have per session, the more accura
  This may also happen if you have addons like "Leatrix Plus" with "Fast loot" option enabled. This causes loot to be received before loot window is opened, so the addon doesn't know where it came from.
 
 
-![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview5.png)
-![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview6.png)
-![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
-![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
-![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
-![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
+![Preview 1](https://github.com/E1ila/FarmLog/blob/master/Preview7.png)
+![Preview 2](https://github.com/E1ila/FarmLog/blob/master/Preview5.png)
+![Preview 3](https://github.com/E1ila/FarmLog/blob/master/Preview6.png)
+![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview2.png)
+![Preview 5](https://github.com/E1ila/FarmLog/blob/master/Preview.png)
+![Preview 6](https://github.com/E1ila/FarmLog/blob/master/Preview3.png)
+![Preview 7](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
 * 1.19

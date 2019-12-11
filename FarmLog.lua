@@ -72,6 +72,9 @@ local TEXT_COLOR = {
 	["gathering"] = "38c98d",
 	["unknown"] = "888888",
 	["consumes"] = "3ddb9f",
+	["bgs"] = "6a78f9",
+	["bgswin"] = "2ed154",
+	["bgsloss"] = "d4422f",
 }
 
 TEXT_COLOR[L["Skinning"]] = TEXT_COLOR["gathering"]
@@ -1253,12 +1256,12 @@ function FarmLog_MainWindow:Refresh()
 		local wins = GetSessionVar("bgsWin", FLogVars.viewTotal)
 		local losses = GetSessionVar("bgsLoss", FLogVars.viewTotal)
 		for bg, count in pairs(GetSessionVar("bgs", FLogVars.viewTotal)) do 
-			self:AddRow(bg, nil, count, TEXT_COLOR["rep"]) 
+			self:AddRow(bg, nil, count, TEXT_COLOR["bgs"]) 
 			if wins and isPositive(wins[bg]) then 
-				self:AddRow("  "..L["Won"], nil, wins[bg], TEXT_COLOR["rep"]) 
+				self:AddRow("    "..L["Won"], nil, wins[bg], TEXT_COLOR["bgswin"]) 
 			end 
 			if losses and isPositive(losses[bg]) then 
-				self:AddRow("  "..L["Lost"], nil, losses[bg], TEXT_COLOR["rep"]) 
+				self:AddRow("    "..L["Lost"], nil, losses[bg], TEXT_COLOR["bgsloss"]) 
 			end 
 		end 
 	end 
