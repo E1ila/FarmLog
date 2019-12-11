@@ -261,6 +261,7 @@ local honorFrenzyKills = 0
 local honorFrenzyTest = false
 local selfPlayerName = nil
 local selfPlayerFaction = nil 
+local bgResultRecorded = false
 
 lastLootedMobs = {}
 
@@ -2363,6 +2364,7 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 		-- ignore BGs
 		if BG_INSTANCE_NAMES[instanceName] then 
 			if FLogGlobalVars.track.bgs and not FLogVars.inInstance then 
+				bgResultRecorded = false 
 				IncreaseSessionDictVar("bgs", instanceName, 1)
 			end 
 		else 		
@@ -2421,7 +2423,8 @@ function FarmLog:OnUpdateBattlefieldStatus(arg1, arg2, arg3)
 	local winner = GetBattlefieldWinner()
 	debug("GetBattlefieldWinner() = "..tostring(winner))
 	debug("FLogVars.instanceName = "..(FLogVars.instanceName or ""))
-	if selfPlayerFaction and FLogVars.instanceName and winner then 
+	if selfPlayerFaction and FLogVars.instanceName and winner and not bgResultRecorded then 
+		bgResultRecorded = true
 		if winner == selfPlayerFaction then 
 			IncreaseSessionDictVar("bgsWin", FLogVars.instanceName, 1)
 			debug("Battlefield won")
