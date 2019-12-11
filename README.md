@@ -59,6 +59,10 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 4](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.19
+    * Counting battle grounds count, as well as wins/loss count
+    * BGs are not counted for instance lock count
+    * Added level-up count
 * 1.18.3
     * Fixed bug causing consumes used on different levels (character level up) to be shown seperately on the log.
 * 1.18.2 

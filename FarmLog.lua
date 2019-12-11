@@ -1,5 +1,5 @@
-﻿local VERSION = "1.18.2"
-local VERSION_INT = 1.1802
+﻿local VERSION = "1.19"
+local VERSION_INT = 1.1900
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -23,6 +23,12 @@ local DROP_META_INDEX_COUNT =  1
 local DROP_META_INDEX_VALUE =  2
 local DROP_META_INDEX_VALUE_EACH =  3
 local DROP_META_INDEX_VALUE_TYPE =  4
+
+local BG_INSTANCE_NAMES = {
+	["Warsong Gulch"] = true,
+	["Alterac Valley"] = true,
+	["Arathi Basin"] = true,
+}
 
 local VALUE_TYPE_MANUAL = 'M'
 local VALUE_TYPE_SCAN = 'S'
@@ -132,10 +138,12 @@ FLogGlobalVars = {
 		consumes = true,
 		money = true,
 		xp = true,
-		skill = true,
+		skill = false,
 		rep = true,
 		deaths = true,
+		levelup = true,
 		resets = true,
+		bgs = true,
 	},
 	hud = {
 		paddingX = 8,
@@ -212,6 +220,9 @@ local function emptySession()
 		deaths = 0,
 		seconds = 0,
 		resets = 0,
+		bgs = {},
+		bgsWin = {},
+		bgsLoss = {},
 	}
 end 
 
@@ -661,6 +672,22 @@ function FarmLog:Migrate()
 			show = FLogGlobalVars.hud.show,
 			locked = FLogGlobalVars.hud.locked,
 		}
+	end 
+
+	if FLogGlobalVars.ver < 1.1803 then 
+		FLogGlobalVars.track.levelup = true 
+	end 
+
+	if FLogVars.ver < 1.1905 then 
+		for _, farm in pairs(FLogVars.farms) do 
+			if not farm.current.bgs then farm.current.bgs = {} end 
+			if not farm.past.bgs then farm.past.bgs = {} end 
+			if not farm.current.bgsWin then farm.current.bgsWin = {} end 
+			if not farm.past.bgsWin then farm.past.bgsWin = {} end 
+			if not farm.current.bgsLoss then farm.current.bgsLoss = {} end 
+			if not farm.past.bgsLoss then farm.past.bgsLoss = {} end 
+		end 
+		FLogGlobalVars.track.bgs = true
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -1215,7 +1242,21 @@ function FarmLog_MainWindow:Refresh()
 		SetFarmVar("honorPerHour", honorPerHour)
 		SetFarmVar("honor", honor)
 	end 
-	
+
+	if FLogGlobalVars.track.bgs then 
+		local wins = GetSessionVar("bgsWin", FLogVars.viewTotal)
+		local losses = GetSessionVar("bgsLoss", FLogVars.viewTotal)
+		for bg, count in pairs(GetSessionVar("bgs", FLogVars.viewTotal)) do 
+			self:AddRow(bg, nil, count, TEXT_COLOR["rep"]) 
+			if wins and isPositive(wins[bg]) then 
+				self:AddRow("  "..L["Won"], nil, wins[bg], TEXT_COLOR["rep"]) 
+			end 
+			if losses and isPositive(losses[bg]) then 
+				self:AddRow("  "..L["Lost"], nil, losses[bg], TEXT_COLOR["rep"]) 
+			end 
+		end 
+	end 
+
 	local deaths = FLogGlobalVars.track.deaths and GetSessionVar("deaths", FLogVars.viewTotal)
 	if isPositive(deaths) then 
 		self:AddRow(numberToString(deaths).." "..L["Deaths"], nil, nil, TEXT_COLOR["deaths"]) 
@@ -1229,6 +1270,10 @@ function FarmLog_MainWindow:Refresh()
 		for skillName, levels in pairs(GetSessionVar("skill", FLogVars.viewTotal)) do 
 			self:AddRow("+"..levels.." "..skillName, nil, nil, TEXT_COLOR["skill"])
 		end
+	end 
+	local levelup = FLogGlobalVars.track.levelup and GetSessionVar("levelup", FLogVars.viewTotal)
+	if isPositive(levelup) then 
+		self:AddRow(levelup.." "..L["Character levels"], nil, nil, TEXT_COLOR["skill"]) 
 	end 
 
 	if FLogGlobalVars.track.ranks then 
@@ -1668,6 +1713,15 @@ function FarmLog:OnPlayerDead()
 	IncreaseSessionVar("deaths", 1)
 	FarmLog_MainWindow:Refresh()
 end 
+
+function FarmLog:OnPlayerLevelUp()
+	if not FLogGlobalVars.track.levelup then return end 
+	-- debug("|cff999999OnPlayerDead|r")
+	IncreaseSessionVar("levelup", 1)
+	FarmLog_MainWindow:Refresh()
+end 
+
+
 
 -- Trade skills event
 
@@ -2282,8 +2336,6 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 			self:PauseSession()
 		end 
 	elseif inInstance then
-		FLogVars.inInstance = true
-		FLogVars.instanceName = instanceName
 		if FLogGlobalVars.autoSwitchInstances then 
 			local farm = FLogVars.farms[FLogVars.currentFarm]
 			if farm.instanceName == instanceName then 
@@ -2292,25 +2344,34 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 				self:SwitchFarm(instanceName, true, true)
 			end
 		end 
-		if FLogGlobalVars.track.resets then 
-			local lastInstance, lastIndex = self:GetLastInstance(instanceName)
-			if lastInstance and lastInstance.leave and now - lastInstance.leave >= INSTANCE_RESET_SECONDS then 
-				-- after 1 hour of not being inside the instance, treat this instance as reset
-				lastInstance = nil 
+		-- ignore BGs
+		if BG_INSTANCE_NAMES[instanceName] then 
+			if FLogGlobalVars.track.bgs and not FLogVars.inInstance then 
+				IncreaseSessionDictVar("bgs", instanceName, 1)
 			end 
-			if not lastInstance then 
-				FarmLog:AddInstance(instanceName, now)
-			else 
-				self:AskQuestion(L["new-instance-title"], L["new-instance-question"], function () 
-					-- yes
+		else 		
+			if FLogGlobalVars.track.resets then 
+				local lastInstance, lastIndex = self:GetLastInstance(instanceName)
+				if lastInstance and lastInstance.leave and now - lastInstance.leave >= INSTANCE_RESET_SECONDS then 
+					-- after 1 hour of not being inside the instance, treat this instance as reset
+					lastInstance = nil 
+				end 
+				if not lastInstance then 
 					FarmLog:AddInstance(instanceName, now)
-				end, function () 
-					-- no
-					lastInstance.leave = nil 
-					FarmLog:RepushInstance(lastIndex)
-				end)
-			end 
-		end
+				else 
+					self:AskQuestion(L["new-instance-title"], L["new-instance-question"], function () 
+						-- yes
+						FarmLog:AddInstance(instanceName, now)
+					end, function () 
+						-- no
+						lastInstance.leave = nil 
+						FarmLog:RepushInstance(lastIndex)
+					end)
+				end 
+			end
+		end 
+		FLogVars.inInstance = true
+		FLogVars.instanceName = instanceName
 	end
 	FarmLog_MainWindow:Refresh()
 end 
@@ -2470,6 +2531,8 @@ function FarmLog:OnEvent(event, ...)
 			self:OnCombatFactionChange(...)
 		elseif event == "PLAYER_DEAD" then 
 			self:OnPlayerDead(...)
+		elseif event == "PLAYER_LEVEL_UP" then 
+			self:OnPlayerLevelUp(...)
 		end 
 	end 
 

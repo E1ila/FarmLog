@@ -134,6 +134,10 @@ function FarmLog_BuildLocalization(context)
     L["ah-quality-2"] = "Uncommon (green+)"
     L["ah-quality-3"] = "Rare (blue+)"
     L["ah-quality-4"] = "Epic (purple+)"
+    L["Character levels"] = "Character levels"
+    L["Battle grounds"] = "Battle grounds"
+    L["Won"] = "Won"
+    L["Lost"] = "Lost"
     if (GetLocale() == "enUS") then
     end
     return L
