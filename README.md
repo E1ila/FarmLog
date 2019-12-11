@@ -62,6 +62,7 @@ Another thing is that the more time & data you have per session, the more accura
 * 1.19
     * Counting battle grounds count, as well as wins/loss count
     * BGs are not counted for instance lock count
+    * Honor diminshing returns can be disabled for BGs (still not confirmed if it's enabled in BGs)
     * Added level-up count
 * 1.18.3
     * Fixed bug causing consumes used on different levels (character level up) to be shown seperately on the log.

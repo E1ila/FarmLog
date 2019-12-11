@@ -138,6 +138,7 @@ function FarmLog_BuildLocalization(context)
     L["Battle grounds"] = "Battle grounds"
     L["Won"] = "Won"
     L["Lost"] = "Lost"
+    L["honorDRinBGs"] = "Enable honor diminishing returns in BGs"
     if (GetLocale() == "enUS") then
     end
     return L

@@ -155,6 +155,7 @@ FLogGlobalVars = {
 	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
 	resumeSessionOnSwitch = true,
+	honorDRinBGs = true,
 	reportTo = {},
 	dismissLootWindowOnEsc = false,
 	groupByMobName = true,
@@ -678,7 +679,7 @@ function FarmLog:Migrate()
 		FLogGlobalVars.track.levelup = true 
 	end 
 
-	if FLogVars.ver < 1.1905 then 
+	if FLogVars.ver < 1.1900 then 
 		for _, farm in pairs(FLogVars.farms) do 
 			if not farm.current.bgs then farm.current.bgs = {} end 
 			if not farm.past.bgs then farm.past.bgs = {} end 
@@ -688,6 +689,7 @@ function FarmLog:Migrate()
 			if not farm.past.bgsLoss then farm.past.bgsLoss = {} end 
 		end 
 		FLogGlobalVars.track.bgs = true
+		FLogGlobalVars.honorDRinBGs = true 
 	end 
 
 	FLogVars.ver = VERSION_INT
@@ -843,7 +845,7 @@ end
 
 function FarmLog:ResetSessionVars()
 	local session = emptySession()
-	if FLogVars.inInstance then 
+	if FLogVars.inInstance and not BG_INSTANCE_NAMES[FLogVars.instanceName] then 
 		session.resets = 1
 	end 
 	local farm = FLogVars.farms[FLogVars.currentFarm]
@@ -1647,8 +1649,12 @@ local HonorGainStrings = {
 }
 
 function FarmLog:EstimatedHonorPercent(unitName)
-	local timesKilledToday = FLogVars.todayKills[unitName] or 0
-	return 1 - min(0.25 * timesKilledToday, 1)
+	if not FLogGlobalVars.honorDRinBGs and FLogVars.inInstance then 
+		return 1
+	else 
+		local timesKilledToday = FLogVars.todayKills[unitName] or 0
+		return 1 - min(0.25 * timesKilledToday, 1)
+	end 
 end 
 
 function FarmLog:CheckPvPDayReset()
@@ -1680,8 +1686,10 @@ function FarmLog:OnCombatHonorEvent(text)
 
 			-- count character kills for honor diminishing returns effect 
 			local honorDR = self:EstimatedHonorPercent(name)
-			local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
-			FLogVars.todayKills[name] = timesKilledToday
+			if FLogGlobalVars.honorDRinBGs or not FLogVars.inInstance then 
+				local timesKilledToday = (FLogVars.todayKills[name] or 0) + 1
+				FLogVars.todayKills[name] = timesKilledToday
+			end 
 
 			if isPositive(honor) then 
 				local adjustedHonor = math.floor(tonumber(honor) * honorDR)
@@ -2406,11 +2414,13 @@ local function OnTooltipSetUnit(...)
 	OriginalOnTooltipSetUnit(GameTooltip, ...)
 
 	local _, unit = GameTooltip:GetUnit()
-	if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) and UnitLevel(unit) >= UnitLevel("player") - 10 then 
-		local name = UnitName(unit)
-		local honor = FarmLog:EstimatedHonorPercent(name) * 100
-		GameTooltip:AddLine("|cff"..HonorDRColor[honor]..honor.."% "..L["Honor"])
-	end 
+	if FLogGlobalVars.honorDRinBGs or not FLogVars.inInstance then 
+		if unit and UnitExists(unit) and UnitIsEnemy(unit, "player") and UnitIsPlayer(unit) and UnitLevel(unit) >= UnitLevel("player") - 10 then 
+			local name = UnitName(unit)
+			local honor = FarmLog:EstimatedHonorPercent(name) * 100
+			GameTooltip:AddLine("|cff"..HonorDRColor[honor]..honor.."% "..L["Honor"])
+		end
+	end  
 	
 	GameTooltip:Show()
 end
