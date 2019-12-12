@@ -1,5 +1,5 @@
-﻿local VERSION = "1.19"
-local VERSION_INT = 1.1900
+﻿local VERSION = "1.19.1"
+local VERSION_INT = 1.1901
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -115,15 +115,8 @@ local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 local PLAYER_WARN_COOLDOWN = 60
 local BL_SEEN_TIMEOUT = 20 * 60
 local BL_TIMERS_DELAY = 5
-local BL_SPAWN_TIME_SECONDS = 3600
 local BL_ITEMID = 13468
 local BL_ITEM_NAME = ""
--- briarthorn FarmLog:SetBlackLotusItemId(2450)
--- peacebloom FarmLog:SetBlackLotusItemId(2447)
--- earthroot FarmLog:SetBlackLotusItemId(2449)
--- silverleaf FarmLog:SetBlackLotusItemId(765)
--- mageroyal FarmLog:SetBlackLotusItemId(785)
--- Stranglekelp FarmLog:SetBlackLotusItemId(3820)
 
 FLogGlobalVars = {
 	debug = false,
@@ -166,6 +159,7 @@ FLogGlobalVars = {
 	pauseOnLogin = true,
 	showHonorPercentOnTooltip = true,
 	showHonorFrenzyCounter = true,
+	blackLotusTimeSeconds = 3600,
 	instances = {},
 	blt = {}, -- BL timers
 	blp = {}, -- BL pick/fail counters
@@ -698,6 +692,8 @@ function FarmLog:Migrate()
 		FLogGlobalVars.honorDRinBGs = true 
 		FLogGlobalVars.autoResumeBGs = true 
 	end 
+
+	if not FLogGlobalVars.blackLotusTimeSeconds then FLogGlobalVars.blackLotusTimeSeconds = 3600 end 
 
 	FLogVars.ver = VERSION_INT
 	FLogGlobalVars.ver = VERSION_INT
@@ -2057,8 +2053,8 @@ function FarmLog:ShowBlackLotusTimers()
 			if realmName == REALM then 
 				for zoneName, lastPick in pairs(timers) do 
 					local delta = now - lastPick
-					if delta < BL_SPAWN_TIME_SECONDS then 
-						local seconds = BL_SPAWN_TIME_SECONDS - delta
+					if delta < FLogGlobalVars.blackLotusTimeSeconds then 
+						local seconds = FLogGlobalVars.blackLotusTimeSeconds - delta
 						local text = L["blacklotus-short"]..": "..zoneName
 						if DBM then 
 							DBM:CreatePizzaTimer(seconds, text)

@@ -60,6 +60,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 7](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.19.2
+    * 
 * 1.19
     * Counting battle grounds count, as well as wins/loss count
     * BGs are not counted for instance lock count
@@ -204,25 +206,21 @@ Another thing is that the more time & data you have per session, the more accura
 * Show repair bill
 * Allow custom attribution loot to certain mob
 * Support multiboxing GPH
-* Add button to add a new farm / rename
-* Show menu when clicking items on list - delete/ignore/set AH price/reassign
-* Remove specific item from the log
+* Add button to a rename a farm
+* Show menu when clicking items on list - delete/blacklist/hide/set AH price/reassign
 * Show drop chances
-* Allow ignoring certain drop from g/h calc
-* Allow filtering loot window with buttons
-* Start instance session on first hit
+* Allow filtering loot window by quality, green/rare/epic buttons
+* Allow starting instance session on first hit
 * Allow manually increasing/decreasing kill values
 * Allow sending session report
 * Show list of instances and times
-* Allow adding new farm with name in search box
 * Show AH scan time
 * Allow scanning using a UI button
-* Add diminishing returns to target tooltip
-* Format numbers with thosands separator
-* Show honor in last 10 seconds
 * Allow to show specific lines from log in HUD
 * Allow tracking rested XP
-* Disable using AH prices
+* With auto instance switch ON, return to previous farm when leaving instance
+* Sum consumes value on "Consumes" row
+* Disable logging of trades somehow, unless enabled
 
 ### MIT License
 Copyright 2019 https://github.com/E1ila
