@@ -1,5 +1,5 @@
-﻿local VERSION = "1.19.2"
-local VERSION_INT = 1.1902
+﻿local VERSION = "1.19.3"
+local VERSION_INT = 1.1903
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
@@ -1716,7 +1716,7 @@ function FarmLog:OnCombatHonorEvent(text)
 		if FLogVars.enabled and FLogGlobalVars.track.honor then 
 			IncreaseSessionVar("honor", honor)
 		end 
-		debug("|cff999999OnCombatHonorEvent|r |cffff9900"..name.."|r honor award |cffff9900"..tostring(honor))
+		debug("|cff999999OnCombatHonorEvent|r honor award |cffff9900"..tostring(honor))
 		if FLogVars.enabled then FarmLog_MainWindow:Refresh() end 
 		return 
 	end 
