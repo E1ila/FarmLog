@@ -61,7 +61,7 @@ Another thing is that the more time & data you have per session, the more accura
 
 ### Changes 
 * 1.19.2
-    * 
+    * Fixed tracking of award honor gain
 * 1.19
     * Counting battle grounds count, as well as wins/loss count
     * BGs are not counted for instance lock count
