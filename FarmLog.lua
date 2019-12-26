@@ -2355,11 +2355,11 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 		FLogVars.inInstance = false
 		FLogVars.instanceName = nil
 		self:CloseOpenInstances()
-		if BG_INSTANCE_NAMES[farm.instanceName] or FLogGlobalVars.autoSwitchInstances then 
+		if (BG_INSTANCE_NAMES[farm.instanceName] and FLogGlobalVars.autoResumeBGs) or (not BG_INSTANCE_NAMES[farm.instanceName] and FLogGlobalVars.autoSwitchInstances) then 
 			self:PauseSession()
 		end 
 	elseif inInstance then
-		if FLogGlobalVars.autoSwitchInstances or (FLogGlobalVars.autoResumeBGs and BG_INSTANCE_NAMES[farm.instanceName] and farm.instanceName == instanceName) then 
+		if (not BG_INSTANCE_NAMES[farm.instanceName] and FLogGlobalVars.autoSwitchInstances) or (FLogGlobalVars.autoResumeBGs and BG_INSTANCE_NAMES[farm.instanceName] and farm.instanceName == instanceName) then 
 			if farm.instanceName == instanceName then 
 				self:ResumeSession()
 			else 
