@@ -1,4 +1,4 @@
-﻿local VERSION = "1.19.3"
+﻿local VERSION = "1.19.4"
 local VERSION_INT = 1.1903
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
@@ -2134,10 +2134,10 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section, mul)
 end
 
 local SelfLootStrings = {
-	_G.LOOT_ITEM_PUSHED_SELF_MULTIPLE,
-	_G.LOOT_ITEM_SELF_MULTIPLE,
-	_G.LOOT_ITEM_PUSHED_SELF,
-	_G.LOOT_ITEM_SELF,
+	-- _G.LOOT_ITEM_PUSHED_SELF_MULTIPLE, -- You receive item: %sx%d
+	_G.LOOT_ITEM_SELF_MULTIPLE, -- You receive loot: %sx%d
+	-- _G.LOOT_ITEM_PUSHED_SELF, -- You receive item: %s
+	_G.LOOT_ITEM_SELF, -- You receive loot: %s
 }
 
 local function ParseSelfLootEvent(chatmsg)
