@@ -585,4 +585,52 @@ FarmLog.Consumes = {
         desc = "Well Fed (15 sta)",
         type = "Alcohol",
     },
+    ["24870"] = {
+        name = "Well Fed",
+        item = "Winter Veil Cookie",
+        desc = "Well Fed (15 sta, 15 spi)",
+        type = "Food",
+    },
+    ["18125"] = {
+        name = "Blessed Sunfruit",
+        item = "Blessed Sunfruit",
+        desc = "Well Fed (10 str)",
+        type = "Food",
+    },
+    ["8090"] = {
+        name = "Bright Baubles",
+        item = "Bright Baubles",
+        desc = "Fishing Lure +75",
+        type = "Consumable",
+    },
+    ["8089"] = {
+        name = "Aquadynamic Fish Attractor",
+        item = "Aquadynamic Fish Attractor",
+        desc = "Fishing Lure +100",
+        type = "Consumable",
+    },
+    ["8088"] = {
+        name = "Nightcrawlers",
+        item = "Nightcrawlers",
+        desc = "Fishing Lure +50",
+        type = "Consumable",
+    },
+    ["8087"] = {
+        name = "Shiny Bauble",
+        item = "Shiny Bauble",
+        desc = "Fishing Lure +25",
+        type = "Consumable",
+    },
+    ["8532"] = {
+        name = "Aquadynamic Fish Lens",
+        item = "Aquadynamic Fish Lens",
+        desc = "Fishing Lure +50",
+        type = "Consumable",
+    },
+    ["7307"] = {
+        name = "Flesh Eating Worm",
+        item = "Flesh Eating Worm",
+        desc = "Fishing Lure +75",
+        type = "Consumable",
+    },
 }
