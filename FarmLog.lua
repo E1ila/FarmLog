@@ -44,9 +44,17 @@ local VALUE_TYPE_COLOR = {
 
 local HonorDRColor = {
 	[100] = "2bff00",
+	[90] = "2bff00",
+	[80] = "2bff00",
 	[75] = "99ff00",
+	[70] = "99ff00",
+	[60] = "99ff00",
 	[50] = "fffb00",
+	[40] = "fffb00",
+	[30] = "fffb00",
 	[25] = "ff9100",
+	[20] = "ff9100",
+	[10] = "ff9100",
 	[0] = "ff1900",
 }
 
@@ -59,6 +67,7 @@ local LOOT_AUTOFIX_TIMEOUT_SEC = 1
 local AH_SCAN_CHUNKS = 500
 local HUD_DRESSUP_TIME = 60
 local HONOR_FRENZY_UPTIME = 10
+local HONOR_DIMINISH_VALUE = 0.10 -- 10% starting from 29/01/2020
 
 local TEXT_COLOR = {
 	["xp"] = "6a78f9",
@@ -1651,7 +1660,7 @@ function FarmLog:EstimatedHonorPercent(unitName)
 		return 1
 	else 
 		local timesKilledToday = FLogVars.todayKills[unitName] or 0
-		return 1 - min(0.25 * timesKilledToday, 1)
+		return 1 - min(HONOR_DIMINISH_VALUE * timesKilledToday, 1)
 	end 
 end 
 
