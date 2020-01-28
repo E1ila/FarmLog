@@ -60,6 +60,8 @@ Another thing is that the more time & data you have per session, the more accura
 ![Preview 7](https://github.com/E1ila/FarmLog/blob/master/Preview4.png)
 
 ### Changes 
+* 1.20
+    * Updated diminishing value of honor to 10% following Blizzard announcement, this will start at 29-Nov 2020
 * 1.19.4
     * Fixed logging of traded and mail received items. They won't be logged now, only looted items.
     * "Auto Resume BG Farms" option will now properly affect pausing of sessions when leaving BGs. If it's OFF, session won't be paused when leaving a BG.
