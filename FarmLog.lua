@@ -127,11 +127,20 @@ local BL_TIMERS_DELAY = 5
 local BL_ITEMID = 13468
 local BL_ITEM_NAME = ""
 
+TSM_PRICE_SOURCES = {
+    ["tsm-price-source-0"] = "DBMarket",
+    ["tsm-price-source-1"] = "DBMinBuyout",
+    ["tsm-price-source-2"] = "DBHistorical",
+    ["tsm-price-source-3"] = "DBRegionMarketAvg",
+    ["tsm-price-source-4"] = "DBRegionMinBuyoutAvg",
+    ["tsm-price-source-5"] = "DBRegionHistorical",
+}
 FLogGlobalVars = {
 	debug = false,
 	ahPrice = {},
 	ahScan = {},
 	ahMinQuality = 3,
+	tsmPriceSource = 0,
 	ignoredItems = {},
 	track = {
 		drops = true,
@@ -545,6 +554,7 @@ function FarmLog:Migrate()
 
 	if not FLogGlobalVars.ahScan then FLogGlobalVars.ahScan = {} end
 	if not FLogGlobalVars.ahMinQuality then FLogGlobalVars.ahMinQuality = 1 end 
+	if not FLogGlobalVars.tsmPriceSource then FLogGlobalVars.tsmPriceSource = 0 end
 
 	if FLogVars.ver < 1.1102 then 
 		-- make sure each killed mob has a drop table, even an empty one
@@ -2094,7 +2104,7 @@ function FarmLog:GetItemValue(itemLink)
 		-- debug("GetItemValue   "..itemLink.."   quality "..quality)
 		local GetTSMPrice = TSM_API and function(link) 
 			local TSM_ItemString = TSM_API.ToItemString(normLink)
-			return TSM_API.GetCustomPriceValue("dbmarket", TSM_ItemString)
+			return TSM_API.GetCustomPriceValue(TSM_PRICE_SOURCES["tsm-price-source-"..FLogGlobalVars.tsmPriceSource], TSM_ItemString)
 		end
 		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
 		ahValue = PriceCheck(normLink)

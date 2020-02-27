@@ -186,14 +186,41 @@ UIDropDownMenu_Initialize(mfpanel.AHMinQualityDropdown, function (frame, level, 
 	end 
 end)
 
+mfpanel.TSMPriceSource = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
+mfpanel.TSMPriceSource:SetPoint("TOPLEFT", mfpanel.AHMinQuality, "BOTTOMLEFT", 0, -40)
+mfpanel.TSMPriceSource:SetWidth(170)
+mfpanel.TSMPriceSource:SetJustifyH("LEFT")
+mfpanel.TSMPriceSource:SetText(L["TSM Price Source"])
 
+local function TSMPriceSourceDropdown_OnClick(self)
+	for i = 0,5 do
+		if TSM_PRICE_SOURCES["tsm-price-source-"..i] == self.value then
+			FLogGlobalVars.tsmPriceSource = i
+			UIDropDownMenu_SetText(mfpanel.TSMPriceSourceDropdown, TSM_PRICE_SOURCES["tsm-price-source-"..i])
+			FarmLog_MainWindow:RecalcTotals()
+			FarmLog_MainWindow:Refresh()
+			break
+		end
+	end
+end
+mfpanel.TSMPriceSourceDropdown = CreateFrame("Frame", "FarmLogTSMPriceSourceDropdown", mfpanel, "UIDropDownMenuTemplate")
+mfpanel.TSMPriceSourceDropdown:SetPoint("TOPLEFT", mfpanel.TSMPriceSource, "BOTTOMLEFT", -20, -2)
+UIDropDownMenu_SetWidth(mfpanel.TSMPriceSourceDropdown, 200)
+UIDropDownMenu_Initialize(mfpanel.TSMPriceSourceDropdown, function (frame, level, menuList)
+	local info = UIDropDownMenu_CreateInfo()
+	info.func = TSMPriceSourceDropdown_OnClick
+	for i = 0,5 do
+		info.text, info.checked = TSM_PRICE_SOURCES["tsm-price-source-"..i], i == FLogGlobalVars.tsmPriceSource
+		UIDropDownMenu_AddButton(info)
+	end
+end)
 ----------------------------------------------
 -- Tracking
 ----------------------------------------------
 mfpanel.TrackingCategoryTitle = mfpanel:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 mfpanel.TrackingCategoryTitle:SetFont(font, 16)
 mfpanel.TrackingCategoryTitle:SetText(L["Tracking"])
-mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.AHMinQualityDropdown, "BOTTOMLEFT", 20, -20)
+mfpanel.TrackingCategoryTitle:SetPoint("TOPLEFT", mfpanel.TSMPriceSourceDropdown, "BOTTOMLEFT", 20, -20)
 
 mfpanel.TrackKills = CreateCheckButton("FarmLogOptions_TrackKills", mfpanel, L["Mobs Kill Count"])
 mfpanel.TrackKills:SetPoint("TOPLEFT", mfpanel.TrackingCategoryTitle, "BOTTOMLEFT", 0, -8)
@@ -343,4 +370,5 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.TrackResets:SetChecked(FLogGlobalVars.track.resets)
 
 	UIDropDownMenu_SetText(InterfacePanel.MainFrame.AHMinQualityDropdown, L["ah-quality-"..FLogGlobalVars.ahMinQuality])
+	UIDropDownMenu_SetText(InterfacePanel.MainFrame.TSMPriceSourceDropdown, TSM_PRICE_SOURCES["tsm-price-source-"..FLogGlobalVars.tsmPriceSource])
 end 

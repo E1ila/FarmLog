@@ -134,6 +134,7 @@ function FarmLog_BuildLocalization(context)
     L["ah-quality-2"] = "Uncommon (green+)"
     L["ah-quality-3"] = "Rare (blue+)"
     L["ah-quality-4"] = "Epic (purple+)"
+    L["TSM Price Source"] = "TSM Price Source"
     L["Character levels"] = "Character levels"
     L["Battle grounds"] = "Battle grounds"
     L["Won"] = "Won"
