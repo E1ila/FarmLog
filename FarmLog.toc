@@ -2,7 +2,7 @@
 ## Title: FarmLog
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 ## Author: Kof @Firemaw (era)
-## Version: v1.21
+## Version: v2.01
 ## SavedVariables: FLogGlobalVars
 ## SavedVariablesPerCharacter: FLogVars
 FarmLog.xml

@@ -28,6 +28,12 @@ local BG_INSTANCE_NAMES = {
 	["Warsong Gulch"] = true,
 	["Alterac Valley"] = true,
 	["Arathi Basin"] = true,
+	["Eye of the Storm"] = true,
+}
+local ARENA_INSTANCE_NAMES = {
+	["Nagrand Arena"] = true,
+	["Blade's Edge Arena"] = true,
+	["Ruins of Lordaeron"] = true,
 }
 
 local VALUE_TYPE_MANUAL = 'M'
@@ -149,6 +155,7 @@ FLogGlobalVars = {
 		levelup = true,
 		resets = true,
 		bgs = true,
+		misc = false,
 	},
 	hud = {
 		paddingX = 8,
@@ -168,6 +175,7 @@ FLogGlobalVars = {
 	pauseOnLogin = true,
 	showHonorPercentOnTooltip = true,
 	showHonorFrenzyCounter = true,
+	minQuantitySold = false,
 	blackLotusTimeSeconds = 3600,
 	instances = {},
 	blt = {}, -- BL timers
@@ -260,7 +268,6 @@ local sessionSearchResult = nil
 local addonLoadedTime = nil
 local blSeen = nil
 local lastHudDressUp = 0
-local hasBigwigs = false
 local honorFrenzySetTime = nil 
 local honorFrenzyTotal = 0
 local honorFrenzyKills = 0
@@ -646,6 +653,7 @@ function FarmLog:Migrate()
 			rep = true,
 			deaths = true,
 			resets = true,
+			misc = false,
 		}
 	end 
 
@@ -1640,6 +1648,16 @@ function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
 	debug("|cff999999OnSpellCastSuccessEvent|r spellId |cffff9900"..tostring(spellId).."|r unit |cffff9900"..tostring(unit))
 	if not FLogGlobalVars.track.consumes or unit ~= "player" then return end 
 	local buffmeta = FarmLog.Consumes[tostring(spellId)]
+
+	if spellId == 27089 then
+		-- The 'Drink' spell can be triggered by 'Purified Draenic Water' and 'Conjured Glacier Water' (and other items).
+		-- GetItemInfo returns nil if that item hasn't been in the player's bag in the current session. If the player had Conjured 
+		-- water in this session, we assume the Drink spell was triggered by that (free) water and thus we return.
+		if GetItemInfo("Conjured Glacier Water") ~= nil then return end
+	end
+
+	-- stuck here
+	--print(spellId)
 	if buffmeta and buffmeta.item then 
 		-- item has/had to be in bags for get by name to work
 		local _, itemLink, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(buffmeta.item)
@@ -2044,25 +2062,8 @@ function FarmLog:SaveBLSeenTime()
 	debug("|cff999999SaveBLSeenTime|r blSeenTime |cffff9900"..blSeen.ts.."|r blSeenZone |cffff9900"..blSeen.zone)
 end 
 
-function FarmLog:CheckTimerAddons()
-	if FLogGlobalVars.showBlackLotusTimer then 
-		local bigwigsAddons = {'BigWigs_Core', 'BigWigs_Options', 'BigWigs_Plugins',}
-		hasBigwigs = true
-		for i=1, #bigwigsAddons do
-			if IsAddOnLoadOnDemand(bigwigsAddons[i]) then 
-				LoadAddOn(bigwigsAddons[i])
-			else 
-				if not IsAddOnLoaded(bigwigsAddons[i]) then
-					hasBigwigs = false
-					break
-				end
-			end 
-		end
-	end 
-end 
-
 function FarmLog:ShowBlackLotusTimers()
-	if FLogGlobalVars.showBlackLotusTimer and (DBM or hasBigwigs) then 
+	if FLogGlobalVars.showBlackLotusTimer then 
 		local now = time()
 		for realmName, timers in pairs(FLogGlobalVars.blt) do 
 			if realmName == REALM then 
@@ -2073,8 +2074,10 @@ function FarmLog:ShowBlackLotusTimers()
 						local text = L["blacklotus-short"]..": "..zoneName
 						if DBM then 
 							DBM:CreatePizzaTimer(seconds, text)
-						elseif SlashCmdList.BIGWIGSLOCALBAR then 
+						elseif SlashCmdList.BIGWIGSLOCALBAR then -- BigWigs exists and is fully loaded
 							SlashCmdList.BIGWIGSLOCALBAR(seconds.." "..text)
+						elseif SlashCmdList["/LOCALBAR"] then -- BigWigs exists but is not yet fully loaded
+							SlashCmdList["/LOCALBAR"](seconds.." "..text)
 						end 
 					end 
 				end 
@@ -2088,12 +2091,14 @@ function FarmLog:GetItemValue(itemLink)
 	local _, _, quality, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink)
 	local normLink = normalizeLink(itemLink)
 	local ahValue = FarmLog:GetManualPrice(normLink)
+	local soldPerDayTSM = nil
 	if ahValue then
 		return ahValue, VALUE_TYPE_MANUAL
 	elseif not quality or quality >= FLogGlobalVars.ahMinQuality then 
 		-- debug("GetItemValue   "..itemLink.."   quality "..quality)
 		local GetTSMPrice = TSM_API and function(link) 
 			local TSM_ItemString = TSM_API.ToItemString(normLink)
+			soldPerDayTSM = TSM_API.GetCustomPriceValue("DBRegionSoldPerDay", TSM_ItemString)
 			return TSM_API.GetCustomPriceValue("dbmarket", TSM_ItemString)
 		end
 		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
@@ -2101,7 +2106,10 @@ function FarmLog:GetItemValue(itemLink)
 	end
 
 	-- check if AH price (-15%) > vendor price + 1s
-	if isPositive(ahValue) and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) then
+	-- also, if the AH price came from TSM, check the 'avg daily sold' value. If it's lower than 1, use the vendor price.
+	if isPositive(ahValue) 
+		and (not isPositive(vendorPrice) or ahValue * 0.85 > vendorPrice + 100) 
+		and (not FLogGlobalVars.minQuantitySold or TSM_API == nil or (isPositive(soldPerDayTSM) and soldPerDayTSM >= 1)) then
 		return ahValue, VALUE_TYPE_SCAN
 	elseif isPositive(vendorPrice) then 
 		return vendorPrice, VALUE_TYPE_VENDOR
@@ -2150,6 +2158,11 @@ local SelfLootStrings = {
 }
 
 local function ParseSelfLootEvent(chatmsg)
+	words = {}
+	local next = false
+	local link1 = ""
+	local quantity1 = 0
+
 	for _, st in ipairs(SelfLootStrings) do
 		local link, quantity = FLogDeformat(chatmsg, st)
 		if quantity then 
@@ -2159,13 +2172,48 @@ local function ParseSelfLootEvent(chatmsg)
 			return link, 1
 		end 
 	end
+	
+
+	--Optional For Gas Clouds Mailbox and more.
+	if FLogGlobalVars.track.misc then
+		for word in chatmsg:gmatch("%w+") do
+			if next == true then
+				--print(word)
+				link1 = word
+				next = false
+			end
+			if string.find(word,"Hitem") then
+				--print("link is next")
+				next = true
+			end
+
+			if string.find(word, "rx") then
+				local test = word:gsub("rx","")
+				quantity1 = tonumber(test)
+				--print(test)
+			end
+
+			if word == "r" then
+				quantity = 1
+				--print(1)
+			end
+		end
+		return link1, quantity1
+	end
+
+
 end
+
 
 function FarmLog:OnLootEvent(text)
 	local now = time()
 	local itemLink, quantity = ParseSelfLootEvent(text)
-	if not itemLink then return end 
+	if not itemLink then return end
 
+	if not string.find(itemLink,":") then
+		local sName, sLink, iRarity, iLevel, iMinLevel, sType, sSubType, iStackCount = GetItemInfo(tonumber(itemLink))
+		itemLink = sLink
+	end
 	local itemId = extractItemID(itemLink)
 	debug("|cff999999OnLootEvent|r itemId |cffff9900"..tostring(itemId))
 	if itemId == tostring(BL_ITEMID) then 
@@ -2376,8 +2424,8 @@ function FarmLog:OnEnteringWorld(isInitialLogin, isReload)
 			end
 		end 
 		-- ignore BGs
-		if BG_INSTANCE_NAMES[instanceName] then 
-			if FLogGlobalVars.track.bgs and not FLogVars.inInstance then 
+		if BG_INSTANCE_NAMES[instanceName] or ARENA_INSTANCE_NAMES[instanceName] then 
+			if FLogGlobalVars.track.bgs and not FLogVars.inInstance and BG_INSTANCE_NAMES[instanceName] then 
 				bgResultRecorded = false 
 				IncreaseSessionDictVar("bgs", instanceName, 1)
 			end 
@@ -2639,7 +2687,6 @@ function FarmLog:OnUpdate()
 	end 
 	if addonLoadedTime and time() - addonLoadedTime > BL_TIMERS_DELAY then 
 		addonLoadedTime = nil 
-		self:CheckTimerAddons()
 		self:ShowBlackLotusTimers()
 		self:CheckPvPDayReset() -- this may return 0 if called too soon
 	end 
