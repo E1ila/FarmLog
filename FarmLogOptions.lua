@@ -1,7 +1,7 @@
 -- Some pieces of the code here were taken from NeatPlates https://www.curseforge.com/wow/addons/neatplates
 
 local function CreatePanelFrame(reference, title)
-	local panelframe = CreateFrame( "Frame", reference, UIParent);
+	local panelframe = CreateFrame( "Frame", reference, UIParent, "BackdropTemplate");
 	panelframe.name = title
 	panelframe.Label = panelframe:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
 	panelframe.Label:SetPoint("TOPLEFT", panelframe, "TOPLEFT", 16, -16)
@@ -93,7 +93,7 @@ panel.ScrollFrame:SetScrollChild(panel.MainFrame)
 
 -- Scroll Frame Border
 ------------------------------
-panel.ScrollFrameBorder = CreateFrame("Frame", "FarmLogScrollFrameBorder", panel.ScrollFrame)
+panel.ScrollFrameBorder = CreateFrame("Frame", "FarmLogScrollFrameBorder", panel.ScrollFrame, "BackdropTemplate")
 panel.ScrollFrameBorder:SetPoint("TOPLEFT", -4, 5)
 panel.ScrollFrameBorder:SetPoint("BOTTOMRIGHT", 3, -5)
 panel.ScrollFrameBorder:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",

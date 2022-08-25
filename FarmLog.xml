@@ -37,7 +37,7 @@
     </Member>
   </FontFamily>
 
-  <Frame name="FarmLog">
+  <Frame name="FarmLog" inherits="BackdropTemplate">
     <Scripts>
       <OnLoad>
         self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
@@ -206,7 +206,7 @@
   </Button>
 
 
-  <Frame name="FarmLog_HonorFrenzyMeter" parent="UIParent" enableMouse="false" movable="true">
+  <Frame name="FarmLog_HonorFrenzyMeter" parent="UIParent" enableMouse="false" movable="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="140" y="40"/>
     </Size>
@@ -216,6 +216,7 @@
     <Scripts>
       <OnLoad>
         self:SetAlpha(0)
+        self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
    			self:SetBackdropColor (0, 0, 0, 0)
     		self:SetBackdropBorderColor(0, 0, 0, 0)
         self:RegisterForDrag("LeftButton")
@@ -228,14 +229,6 @@
         self:StopMovingOrSizing()
       </OnDragStop>
     </Scripts>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
     <Layers>
       <Layer level="ARTWORK">
         <FontString name="$parent_Text" font="Fonts\FRIZQT___CYR.TTF" outline="THICK" text="1,200">
@@ -343,18 +336,10 @@
 
   <!-- Question Dialog -->
 
-  <Frame name="FarmLog_QuestionDialog" frameStrata="DIALOG" parent="UIParent" enableMouse="true" movable="true">
+  <Frame name="FarmLog_QuestionDialog" frameStrata="DIALOG" parent="UIParent" enableMouse="true" movable="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="250" y="100"/>
     </Size>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
     <Anchors>
       <Anchor point="CENTER">
         <Offset>
@@ -364,6 +349,7 @@
     </Anchors>
     <Scripts>
       <OnLoad>
+        self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
    			self:SetBackdropColor (0, 0, 0, 0.9)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
         self:RegisterForDrag("LeftButton")
@@ -397,7 +383,7 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <Frame name="$parent_Title">
+      <Frame name="$parent_Title" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="120" y="20"/>
         </Size>
@@ -413,16 +399,9 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.2)
         		self:SetBackdropBorderColor(0, 0, 0, 1)
           </OnLoad>
@@ -488,15 +467,7 @@
 
   <!-- Heads-Up Display -->
 
-  <Frame name="FarmLog_HUD" frameStrata="MEDIUM" parent="UIParent" enableMouse="true" movable="true">
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
+  <Frame name="FarmLog_HUD" frameStrata="MEDIUM" parent="UIParent" enableMouse="true" movable="true" inherits="BackdropTemplate">
     <Anchor point="CENTER" />
     <Scripts>
       <OnLoad>
@@ -534,26 +505,19 @@
 
   <!-- Main Loot Window -->
 
-  <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLog_MainWindow" parent="UIParent" frameStrata="MEDIUM" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="250" y="250"/>
     </Size>
     <ResizeBounds>
       <minResize x="200" y="200" />
     </ResizeBounds>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
     <Scripts>
       <OnLoad>
         self:RegisterEvent("MODIFIER_STATE_CHANGED")
         self:SetMaxResize(600, GetScreenHeight() - 100);
-   			self:SetBackdropColor (0, 0, 0, 0.8)
+        self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
+   			self:SetBackdropColor(0, 0, 0, 0.7)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
         self:SetUserPlaced(true)
         self.rows = {}
@@ -589,18 +553,10 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <Button name="$parent_ToggleHUDButton">
+      <Button name="$parent_ToggleHUDButton" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="28" y="14"/>
         </Size>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Anchors>
           <Anchor point="TOPRIGHT" relativeTo="$parent_CloseButton" relativePoint="TOPLEFT" x="0" y="-6" />
         </Anchors>
@@ -618,6 +574,7 @@
           <OnLoad>
 				    self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
             self.label = FarmLog_MainWindow_ToggleHUDButton_Text
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
@@ -635,18 +592,10 @@
         </Scripts>
       </Button>      <!--$parent_ToggleHUDButton-->
 
-      <Button name="$parent_SessionsButton">
+      <Button name="$parent_SessionsButton" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="14" y="14"/>
         </Size>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
@@ -667,6 +616,7 @@
         <Scripts>
           <OnLoad>
             self.label = FarmLog_MainWindow_SessionsButton_Text
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
@@ -684,18 +634,10 @@
         </Scripts>
       </Button>      <!--$parent_SessionsButton-->
 
-      <Button name="$parent_ClearButton">
+      <Button name="$parent_ClearButton" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="14" y="14"/>
         </Size>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parent_SessionsButton" relativePoint="TOPRIGHT">
             <Offset>
@@ -716,6 +658,7 @@
         <Scripts>
           <OnLoad>
             self.label = FarmLog_MainWindow_ClearButton_Text
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
@@ -734,18 +677,10 @@
       </Button>      <!--$parent_ClearButton-->
 
 
-      <Button name="$parent_NewSessionButton">
+      <Button name="$parent_NewSessionButton" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="14" y="14"/>
         </Size>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parent_ClearButton" relativePoint="TOPRIGHT">
             <Offset>
@@ -766,6 +701,7 @@
         <Scripts>
           <OnLoad>
             self.label = FarmLog_MainWindow_NewSessionButton_Text
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
           </OnLoad>
           <OnEnter>
             FarmLog_SetTextButtonBackdropColor(self, true)
@@ -783,7 +719,7 @@
         </Scripts>
       </Button>      <!--$parent_NewSessionButton-->
 
-      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
         <Size>
           <AbsDimension y="18"/>
         </Size>
@@ -799,16 +735,9 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
         		self:SetBackdropBorderColor(0, 0, 0, 0)
             self:RegisterForDrag("LeftButton")
@@ -833,7 +762,7 @@
         </Layers>
       </Frame>      <!--$parent_Title-->
 
-      <Frame name="$parent_Buttons" enableMouse="true" movable="true" resizable="true">
+      <Frame name="$parent_Buttons" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
         <Size>
           <AbsDimension y="20"/>
         </Size>
@@ -849,33 +778,18 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.1)
         		self:SetBackdropBorderColor(0, 0, 0, 0)
           </OnLoad>
         </Scripts>
         <Frames>
-          <Button name="$parent_SortGoldButton">
+          <Button name="$parent_SortGoldButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT">
                 <Offset>
@@ -896,6 +810,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_SortGoldButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -913,18 +828,10 @@
             </Scripts>
           </Button>          <!--$parent_SortGoldButton-->
 
-          <Button name="$parent_SortKillsButton">
+          <Button name="$parent_SortKillsButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT" relativeTo="$parent_SortGoldButton" relativePoint="TOPLEFT">
                 <Offset>
@@ -945,6 +852,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_SortKillsButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -962,18 +870,10 @@
             </Scripts>
           </Button>          <!--$parent_SortKillsButton-->
 
-          <Button name="$parent_SortAbcButton">
+          <Button name="$parent_SortAbcButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT" relativeTo="$parent_SortKillsButton" relativePoint="TOPLEFT">
                 <Offset>
@@ -994,6 +894,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_SortAbcButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -1011,18 +912,10 @@
             </Scripts>
           </Button>          <!--$parent_SortAbcButton-->
 
-          <Button name="$parent_ToggleMobNameButton">
+          <Button name="$parent_ToggleMobNameButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="32" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPLEFT">
                 <Offset>
@@ -1043,6 +936,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_ToggleMobNameButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -1056,18 +950,10 @@
             </Scripts>
           </Button>          <!--$parent_ToggleMobNameButton-->
 
-          <Button name="$parent_ToggleCurrentButton">
+          <Button name="$parent_ToggleCurrentButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="42" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPLEFT" relativeTo="$parent_ToggleMobNameButton" relativePoint="TOPRIGHT">
                 <Offset>
@@ -1088,6 +974,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_ToggleCurrentButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -1103,18 +990,10 @@
             </Scripts>
           </Button>          <!--$parent_ToggleCurrentButton-->
 
-          <Button name="$parent_TogglePvPButton">
+          <Button name="$parent_TogglePvPButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPLEFT" relativeTo="$parent_ToggleCurrentButton" relativePoint="TOPRIGHT">
                 <Offset>
@@ -1135,6 +1014,7 @@
             <Scripts>
               <OnLoad>
                 self.label = FarmLog_MainWindow_Buttons_TogglePvPButton_Text
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
               </OnLoad>
               <OnEnter>
                 FarmLog_SetTextButtonBackdropColor(self, true)
@@ -1150,18 +1030,10 @@
             </Scripts>
           </Button>          <!--$parent_TogglePvPButton-->
 
-          <Frame name="$parent_Instances">
+          <Frame name="$parent_Instances" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="20" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPLEFT" relativeTo="$parent_TogglePvPButton" relativePoint="TOPRIGHT">
                 <Offset>
@@ -1181,6 +1053,7 @@
             </Layers>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self:SetBackdropColor(0, 0, 0, 0.4)
           			self:SetBackdropBorderColor(1, 1, 1, 0.1)
 			          FarmLog_MainWindow_Buttons_Instances_Text:SetTextColor(0.8, 0.8, 0.8, 1)
@@ -1262,7 +1135,7 @@
     </Frames>
   </Frame>  <!--FarmLog_MainWindow-->
 
-  <Frame name="FarmLog_SessionsWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLog_SessionsWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="200" y="200"/>
     </Size>
@@ -1273,17 +1146,10 @@
       <minResize x="200" y="200" />
       <maxResize x="600" y="800" />
     </ResizeBounds>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
     <Scripts>
       <OnLoad>
-   			self:SetBackdropColor (0, 0, 0, 0.8)
+        self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
+   			self:SetBackdropColor (0, 0, 0, 0.7)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
         self.rows = {}
         tinsert(UISpecialFrames, self:GetName())
@@ -1310,7 +1176,7 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="120" y="20"/>
         </Size>
@@ -1326,16 +1192,9 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
         		self:SetBackdropBorderColor(0, 0, 0, 0)
             self:RegisterForDrag("LeftButton")
@@ -1359,7 +1218,7 @@
         </Layers>
       </Frame>      <!--$parent_Title-->
 
-      <Frame name="$parent_Buttons" enableMouse="true" movable="true" resizable="true">
+      <Frame name="$parent_Buttons" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
         <Size>
           <AbsDimension y="20"/>
         </Size>
@@ -1375,33 +1234,18 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.1)
         		self:SetBackdropBorderColor(0, 0, 0, 0)
           </OnLoad>
         </Scripts>
         <Frames>
-          <Button name="$parent_SortGoldButton">
+          <Button name="$parent_SortGoldButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT">
                 <Offset>
@@ -1421,6 +1265,7 @@
             </Layers>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self.label = FarmLog_SessionsWindow_Buttons_SortGoldButton_Text
               </OnLoad>
               <OnEnter>
@@ -1435,18 +1280,10 @@
             </Scripts>
           </Button>          <!--$parent_SortGoldButton-->
 
-          <Button name="$parent_SortUseButton">
+          <Button name="$parent_SortUseButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT" relativeTo="$parent_SortGoldButton" relativePoint="TOPLEFT">
                 <Offset>
@@ -1466,6 +1303,7 @@
             </Layers>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self.label = FarmLog_SessionsWindow_Buttons_SortUseButton_Text
               </OnLoad>
               <OnEnter>
@@ -1480,18 +1318,10 @@
             </Scripts>
           </Button>          <!--$parent_SortUseButton-->
 
-          <Button name="$parent_SortAbcButton">
+          <Button name="$parent_SortAbcButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="28" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT" relativeTo="$parent_SortUseButton" relativePoint="TOPLEFT">
                 <Offset>
@@ -1511,6 +1341,7 @@
             </Layers>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self.label = FarmLog_SessionsWindow_Buttons_SortAbcButton_Text
               </OnLoad>
               <OnEnter>
@@ -1525,18 +1356,10 @@
             </Scripts>
           </Button>          <!--$parent_SortAbcButton-->
 
-          <Button name="$parent_NewFarmButton">
+          <Button name="$parent_NewFarmButton" inherits="BackdropTemplate">
             <Size>
               <AbsDimension x="14" y="14"/>
             </Size>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Anchors>
               <Anchor point="TOPRIGHT" relativeTo="$parent_SortAbcButton" relativePoint="TOPLEFT" x="-6" y="0" />
             </Anchors>
@@ -1552,6 +1375,7 @@
             </Layers>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self.label = FarmLog_SessionsWindow_Buttons_NewFarmButton_Text
               </OnLoad>
               <OnEnter>
@@ -1570,22 +1394,15 @@
             </Scripts>
           </Button>          <!--$parent_NewFarmButton-->
 
-          <EditBox name="$parent_SearchBox" letters="80" autoFocus="false">
+          <EditBox name="$parent_SearchBox" letters="80" autoFocus="false" inherits="BackdropTemplate">
             <Size x="10" y="16" />
             <Anchors>
               <Anchor point="LEFT" x="2" y="0" />
               <Anchor point="RIGHT" relativeTo="$parent_NewFarmButton" relativePoint="LEFT" x="-2" y="0" />
             </Anchors>
-            <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-              <EdgeSize>
-                <AbsValue val="1"></AbsValue>
-              </EdgeSize>
-              <TileSize>
-                <AbsValue val="16" />
-              </TileSize>
-            </Backdrop>
             <Scripts>
               <OnLoad>
+                self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
                 self:SetBackdropColor(0, 0, 0, 0.8)
             		self:SetBackdropBorderColor(0.5, 0.5, 0.5, 0)
               </OnLoad>
@@ -1674,7 +1491,7 @@
   </Frame>  <!--FarmLog_SessionsWindow-->
 
 
-  <Frame name="FarmLog_LogWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true">
+  <Frame name="FarmLog_LogWindow" parent="UIParent" frameStrata="HIGH" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="200" y="200"/>
     </Size>
@@ -1685,16 +1502,9 @@
       <minResize x="200" y="200" />
       <maxResize x="600" y="800" />
     </ResizeBounds>
-    <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-      <EdgeSize>
-        <AbsValue val="1"></AbsValue>
-      </EdgeSize>
-      <TileSize>
-        <AbsValue val="16" />
-      </TileSize>
-    </Backdrop>
     <Scripts>
       <OnLoad>
+        self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
    			self:SetBackdropColor (0, 0, 0, 0.8)
     		self:SetBackdropBorderColor(0, 0, 0, 1)
         self.rows = {}
@@ -1722,7 +1532,7 @@
         </Scripts>
       </Button>      <!--$parent_CloseButton-->
 
-      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true">
+      <Frame name="$parent_Title" enableMouse="true" movable="true" resizable="true" inherits="BackdropTemplate">
         <Size>
           <AbsDimension x="120" y="20"/>
         </Size>
@@ -1738,16 +1548,9 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface/Buttons/WHITE8X8" edgeFile="Interface/Buttons/WHITE8X8" tile="true">
-          <EdgeSize>
-            <AbsValue val="1"></AbsValue>
-          </EdgeSize>
-          <TileSize>
-            <AbsValue val="16" />
-          </TileSize>
-        </Backdrop>
         <Scripts>
           <OnLoad>
+            self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
        			self:SetBackdropColor(0.5, 0.5, 0.5, 0.3)
         		self:SetBackdropBorderColor(0, 0, 0, 0)
             self:RegisterForDrag("LeftButton")

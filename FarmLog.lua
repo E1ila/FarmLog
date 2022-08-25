@@ -1,7 +1,7 @@
 ﻿local VERSION = "1.20"
 local VERSION_INT = 1.2000
 local ADDON_NAME = "FarmLog"
-local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Shazzrah|r"
+local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Firemaw|r (era)"
 local FONT_NAME = "Fonts\\FRIZQT__.TTF"
 local MAX_AH_RETRY = 0
 
@@ -155,7 +155,7 @@ FLogGlobalVars = {
 		paddingY = 5,
 		fontName = FONT_NAME,
 		fontSize = 12,
-		alpha = 0.7,
+		alpha = 0.6,
 	},
 	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
@@ -985,7 +985,7 @@ local function CreateRow_Text(existingRow, text, container)
 	row.type = "text"
 
 	if not row.root then 
-		row.root = CreateFrame("FRAME", nil, container.scrollContent);		
+		row.root = CreateFrame("FRAME", nil, container.scrollContent, BackdropTemplateMixin and "BackdropTemplate");		
 		-- row.root:SetWidth(container.scrollContent:GetWidth() - 20);
 		row.root:SetHeight(15);
 		row.root:SetBackdropColor(1, 0, 0, 1)
@@ -2698,6 +2698,7 @@ function FarmLog_MainWindow:ResetPosition()
 end 
 
 function FarmLog_MinimapButton:Init(reload) 
+	FarmLog_MinimapButton:ClearAllPoints()
 	FarmLog_MinimapButton:SetPoint(FLogVars.minimapButtonPosition.point, Minimap, FLogVars.minimapButtonPosition.x, FLogVars.minimapButtonPosition.y);
 	if FLogVars.enableMinimapButton then
 		self:Show();
@@ -2810,6 +2811,7 @@ function FarmLog_HUD:DressUp()
 	local fontSize = FLogGlobalVars.hud.fontSize
 	local pvpMode = GetFarmVar("pvpMode") == true
 
+	self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
 	self:SetBackdropColor(0, 0, 0, FLogGlobalVars.hud.alpha)
 	self:SetBackdropBorderColor(0, 0, 0, 1)
 	self:RegisterForDrag("LeftButton")
