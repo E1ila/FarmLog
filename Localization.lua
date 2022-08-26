@@ -141,6 +141,7 @@ function FarmLog_BuildLocalization(context)
     L["Lost"] = "Lost"
     L["honorDRinBGs"] = "Enable honor diminishing returns in BGs"
     L["autoResumeBGs"] = "Auto resume BG farms when entering"
+    L["TSM Price Source"] = "TSM Price Source"
     if (GetLocale() == "enUS") then
     end
     return L
