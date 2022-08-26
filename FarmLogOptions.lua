@@ -50,9 +50,10 @@ local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog")
 InterfaceOptions_AddCategory(InterfacePanel);
 FarmLog.InterfacePanel = InterfacePanel
 
+local SharedMedia = LibStub:GetLibrary ("LibSharedMedia-3.0")
 local panel = InterfacePanel
 local L = FarmLog.L 
-local font = "Fonts\\FRIZQT__.TTF"
+local font = SharedMedia.MediaTable.font[SharedMedia.DefaultMedia.font]
 
 panel:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", insets = { left = 2, right = 2, top = 2, bottom = 2 },})
 panel:SetBackdropColor(0.06, 0.06, 0.06, .7)
