@@ -312,6 +312,12 @@ mfpanel.ResetHUDPositionButton:SetWidth(200)
 mfpanel.ResetHUDPositionButton:SetText(L["Reset HUD Position"])
 mfpanel.ResetHUDPositionButton:SetScript("OnClick", function(self) FarmLog_HUD:ResetPosition() end)
 
+mfpanel.ResetFontsButton = CreateFrame("Button", "FarmLogOptions_ResetFontButton", mfpanel, "FarmLogPanelButtonTemplate")
+mfpanel.ResetFontsButton:SetPoint("TOPLEFT", mfpanel.ResetLootWindowPositionButton, "BOTTOMLEFT", 0, -5)
+mfpanel.ResetFontsButton:SetWidth(200)
+mfpanel.ResetFontsButton:SetText(L["Reset Fonts"])
+mfpanel.ResetFontsButton:SetScript("OnClick", function(self) FarmLog_MainWindow:ResetFont() end)
+
 
 ----------------------------------------------
 -- Init

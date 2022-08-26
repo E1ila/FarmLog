@@ -121,6 +121,7 @@ function FarmLog_BuildLocalization(context)
     L["showHonorPercentOnTooltip"] = "Show honor % on enemy target's tooltip (requires reload)"
     L["new-farm-help"] = "Create a new farm, will use the name in search box"
     L["Reset HUD Position"] = "Reset HUD Position"
+    L["Reset Fonts"] = "Reset Fonts"
     L["PvP"] = "PvP"
     L["Move Honor Frenzy Frame"] = "Move Honor Frenzy Frame"
     L["showHonorFrenzyCounter"] = "Show Honor Frenzy Count"

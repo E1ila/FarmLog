@@ -1,14 +1,16 @@
-﻿local VERSION = "1.20"
-local VERSION_INT = 1.2000
+﻿local VERSION = "1.23"
+local VERSION_INT = 1.2300
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Firemaw|r (era)"
-local FONT_NAME = "Fonts\\FRIZQT__.TTF"
 local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
 local UNKNOWN_MOBNAME = L["Unknown"]
 local CONSUMES_MOBNAME = L["Consumes"]
 local REALM = GetRealmName()
+
+local SharedMedia = LibStub:GetLibrary ("LibSharedMedia-3.0")
+local DEFAULT_FONT_NAME = SharedMedia.MediaTable.font[SharedMedia.DefaultMedia.font]
 
 FarmLog.L = L 
 FarmLog.Version = VERSION
@@ -160,10 +162,11 @@ FLogGlobalVars = {
 	hud = {
 		paddingX = 8,
 		paddingY = 5,
-		fontName = FONT_NAME,
+		fontName = DEFAULT_FONT_NAME,
 		fontSize = 12,
 		alpha = 0.6,
 	},
+	fontName = DEFAULT_FONT_NAME,
 	showBlackLotusTimer = true,
 	autoSwitchInstances = false,
 	autoResumeBGs = true,
@@ -661,13 +664,18 @@ function FarmLog:Migrate()
 		FLogGlobalVars.hud = {
 			paddingX = 8,
 			paddingY = 5,
-			fontName = FONT_NAME,
+			fontName = DEFAULT_FONT_NAME,
 			fontSize = 12,
 			alpha = 0.7,
 			locked = false,
 			show = false,
 		}
 	end 
+
+	if not FLogGlobalVars.fontName then
+		FLogGlobalVars.fontName = DEFAULT_FONT_NAME
+		FLogGlobalVars.hud.fontName = DEFAULT_FONT_NAME
+	end
 
 	if FLogGlobalVars.ver < 1.1705 then 
 		FLogGlobalVars.showBlackLotusTimer = true
@@ -1014,7 +1022,7 @@ local function CreateRow_Text(existingRow, text, container)
 		row.label = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.label:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.label:SetPoint("LEFT")
-		row.label:SetFont(FONT_NAME, 12)
+		row.label:SetFont(FLogGlobalVars.fontName, 12)
 	end 
 	row.label:SetText(text);
 	row.label:Show()
@@ -1095,7 +1103,7 @@ function FarmLog_MainWindow:CreateRow(text, valueText)
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.valueLabel:SetPoint("RIGHT", 0, 0)
-		row.valueLabel:SetFont(FONT_NAME, 12)
+		row.valueLabel:SetFont(FLogGlobalVars.fontName, 12)
 	end 
 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
 	row.valueLabel:SetText(valueText or "");
@@ -1471,7 +1479,7 @@ function FarmLog_SessionsWindow:CreateRow(text, valueText)
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.valueLabel:SetPoint("RIGHT", 20, 0)
-		row.valueLabel:SetFont(FONT_NAME, 12)
+		row.valueLabel:SetFont(FLogGlobalVars.fontName, 12)
 	end 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
 	row.valueLabel:SetText(valueText or "");
 	row.valueLabel:Show()
@@ -1551,7 +1559,7 @@ function FarmLog_LogWindow:CreateRow(text, valueText)
 		row.valueLabel = row.root:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
 		row.valueLabel:SetTextColor(0.8, 0.8, 0.8, 1)
 		row.valueLabel:SetPoint("RIGHT", 0, 0)
-		row.valueLabel:SetFont(FONT_NAME, 12)
+		row.valueLabel:SetFont(FLogGlobalVars.fontName, 12)
 	end 	-- debug("FarmLog_MainWindow:CreateRow "..text..tostring(valueText))
 	row.valueLabel:SetText(valueText or "");
 	row.valueLabel:Show()
@@ -2725,6 +2733,13 @@ end
 
 
 -- UI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+function FarmLog_MainWindow:ResetFont()
+	FLogGlobalVars.fontName = DEFAULT_FONT_NAME
+	FLogGlobalVars.hud.fontName = DEFAULT_FONT_NAME
+	ReloadUI()
+end 
+
 
 -- dragging & positioning
 
