@@ -103,7 +103,12 @@ TEXT_COLOR[CONSUMES_MOBNAME] = TEXT_COLOR["consumes"]
 
 local TITLE_COLOR = "|cff4CB4ff"
 local SPELL_HERBING = 2366
-local SPELL_MINING = 2575
+local SPELL_MINING = {
+	[2575] = true,  -- Apprentice
+	[3564] = true, -- Expert
+	[2576] = true, -- Journeyman
+	[10248] = true, -- Artian
+}
 local SPELL_FISHING = {
 	[7620] = true,
 	[7731] = true,
@@ -126,6 +131,7 @@ local SKILL_LOOTWINDOW_OPEN_TIMEOUT = { -- trade skill takes a few sec to cast
 	[L["Herbalism"]] = 8,
 	[L["Mining"]] = 8,
 }
+local MINE_COUNT_COOLDOWN = 20
 
 local SKILL_HERB_TEXT = (string.gsub((GetSpellInfo(9134)),"%A",""))
 
@@ -288,6 +294,7 @@ local honorFrenzyTest = false
 local selfPlayerName = nil
 local selfPlayerFaction = nil 
 local bgResultRecorded = false
+local lastMiningTime = 0
 
 lastLootedMobs = {}
 
@@ -1640,27 +1647,36 @@ function FarmLog:OnSpellCastEvent(unit, target, guid, spellId)
 	debug("|cff999999OnSpellCastEvent|r spellId |cffff9900"..tostring(spellId))
 
 	if spellId == SPELL_HERBING then 
+		miningMineName = nil 
 		skillName = L["Herbalism"]
 		skillNameTime = time()
 		skillTooltip1 = GameTooltipTextLeft1:GetText()
 		if skillTooltip1 == BL_ITEM_NAME then 
 			self:IncreaseBlackLotusPickStat("attempt")
 		end 
-	elseif spellId == SPELL_MINING then 
+	elseif SPELL_MINING[spellId] then 
 		skillName = L["Mining"]
+		if GameTooltipTextLeft1:GetText() then 
+			miningMineName = GameTooltipTextLeft1:GetText()
+			debug("|cff999999OnSpellCastEvent|r Setting miningMineName |cffff9900"..tostring(miningMineName))
+		end
 		skillNameTime = time()
 	elseif SPELL_FISHING[spellId] then
+		miningMineName = nil 
 		skillName = L["Fishing"]
 		skillNameTime = time()
 	elseif spellId == SPELL_OPEN or spellId == SPELL_OPEN_NOTEXT then 
+		miningMineName = nil 
 		skillName = L["Treasure"]
 		skillNameTime = time()
 	elseif SPELL_SKINNING[spellId] then 
+		miningMineName = nil 
 		skillName = L["Skinning"]
 		skillNameTime = time()
 	else 
 		skillName = nil 
 	end 
+	-- debug("|cff999999OnSpellCastEvent|r skillName |cffff9900"..tostring(skillName))
 end 
 
 function FarmLog:OnSpellCastSuccessEvent(unit, target, spellId)
@@ -1796,6 +1812,7 @@ function FarmLog:ParseSkillEvent(chatmsg)
 	for _, st in ipairs(SkillGainStrings) do
 		local skillName, level = FLogDeformat(chatmsg, st)
 		if level then
+			-- debug("FarmLog:ParseSkillEvent|r detected skill level up |cffff9900"..tostring(skillName))
 			return skillName, level
 		end
 	end
@@ -1918,14 +1935,30 @@ end
 function FarmLog:OnLootOpened(autoLoot)
 	if not FLogGlobalVars.track.drops then return end 
 
+	local now = time()
 	local lootCount = GetNumLootItems()
 	local mobName = nil
+	debug("|cff999999FarmLog:OnLootOpened|r skillName |cffff9900"..tostring(skillName))
 
 	if skillName then
-		mobName = skillName
-		-- count gathering skill act in kills table
 		local sessionKills = GetSessionVar("kills", false)
-		sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
+		-- must count kills or it won't appear on list, since sort uses kills to iterate drops
+		if not miningMineName or now - lastMiningTime > MINE_COUNT_COOLDOWN then
+			sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
+			if miningMineName then 
+				-- use Black Lotus log to also log individual mines
+				self:LogBlackLotusCurrentLocation(true)
+			end
+		end
+
+		if miningMineName then
+			-- mine name stored in miningMineName
+			mobName = miningMineName
+			sessionKills[mobName] = (sessionKills[mobName] or 0) + 1 
+			lastMiningTime = now
+		else
+			mobName = skillName
+		end
 	end 
 	if not mobName and UnitIsEnemy("player", "target") and UnitIsDead("target") and not lastLootedMobs[UnitGUID("target")] then 
 		lastLootedMobs[UnitGUID("target")] = time()
@@ -1936,7 +1969,6 @@ function FarmLog:OnLootOpened(autoLoot)
 	lastMobLoot = {}
 	skillName = nil 
 	skillNameTime = nil 
-	local now = time()
 	for i = 1, lootCount do 
 		local link = GetLootSlotLink(i)
 		if link then 
@@ -1988,6 +2020,7 @@ function FarmLog:OnMoneyEvent(text)
 		FarmLog_MainWindow:Refresh()
 	end 
 end 
+
 
 -- Black lotus tracking
 
@@ -2150,7 +2183,7 @@ function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section, mul)
 	elseif priceType == VALUE_TYPE_MANUAL or priceType == VALUE_TYPE_SCAN then
 		IncreaseSessionVar("ah", value * count * mul)
 	end 
-	debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value)
+	debug("|cff999999FarmLog:InsertLoot|r using |cffff9900"..priceType.."|r price of |cffff9900"..value.."|r mobName of |cffff9900"..mobName)
 
 	local sessionDrops = GetSessionVar(section, false)
 	if not sessionDrops[mobName] then		
@@ -2224,7 +2257,7 @@ local function ParseSelfLootEvent(chatmsg)
 end
 
 
-function FarmLog:OnLootEvent(text)
+function FarmLog:OnLootEvent(text, second, third)
 	local now = time()
 	local itemLink, quantity = ParseSelfLootEvent(text)
 	if not itemLink then return end
@@ -2234,7 +2267,7 @@ function FarmLog:OnLootEvent(text)
 		itemLink = sLink
 	end
 	local itemId = extractItemID(itemLink)
-	debug("|cff999999OnLootEvent|r itemId |cffff9900"..tostring(itemId))
+	debug("|cff999999OnLootEvent|r itemId |cffff9900"..tostring(itemId).." | second "..second.." | third "..third)
 	if itemId == tostring(BL_ITEMID) then 
 		-- start timer even if not in session
 		self:LogBlackLotusCurrentLocation(true)
