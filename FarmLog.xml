@@ -515,7 +515,7 @@
     <Scripts>
       <OnLoad>
         self:RegisterEvent("MODIFIER_STATE_CHANGED")
-        self:SetMaxResize(600, GetScreenHeight() - 100);
+        <!-- self:SetMaxResize(600, GetScreenHeight() - 100); -->
         self:SetBackdrop ({bgFile = [[Interface\AddOns\FarmLog\assets\background]], tile = true, tileSize = 16, insets = {left = 0, right = 0, top = 0, bottom = 0}})
    			self:SetBackdropColor(0, 0, 0, 0.7)
     		self:SetBackdropBorderColor(0, 0, 0, 1)

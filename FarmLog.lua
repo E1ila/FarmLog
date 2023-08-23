@@ -1,7 +1,7 @@
-﻿local VERSION = "1.23"
-local VERSION_INT = 1.2300
+﻿local VERSION = "1.24"
+local VERSION_INT = 1.2400
 local ADDON_NAME = "FarmLog"
-local CREDITS = "by |cff40C7EBKof|r @ |cffff2222Firemaw|r (era)"
+local CREDITS = "by |cffb266ffKof|r @ |cffff2222Firemaw|r (era)"
 local MAX_AH_RETRY = 0
 
 local L = FarmLog_BuildLocalization()
@@ -195,7 +195,7 @@ FLogGlobalVars = {
 	showHonorPercentOnTooltip = true,
 	showHonorFrenzyCounter = true,
 	minQuantitySold = false,
-	blackLotusTimeSeconds = 3600,
+	blackLotusTimeSeconds = 60 * 20, -- 20 min
 	instances = {},
 	blt = {}, -- BL timers
 	blp = {}, -- BL pick/fail counters
@@ -1947,7 +1947,7 @@ function FarmLog:OnLootOpened(autoLoot)
 			sessionKills[skillName] = (sessionKills[skillName] or 0) + 1
 			if miningMineName then 
 				-- use Black Lotus log to also log individual mines
-				self:LogBlackLotusCurrentLocation(true)
+				-- self:LogBlackLotusCurrentLocation(true)
 			end
 		end
 
