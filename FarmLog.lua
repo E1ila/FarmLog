@@ -2153,7 +2153,10 @@ function FarmLog:GetItemValue(itemLink)
 			soldPerDayTSM = TSM_API.GetCustomPriceValue("DBRegionSoldPerDay", TSM_ItemString)
 			return TSM_API.GetCustomPriceValue(TSM_PRICE_SOURCES["tsm-price-source-"..FLogGlobalVars.tsmPriceSource], TSM_ItemString)
 		end
-		local PriceCheck = Atr_GetAuctionBuyout or GetTSMPrice or GetAHScanPrice
+		local GetAuctionatorPrice = Auctionator and function(link)
+			return Auctionator.API.v1.GetAuctionPriceByItemLink("FarmLog", link)
+		end
+		local PriceCheck = Atr_GetAuctionBuyout or GetAuctionatorPrice or GetTSMPrice or GetAHScanPrice
 		ahValue = PriceCheck(normLink)
 	end
 
