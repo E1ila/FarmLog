@@ -47,7 +47,8 @@ end
 ------------------------------------------------
 
 local InterfacePanel = CreatePanelFrame("FarmLogInterfacePanel", "FarmLog")
-InterfaceOptions_AddCategory(InterfacePanel);
+local category = Settings.RegisterCanvasLayoutCategory(InterfacePanel, "FarmLog")
+Settings.RegisterAddOnCategory(category)
 FarmLog.InterfacePanel = InterfacePanel
 
 local SharedMedia = LibStub:GetLibrary ("LibSharedMedia-3.0")
