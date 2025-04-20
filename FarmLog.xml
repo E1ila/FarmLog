@@ -109,7 +109,7 @@
     </Size>
     <Layers>
       <Layer level="BACKGROUND">
-        <Texture name="$parentLeft" urgency="5" file="Interface\Buttons\UI-Panel-Button-Up">
+        <Texture name="$parentLeft" file="Interface\Buttons\UI-Panel-Button-Up">
           <Size>
             <AbsDimension x="12" y="22"/>
           </Size>
@@ -119,7 +119,7 @@
           </Anchors>
           <TexCoords left="0" right="0.09375" top="0" bottom="0.6875"/>
         </Texture>
-        <Texture name="$parentRight" urgency="5" file="Interface\Buttons\UI-Panel-Button-Up">
+        <Texture name="$parentRight" file="Interface\Buttons\UI-Panel-Button-Up">
           <Size>
             <AbsDimension x="12" y="22"/>
           </Size>
@@ -129,7 +129,7 @@
           </Anchors>
           <TexCoords left="0.53125" right="0.625" top="0" bottom="0.6875"/>
         </Texture>
-        <Texture name="$parentMiddle" urgency="5" file="Interface\Buttons\UI-Panel-Button-Up">
+        <Texture name="$parentMiddle" file="Interface\Buttons\UI-Panel-Button-Up">
           <Size>
             <AbsDimension x="12" y="22"/>
           </Size>
@@ -468,7 +468,9 @@
   <!-- Heads-Up Display -->
 
   <Frame name="FarmLog_HUD" frameStrata="MEDIUM" parent="UIParent" enableMouse="true" movable="true" inherits="BackdropTemplate">
-    <Anchor point="CENTER" />
+    <Anchors>
+      <Anchor point="CENTER" />
+    </Anchors>
     <Scripts>
       <OnLoad>
         self:SetUserPlaced(true)
