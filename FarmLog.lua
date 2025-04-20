@@ -1,5 +1,5 @@
-﻿local VERSION = "1.24"
-local VERSION_INT = 1.2400
+﻿local VERSION = "1.25"
+local VERSION_INT = 1.2500
 local ADDON_NAME = "FarmLog"
 local CREDITS = "by |cffb266ffKof|r @ |cffff2222Firemaw|r (era)"
 local MAX_AH_RETRY = 0

@@ -1,12 +1,12 @@
 ﻿## Interface: 90207
 ## Interface-Retail: 100107
-## Interface-Classic: 11404
+## Interface-Classic: 11507
 ## Interface-BCC: 20504
 ## Interface-Wrath: 30402
 ## Title: FarmLog
 ## Notes: Logs loot, monster kills, honor and instances. Know exactly what your farm session has yielded.
 ## Author: Kof @Firemaw (era)
-## Version: v1.23
+## Version: v1.25
 ## SavedVariables: FLogGlobalVars
 ## SavedVariablesPerCharacter: FLogVars
 ## OptionalDeps: Ace3, LibSharedMedia-3.0
