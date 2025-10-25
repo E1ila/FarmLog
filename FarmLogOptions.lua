@@ -140,8 +140,13 @@ mfpanel.PauseOnLogin = CreateCheckButton("FarmLogOptions_PauseOnLogin", mfpanel,
 mfpanel.PauseOnLogin:SetPoint("TOPLEFT", mfpanel.ResumeSessionOnSwitch, "TOPLEFT", 0, -25)
 mfpanel.PauseOnLogin:SetScript("OnClick", function(self) FLogGlobalVars.pauseOnLogin = self:GetChecked() end)
 
+mfpanel.TrackPartyLoot = CreateCheckButton("FarmLogOptions_TrackPartyLoot", mfpanel, L["trackPartyLoot"])
+mfpanel.TrackPartyLoot:SetPoint("TOPLEFT", mfpanel.PauseOnLogin, "TOPLEFT", 0, -25)
+mfpanel.TrackPartyLoot:SetScript("OnClick", function(self) FLogGlobalVars.trackPartyLoot = self:GetChecked() end)
+mfpanel.TrackPartyLoot.tooltipText = L["trackPartyLoot-tooltip"]
+
 mfpanel.DismissLootWindowOnEsc = CreateCheckButton("FarmLogOptions_DismissLootWindowOnEsc", mfpanel, L["dismissLootWindowOnEsc"])
-mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.PauseOnLogin, "TOPLEFT", 0, -25)
+mfpanel.DismissLootWindowOnEsc:SetPoint("TOPLEFT", mfpanel.TrackPartyLoot, "TOPLEFT", 0, -25)
 mfpanel.DismissLootWindowOnEsc:SetScript("OnClick", function(self) FLogGlobalVars.dismissLootWindowOnEsc = self:GetChecked() end)
 mfpanel.DismissLootWindowOnEsc.tooltipText = L["dismissLootWindowOnEsc-tooltip"]
 
@@ -354,7 +359,7 @@ mfpanel.ResetFontsButton:SetScript("OnClick", function(self) FarmLog_MainWindow:
 -- Init
 ----------------------------------------------
 
-function InterfacePanel:AddonLoaded() 
+function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.AutoSwitchInstances:SetChecked(FLogGlobalVars.autoSwitchInstances)
 	InterfacePanel.MainFrame.ResumeSessionOnSwitch:SetChecked(FLogGlobalVars.resumeSessionOnSwitch)
 	InterfacePanel.MainFrame.DismissLootWindowOnEsc:SetChecked(FLogGlobalVars.dismissLootWindowOnEsc)
@@ -362,6 +367,7 @@ function InterfacePanel:AddonLoaded()
 	InterfacePanel.MainFrame.ShowHonorPercentOnTooltip:SetChecked(FLogGlobalVars.showHonorPercentOnTooltip)
 	InterfacePanel.MainFrame.ShowHonorFrenzyCounter:SetChecked(FLogGlobalVars.showHonorFrenzyCounter)
 	InterfacePanel.MainFrame.PauseOnLogin:SetChecked(FLogGlobalVars.pauseOnLogin)
+	InterfacePanel.MainFrame.TrackPartyLoot:SetChecked(FLogGlobalVars.trackPartyLoot)
 	InterfacePanel.MainFrame.HonorDRinBGs:SetChecked(FLogGlobalVars.honorDRinBGs)
 	InterfacePanel.MainFrame.AutoResumeBGs:SetChecked(FLogGlobalVars.autoResumeBGs)
 

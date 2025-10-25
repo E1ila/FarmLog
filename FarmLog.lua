@@ -157,6 +157,7 @@ FLogGlobalVars = {
 	ahMinQuality = 3,
 	tsmPriceSource = 0,
 	ignoredItems = {},
+	trackPartyLoot = false,
 	track = {
 		drops = true,
 		kills = true,
@@ -2212,20 +2213,39 @@ local SelfLootStrings = {
 	_G.LOOT_ITEM_SELF, -- You receive loot: %s
 }
 
+local PartyMemberLootStrings = {
+	_G.LOOT_ITEM_MULTIPLE, -- %s receives loot: %sx%d
+	_G.LOOT_ITEM, -- %s receives loot: %s
+}
+
 local function ParseSelfLootEvent(chatmsg)
 	words = {}
 	local next = false
 	local link1 = ""
 	local quantity1 = 0
 
+	-- Try self loot strings first
 	for _, st in ipairs(SelfLootStrings) do
 		local link, quantity = FLogDeformat(chatmsg, st)
-		if quantity then 
+		if quantity then
 			return link, quantity
-		end 
-		if link then 
+		end
+		if link then
 			return link, 1
-		end 
+		end
+	end
+
+	-- Try party loot strings if enabled
+	if FLogGlobalVars.trackPartyLoot then
+		for _, st in ipairs(PartyMemberLootStrings) do
+			local playerName, link, quantity = FLogDeformat(chatmsg, st)
+			if link and quantity then
+				return link, quantity
+			end
+			if link then
+				return link, 1
+			end
+		end
 	end
 	
 

@@ -117,6 +117,8 @@ function FarmLog_BuildLocalization(context)
     L["Instance Resets"] = "Instance resets"
     L["Mobs Kill Count"] = "Mobs kill count"
     L["pauseOnLogin"] = "Pause session on login"
+    L["trackPartyLoot"] = "Track party members' loot"
+    L["trackPartyLoot-tooltip"] = "Track loot received by party members in addition to your own"
     L["showBlackLotusTimer"] = "Black Lotus timers (requires reload)"
     L["showHonorPercentOnTooltip"] = "Show honor % on enemy target's tooltip (requires reload)"
     L["new-farm-help"] = "Create a new farm, will use the name in search box"
