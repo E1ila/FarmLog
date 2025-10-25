@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Applications/wow/_classic_era_/Interface/AddOns/TargetNameplateIndicator/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

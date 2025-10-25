@@ -2834,17 +2834,21 @@ function FarmLog_MinimapButton:DragStopped()
 	FLogVars.minimapButtonPosition.y = y;
 end 
 
-function FarmLog_MinimapButton:Clicked(button) 
+function FarmLog_MinimapButton:Clicked(button)
 	if button == "RightButton" then
 		FarmLog:ToggleLogging()
 	else
-		if IsShiftKeyDown() then 
-			InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
-		elseif IsControlKeyDown() then 
-			FarmLog_MainWindow_SessionsButton:Clicked() 
-		else  
+		if IsShiftKeyDown() then
+			if Settings and Settings.OpenToCategory then
+				Settings.OpenToCategory("FarmLog")
+			elseif InterfaceOptionsFrame_OpenToCategory then
+				InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
+			end
+		elseif IsControlKeyDown() then
+			FarmLog_MainWindow_SessionsButton:Clicked()
+		else
 			FarmLog_MainWindow:ToggleWindow()
-		end 
+		end
 	end
 end 
 
@@ -3368,8 +3372,12 @@ SlashCmdList.FARMLOG = function(msg)
 	local _, _, cmd, arg1 = string.find(msg, "([%w]+)%s*(.*)$")
 	if not cmd then
 		-- FarmLog:ToggleLogging()
-		InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
-		if not FLogVars.enabled then 
+		if Settings and Settings.OpenToCategory then
+			Settings.OpenToCategory("FarmLog")
+		elseif InterfaceOptionsFrame_OpenToCategory then
+			InterfaceOptionsFrame_OpenToCategory(FarmLog.InterfacePanel)
+		end
+		if not FLogVars.enabled then
 			out("|cffff7722To resume session, right click the minimap button.")
 		end 
 	else 
