@@ -2175,6 +2175,35 @@ function FarmLog:GetItemValue(itemLink)
 	return 0, VALUE_TYPE_NOVALUE
 end
 
+-- Manual add item to session
+
+function FarmLog:AddManualItem(itemLink, count)
+	if not itemLink then
+		out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+		return false
+	end
+
+	itemLink = normalizeLink(itemLink)
+
+	if not GetItemInfo(itemLink) then
+		out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+		return false
+	end
+
+	count = count or 1
+	if count <= 0 then
+		out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+		return false
+	end
+
+	local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+	self:InsertLoot(L["Manual"], itemLink, count, vendorPrice or 0)
+	out("Added "..count.."x "..itemLink.." to current session")
+	FarmLog_MainWindow:RecalcTotals()
+	FarmLog_MainWindow:Refresh()
+	return true
+end
+
 -- Loot receive event
 
 function FarmLog:InsertLoot(mobName, itemLink, count, vendorPrice, section, mul)
@@ -3465,34 +3494,14 @@ SlashCmdList.FARMLOG = function(msg)
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
 			local itemLink = string.sub(arg1, startIndex, endIndex);
-			itemLink = normalizeLink(itemLink) -- remove player level
 
-			if itemLink and GetItemInfo(itemLink) then
-				if not FLogVars.enabled then
-					out("No active session. Start a session first.")
-					return
-				end
-
-				local count = 1
-				if ((endIndex + 2 ) <= (#arg1)) then
-					local st = string.sub(arg1, endIndex + 2, #arg1)
-					local itemCount = tonumber(st)
-					if itemCount and itemCount > 0 then
-						count = itemCount
-					else
-						out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
-						return
-					end
-				end
-
-				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
-				FarmLog:InsertLoot(L["Manual"], itemLink, count, vendorPrice or 0)
-				out("Added "..count.."x "..itemLink.." to current session")
-				FarmLog_MainWindow:RecalcTotals()
-				FarmLog_MainWindow:Refresh()
-			else
-				out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+			local count = nil
+			if endIndex and ((endIndex + 2 ) <= (#arg1)) then
+				local st = string.sub(arg1, endIndex + 2, #arg1)
+				count = tonumber(st)
 			end
+
+			FarmLog:AddManualItem(itemLink, count)
 		elseif "IGNORE" == cmd or "I" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");
