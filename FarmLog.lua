@@ -88,6 +88,7 @@ local TEXT_COLOR = {
 	["deaths"] = "ee3333",
 	["gathering"] = "38c98d",
 	["unknown"] = "888888",
+	["manual"] = "c879ff",
 	["consumes"] = "3ddb9f",
 	["bgs"] = "6a78f9",
 	["bgswin"] = "2ed154",
@@ -99,6 +100,7 @@ TEXT_COLOR[L["Herbalism"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Mining"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[L["Fishing"]] = TEXT_COLOR["gathering"]
 TEXT_COLOR[UNKNOWN_MOBNAME] = TEXT_COLOR["unknown"]
+TEXT_COLOR[L["Manual"]] = TEXT_COLOR["manual"]
 TEXT_COLOR[CONSUMES_MOBNAME] = TEXT_COLOR["consumes"]
 
 local TITLE_COLOR = "|cff4CB4ff"
@@ -3420,6 +3422,7 @@ SlashCmdList.FARMLOG = function(msg)
 			out(" |cff00ff00/fl delete <session_name>|r delete a session")
 			out(" |cff00ff00/fl r|r reset current session")
 			out(" |cff00ff00/fl set <item_link> <gold_value>|r sets AH ahPrice of an item, in gold")
+			out(" |cff00ff00/fl add <item_link> [count]|r manually add an item to current session (count defaults to 1)")
 			out(" |cff00ff00/fl i <item_link>|r adds/remove an item from ignore list")
 			out(" |cff00ff00/fl asi|r enables/disables Auto Switch in Instances, if enabled, will automatically start a farm session for that instance. Instance name will be used for session name.")
 			out(" |cff00ff00/fl ar|r enables/disables auto session resume when choosing one from the list")
@@ -3455,9 +3458,41 @@ SlashCmdList.FARMLOG = function(msg)
 				end 
 				FarmLog_MainWindow:RecalcTotals()
 				FarmLog_MainWindow:Refresh()
-			else 
+			else
 				out("Incorrect usage of command write |cff00ff00/fl set [ITEM_LINK] [PRICE_GOLD]|r")
-			end 
+			end
+		elseif "ADD" == cmd then
+			local startIndex, _ = string.find(arg1, "%|c");
+			local _, endIndex = string.find(arg1, "%]%|h%|r");
+			local itemLink = string.sub(arg1, startIndex, endIndex);
+			itemLink = normalizeLink(itemLink) -- remove player level
+
+			if itemLink and GetItemInfo(itemLink) then
+				if not FLogVars.enabled then
+					out("No active session. Start a session first.")
+					return
+				end
+
+				local count = 1
+				if ((endIndex + 2 ) <= (#arg1)) then
+					local st = string.sub(arg1, endIndex + 2, #arg1)
+					local itemCount = tonumber(st)
+					if itemCount and itemCount > 0 then
+						count = itemCount
+					else
+						out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+						return
+					end
+				end
+
+				local _, _, _, _, _, _, _, _, _, _, vendorPrice = GetItemInfo(itemLink);
+				FarmLog:InsertLoot(L["Manual"], itemLink, count, vendorPrice or 0)
+				out("Added "..count.."x "..itemLink.." to current session")
+				FarmLog_MainWindow:RecalcTotals()
+				FarmLog_MainWindow:Refresh()
+			else
+				out("Incorrect usage of command write |cff00ff00/fl add [ITEM_LINK] [COUNT]|r")
+			end
 		elseif "IGNORE" == cmd or "I" == cmd then
 			local startIndex, _ = string.find(arg1, "%|c");
 			local _, endIndex = string.find(arg1, "%]%|h%|r");

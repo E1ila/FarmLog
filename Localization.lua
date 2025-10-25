@@ -54,6 +54,7 @@ function FarmLog_BuildLocalization(context)
     L["Mining"] = "Mining"
     L["Skinning"] = "Skinning"
     L["Unknown"] = "Unknown"
+    L["Manual"] = "Manual"
     L["Gold / Hour"] = "Gold / hour"
     L["Honor / Hour"] = "Honor / hour"
     L["g/h"] = "G/H"
