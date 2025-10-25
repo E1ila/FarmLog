@@ -3460,6 +3460,7 @@ SlashCmdList.FARMLOG = function(msg)
 			out(" |cff00ff00/fl rmw|r resets main window position")
 			out(" |cff00ff00/fl inc|r increase kill count of selected target")
 			out(" |cff00ff00/fl dec|r decrease kill count of selected target")
+			out(" |cff00ff00/fl time <seconds>|r adjust current session time (can be positive or negative)")
 			out(" |cff00ff00/fl bl|r show black lotus log")
 			out(" |cff00ff00/fl ah|r scan AH for current prices, must have AH window open")
 		elseif "SET" == cmd then
@@ -3592,9 +3593,23 @@ SlashCmdList.FARMLOG = function(msg)
 				pickMeta.seen = blSeen
 			end 
 			FarmLog:LogBlackLotus(GetZoneText(), pickMeta)
-		elseif "BLS" == cmd then 
-			FarmLog:SaveBLSeenTime() 
-		else 
+		elseif "BLS" == cmd then
+			FarmLog:SaveBLSeenTime()
+		elseif "TIME" == cmd then
+			local timeAdjustment = tonumber(arg1)
+			if timeAdjustment then
+				IncreaseSessionVar("seconds", timeAdjustment)
+				if timeAdjustment > 0 then
+					out("Added "..timeAdjustment.." seconds to current session")
+				else
+					out("Removed "..(-timeAdjustment).." seconds from current session")
+				end
+				FarmLog_MainWindow:RecalcTotals()
+				FarmLog_MainWindow:Refresh()
+			else
+				out("Incorrect usage of command. Usage: |cff00ff00/fl time <seconds>|r (can be positive or negative)")
+			end
+		else
 			out("Unknown command "..cmd)
 		end 
 	end 
